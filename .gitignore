@@ -1,3 +1,6 @@
-/cover.out
-/tenant.db
-/.ext
+.DS_Store
+cover.out
+# personal developer settings
+/.dev/
+# external dependencies from Depfile
+/.ext/

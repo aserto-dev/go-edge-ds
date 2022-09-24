@@ -70,8 +70,10 @@ linters:
     - bodyclose
     - deadcode
     - depguard
+    - dogsled
     - errcheck
     - exportloopref
+    - exhaustive
     - funlen
     - gochecknoinits
     - goconst
@@ -79,13 +81,14 @@ linters:
     - gocyclo
     - gofmt
     - goimports
+    - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
     - misspell
     - nakedret
-    - revive
+    - rowserrcheck
     - staticcheck
     - structcheck
     - stylecheck
@@ -95,6 +98,28 @@ linters:
     - unused
     - varcheck
 
+  # don't enable:
+  # - asciicheck
+  # - dupl
+  # - scopelint
+  # - gochecknoglobals
+  # - gocognit
+  # - godot
+  # - godox
+  # - goerr113
+  # - gomnd
+  # - interfacer
+  # - lll
+  # - maligned
+  # - nestif
+  # - noctx
+  # - nolintlint
+  # - prealloc
+  # - testpackage
+  # - revive
+  # - wsl
+  # - whitespace
+  
 issues:
   # List of regexps of issue texts to exclude, empty list by default.
   # But independently from this option we use default exclude patterns,
