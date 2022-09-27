@@ -21,8 +21,8 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 		}
 	}()
 
-	ot, err := types.GetObjectType(req.Param, s.store, []boltdb.Opts{txOpt}...)
-	return &dsr.GetObjectTypeResponse{Result: ot.Msg()}, err
+	objType, err := types.GetObjectType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	return &dsr.GetObjectTypeResponse{Result: objType.Msg()}, err
 }
 
 func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (*dsr.GetObjectTypesResponse, error) {
@@ -42,7 +42,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 		}
 	}()
 
-	relType, err := types.GetRelationType(req.Param, s.store, []boltdb.Opts{txOpt}...)
+	relType, err := types.GetRelationType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsr.GetRelationTypeResponse{Result: relType.Msg()}, err
 }
 
@@ -63,7 +63,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 		}
 	}()
 
-	perm, err := types.GetPermission(req.Param, s.store, []boltdb.Opts{txOpt}...)
+	perm, err := types.GetPermission(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsr.GetPermissionResponse{Result: perm.Msg()}, err
 
 }

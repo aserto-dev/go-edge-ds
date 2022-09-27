@@ -53,7 +53,7 @@ func (i *ObjectType) Normalize() error {
 	return nil
 }
 
-func GetObjectType(i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*ObjectType, error) {
+func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*ObjectType, error) {
 	var name string
 	if i.GetName() != "" {
 		name = i.GetName()
@@ -93,7 +93,7 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	}
 
 	curHash := ""
-	current, err := GetObjectType(&dsc.ObjectTypeIdentifier{Name: &i.Name}, store, opts...)
+	current, err := GetObjectType(ctx, &dsc.ObjectTypeIdentifier{Name: &i.Name}, store, opts...)
 	if err == nil {
 		curHash = current.ObjectType.Hash
 	}
@@ -137,12 +137,12 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	return nil
 }
 
-func DeleteObjectType(i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
+func DeleteObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
 	if ok, err := ObjectTypeIdentifier.Validate(i); !ok {
 		return err
 	}
 
-	current, err := GetObjectType(i, store, opts...)
+	current, err := GetObjectType(ctx, i, store, opts...)
 	switch {
 	case errors.Is(err, boltdb.ErrKeyNotFound):
 		return nil

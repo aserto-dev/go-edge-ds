@@ -57,7 +57,7 @@ func (i *RelationType) Normalize() error {
 	return nil
 }
 
-func GetRelationType(i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*RelationType, error) {
+func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*RelationType, error) {
 	var (
 		relTypeName string
 		objTypeName string
@@ -104,7 +104,7 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 	}
 
 	curHash := ""
-	current, err := GetRelationType(&dsc.RelationTypeIdentifier{
+	current, err := GetRelationType(ctx, &dsc.RelationTypeIdentifier{
 		Name:       &i.Name,
 		ObjectType: &i.ObjectType,
 	}, store, opts...)
@@ -152,12 +152,12 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 	return nil
 }
 
-func DeleteRelationType(i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
+func DeleteRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
 	if ok, err := RelationTypeIdentifier.Validate(i); !ok {
 		return err
 	}
 
-	current, err := GetRelationType(i, store, opts...)
+	current, err := GetRelationType(ctx, i, store, opts...)
 	switch {
 	case errors.Is(err, boltdb.ErrKeyNotFound):
 		return nil

@@ -50,7 +50,7 @@ func (i *Permission) Normalize() error {
 	return nil
 }
 
-func GetPermission(i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Permission, error) {
+func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Permission, error) {
 	var name string
 	if i.GetName() != "" {
 		name = i.GetName()
@@ -90,7 +90,7 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	}
 
 	curHash := ""
-	current, err := GetPermission(&dsc.PermissionIdentifier{Name: &i.Name}, store, opts...)
+	current, err := GetPermission(ctx, &dsc.PermissionIdentifier{Name: &i.Name}, store, opts...)
 	if err == nil {
 		curHash = current.Permission.Hash
 	}
@@ -134,12 +134,12 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	return nil
 }
 
-func DeletePermission(i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
+func DeletePermission(ctx context.Context, i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
 	if ok, err := PermissionIdentifier.Validate(i); !ok {
 		return err
 	}
 
-	current, err := GetPermission(i, store, opts...)
+	current, err := GetPermission(ctx, i, store, opts...)
 	switch {
 	case errors.Is(err, boltdb.ErrKeyNotFound):
 		return nil

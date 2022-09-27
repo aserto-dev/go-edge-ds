@@ -39,7 +39,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 		}
 	}()
 
-	err = types.DeleteObjectType(req.Param, s.store, []boltdb.Opts{txOpt}...)
+	err = types.DeleteObjectType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsw.DeleteObjectTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -73,7 +73,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 		}
 	}()
 
-	err = types.DeleteRelationType(req.Param, s.store, []boltdb.Opts{txOpt}...)
+	err = types.DeleteRelationType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsw.DeleteRelationTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -107,7 +107,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 		}
 	}()
 
-	err = types.DeletePermission(req.Param, s.store, []boltdb.Opts{txOpt}...)
+	err = types.DeletePermission(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsw.DeletePermissionResponse{Result: &emptypb.Empty{}}, err
 }
 
