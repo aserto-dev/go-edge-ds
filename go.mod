@@ -7,6 +7,7 @@ require (
 	github.com/aserto-dev/go-utils v0.8.28
 	github.com/google/uuid v1.3.0
 	github.com/magefile/mage v1.14.0
+	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.28.0
 	go.etcd.io/bbolt v1.3.6

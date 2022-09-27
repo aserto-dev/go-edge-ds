@@ -65,7 +65,6 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 
 	perm, err := types.GetPermission(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	return &dsr.GetPermissionResponse{Result: perm.Msg()}, err
-
 }
 
 func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (*dsr.GetPermissionsResponse, error) {
@@ -74,7 +73,19 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 
 // object methods
 func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*dsr.GetObjectResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	obj, err := types.GetObject(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	return &dsr.GetObjectResponse{Result: obj.Msg()}, err
 }
 
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {

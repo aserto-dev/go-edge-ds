@@ -113,11 +113,36 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 
 // object methods
 func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.WriteTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup(err)
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	obj := types.NewObject(req.Object)
+	err = obj.Set(ctx, s.store, []boltdb.Opts{txOpt}...)
+	return &dsw.SetObjectResponse{Result: obj.Msg()}, err
 }
 
 func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (*dsw.DeleteObjectResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.WriteTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup(err)
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	err = types.DeleteObject(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	return &dsw.DeleteObjectResponse{Result: &emptypb.Empty{}}, err
 }
 
 // relation methods
