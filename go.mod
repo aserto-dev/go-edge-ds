@@ -3,9 +3,10 @@ module github.com/aserto-dev/edge-ds
 go 1.17
 
 require (
-	github.com/aserto-dev/go-lib v0.8.50
+	github.com/aserto-dev/aserto-grpc v0.0.4
 	github.com/aserto-dev/go-utils v0.8.28
 	github.com/google/uuid v1.3.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magefile/mage v1.14.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
@@ -14,9 +15,6 @@ require (
 )
 
 require (
-	github.com/aserto-dev/aserto-grpc v0.0.4 // indirect
-	github.com/gofrs/uuid v4.2.0+incompatible // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect

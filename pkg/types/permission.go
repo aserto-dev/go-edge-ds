@@ -10,9 +10,9 @@ import (
 
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/pb"
+	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-lib/ids"
 	"github.com/aserto-dev/go-utils/cerr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -80,7 +80,7 @@ func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *bolt
 }
 
 func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	sessionID := ids.ExtractSessionID(ctx)
+	sessionID := session.ExtractSessionID(ctx)
 
 	if ok, err := i.Validate(); !ok {
 		return err

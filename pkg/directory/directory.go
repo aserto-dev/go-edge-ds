@@ -6,8 +6,8 @@ import (
 
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/directory/metadata"
+	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
-	"github.com/aserto-dev/go-lib/ids"
 	"github.com/google/uuid"
 
 	"github.com/rs/zerolog"
@@ -67,7 +67,7 @@ func (s *Directory) Seed() error {
 	}
 	root := true
 
-	ctx := ids.ContextWithSessionID(context.Background(), uuid.NewString())
+	ctx := session.ContextWithSessionID(context.Background(), uuid.NewString())
 
 	for _, objType := range metadata.ObjectTypes {
 

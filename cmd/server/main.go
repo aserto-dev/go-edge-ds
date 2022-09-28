@@ -7,9 +7,11 @@ import (
 	"net"
 	"os"
 	"path"
+	"time"
 
 	eds "github.com/aserto-dev/edge-ds"
 	ds "github.com/aserto-dev/edge-ds/pkg/directory"
+	"github.com/aserto-dev/edge-ds/pkg/session"
 	"github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/aserto/directory/v2"
@@ -18,6 +20,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
+
+const connectionTimeout time.Duration = 5 * time.Second
 
 var port int
 
@@ -48,7 +52,13 @@ func main() {
 	}
 	defer server.Close()
 
-	s := grpc.NewServer()
+	sessionMiddleware := session.HeaderMiddleware{DisableValidation: false}
+
+	s := grpc.NewServer(
+		grpc.ConnectionTimeout(connectionTimeout),
+		grpc.UnaryInterceptor(sessionMiddleware.Unary()),
+		grpc.StreamInterceptor(sessionMiddleware.Stream()),
+	)
 
 	directory.RegisterDirectoryServer(s, server)
 	writer.RegisterWriterServer(s, server)

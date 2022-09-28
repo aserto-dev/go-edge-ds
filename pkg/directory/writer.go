@@ -11,6 +11,8 @@ import (
 
 // object type metadata methods
 func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (resp *dsw.SetObjectTypeResponse, err error) {
+	s.logger.Trace().Msg("SetObjectType")
+
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
