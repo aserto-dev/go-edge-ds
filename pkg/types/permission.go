@@ -100,7 +100,7 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 		i.Permission.Hash = curHash
 	}
 
-	if curHash != i.Permission.Hash {
+	if curHash != "" && curHash != i.Permission.Hash {
 		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.Permission.Hash)
 	}
 

@@ -111,7 +111,7 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 		i.RelationType.Hash = curHash
 	}
 
-	if curHash != i.RelationType.Hash {
+	if curHash != "" && curHash != i.RelationType.Hash {
 		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.RelationType.Hash)
 	}
 

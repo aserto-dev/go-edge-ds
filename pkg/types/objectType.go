@@ -102,7 +102,7 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 		i.ObjectType.Hash = curHash
 	}
 
-	if curHash != i.ObjectType.Hash {
+	if curHash != "" && curHash != i.ObjectType.Hash {
 		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.ObjectType.Hash)
 	}
 
