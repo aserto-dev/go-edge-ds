@@ -20,5 +20,8 @@ func (objectIdentifier) Validate(i *dsc.ObjectIdentifier) (bool, error) {
 		*i.Key != "" && *i.Type != "" {
 		return true, nil
 	}
+	if i.Type != nil && *i.Type != "" {
+		return true, nil
+	}
 	return false, cerr.ErrInvalidArgument.Msg("object_identifier")
 }

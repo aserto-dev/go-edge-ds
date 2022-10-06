@@ -1,6 +1,8 @@
 package boltdb
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -157,6 +159,46 @@ func (s *BoltDB) Read(path []string, key string, opts []Opts) ([]byte, error) {
 		if res == nil {
 			return errors.Wrapf(ErrKeyNotFound, "key [%s]", key)
 		}
+
+		return nil
+	}
+
+	var err error
+	txo := getTxOpts(opts)
+	if txo.tx == nil {
+		err = s.db.View(read)
+	} else {
+		err = read(txo.tx)
+	}
+
+	return res, err
+}
+
+// Read value from key in bucket path.
+func (s *BoltDB) ReadPrefix(path []string, prefix string, opts []Opts) ([]byte, error) {
+	s.logger.Trace().Interface("path", path).Str("prefix", prefix).Msg("Read")
+
+	var res []byte
+
+	read := func(tx *bolt.Tx) error {
+		b, err := s.setBucket(tx, path)
+		if err != nil {
+			return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+		}
+
+		c := b.Cursor()
+
+		prefix := []byte(prefix)
+		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			fmt.Printf("key=%s, value=%s\n", k, v)
+			res = v
+			return nil
+		}
+
+		// res = b.Get([]byte(key))
+		// if res == nil {
+		// 	return errors.Wrapf(ErrKeyNotFound, "key [%s]", key)
+		// }
 
 		return nil
 	}

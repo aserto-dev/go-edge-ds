@@ -54,49 +54,58 @@ func (i *Relation) Normalize() error {
 
 func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Relation, error) {
 	var (
-		objID   string
+		subID   string
+		subType string
+
 		relName string
 		// relID   int32
-		subID string
+		objID   string
+		objType string
 	)
-
-	if ok, _ := ObjectIdentifier.Validate(i.Object); ok {
-		if i.Object.Id != nil {
-			objID = *i.Object.Id
-		} else {
-			objKey := *i.Object.Type + "|" + *i.Object.Key
-
-			buf, err := store.Read(ObjectsKeyPath(), objKey, opts)
-			if err != nil {
-				return nil, err
-			}
-
-			var obj dsc.Object
-			if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
-				return nil, err
-			}
-			objID = obj.GetId()
-		}
-	}
 
 	if ok, _ := ObjectIdentifier.Validate(i.Subject); ok {
 		if i.Subject.Id != nil {
 			subID = *i.Subject.Id
-		} else {
+		} else if i.Subject.Key != nil && i.Subject.Type != nil {
 			subKey := *i.Subject.Type + "|" + *i.Subject.Key
 
 			buf, err := store.Read(ObjectsKeyPath(), subKey, opts)
 			if err != nil {
 				return nil, err
 			}
-
-			var obj dsc.Object
-			if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
-				return nil, err
-			}
-			subID = obj.GetId()
+			subID = string(buf)
+			// var obj dsc.Object
+			// if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
+			// 	return nil, err
+			// }
+			// subID = obj.GetId()
+		} else if i.Subject.Type != nil {
+			subType = i.Subject.GetType()
 		}
 	}
+	_ = subType
+
+	if ok, _ := ObjectIdentifier.Validate(i.Object); ok {
+		if i.Object.Id != nil {
+			objID = *i.Object.Id
+		} else if i.Object.Type != nil && i.Object.Key != nil {
+			objKey := *i.Object.Type + "|" + *i.Object.Key
+
+			buf, err := store.Read(ObjectsKeyPath(), objKey, opts)
+			if err != nil {
+				return nil, err
+			}
+			objID = string(buf)
+			// var obj dsc.Object
+			// if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
+			// 	return nil, err
+			// }
+			// objID = obj.GetId()
+		} else if i.Object.Type != nil {
+			objType = i.Object.GetType()
+		}
+	}
+	_ = objType
 
 	if ok, _ := RelationTypeIdentifier.Validate(i.Relation); ok {
 		var relID int32
@@ -122,8 +131,9 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 		relName = relType.Name
 	}
 
-	relID := relName + "|" + subID + "|" + objID
-	buf, err := store.Read(RelationsSubPath(), relID, opts)
+	filter := relName + "|" + objID + "|" + subID
+
+	buf, err := store.ReadPrefix(RelationsObjPath(), filter, opts)
 	if err != nil {
 		return nil, err
 	}
