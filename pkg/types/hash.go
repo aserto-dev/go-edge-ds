@@ -20,9 +20,9 @@ func Int32ToByte(i int32) []byte {
 }
 
 func ByteToInt32(b []byte) int32 {
-	// if len(b) != 4 {
-	// 	panic("illegal buf size")
-	// }
+	if len(b) != 4 {
+		panic("illegal buf size")
+	}
 	r := binary.LittleEndian.Uint32(b)
 	return int32(r)
 }
