@@ -5,6 +5,7 @@ import (
 
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/types"
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/v2"
 )
 
@@ -88,13 +89,46 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 	return &dsr.GetObjectResponse{Result: obj.Msg()}, err
 }
 
+func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyRequest) (*dsr.GetObjectManyResponse, error) {
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	_, err = types.GetObjectMany(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []*dsc.Object{}
+	return &dsr.GetObjectManyResponse{Results: results}, err
+}
+
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
 	return nil, nil
 }
 
 // relation methods
 func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (*dsr.GetRelationResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	rel, err := types.GetRelation(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	return &dsr.GetRelationResponse{Result: rel.Msg()}, err
 }
 
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {

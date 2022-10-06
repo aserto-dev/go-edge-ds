@@ -149,6 +149,8 @@ github.com/aserto-dev/clui v0.8.0/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2l
 github.com/aserto-dev/clui v0.8.1/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
 github.com/aserto-dev/go-directory v0.0.13-0.20220926223453-6c62ae285876 h1:O9cAXjActu0J54syUvmg5J29q50HYwwNrLEDFddAHXk=
 github.com/aserto-dev/go-directory v0.0.13-0.20220926223453-6c62ae285876/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
+github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3 h1:1srdC+9+vGigmLXStL/hXvDmwAE4oOpuS/pWXgDApzE=
+github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
 github.com/aserto-dev/go-grpc v0.8.51 h1:mRyj9Dn4debqZ2RyV/++Lzy5nUIisZbmcH5w7T1xmt0=
 github.com/aserto-dev/go-grpc v0.8.51/go.mod h1:ZHKobEadfjzb39dKhc/iy8JyQDRuB/IsSwVa8YuWkQY=
 github.com/aserto-dev/go-utils v0.8.26/go.mod h1:s5XhjJMG1UCarMpI4E01cgW35zls+E+eGqiPmGssXsU=

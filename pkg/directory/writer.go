@@ -149,9 +149,34 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 
 // relation methods
 func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.WriteTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup(err)
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	rel := types.NewRelation(req.Relation)
+	err = rel.Set(ctx, s.store, []boltdb.Opts{txOpt}...)
+	return &dsw.SetRelationResponse{Result: rel.Msg()}, err
 }
 
 func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (*dsw.DeleteRelationResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.WriteTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup(err)
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	err = types.DeleteRelation(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	return &dsw.DeleteRelationResponse{Result: &emptypb.Empty{}}, err
 }

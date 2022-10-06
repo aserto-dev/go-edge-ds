@@ -24,6 +24,12 @@ type Object struct {
 	*dsc.Object
 }
 
+type Objects []*Object
+
+func (o *Objects) Msg() []*dsc.Object {
+	return []*dsc.Object{}
+}
+
 func NewObject(i *dsc.Object) *Object {
 	return &Object{
 		Object: i,
@@ -53,7 +59,6 @@ func (i *Object) Normalize() error {
 
 func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Object, error) {
 	var objID string
-
 	if ID.IsValid(i.GetId()) {
 		objID = i.GetId()
 	} else if i.GetKey() != "" && i.GetType() != "" {
@@ -82,6 +87,10 @@ func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltD
 	}, nil
 }
 
+func GetObjectMany(ctx context.Context, i []*dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, error) {
+	return nil, nil
+}
+
 func (i *Object) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
 	sessionID := session.ExtractSessionID(ctx)
 
@@ -99,7 +108,7 @@ func (i *Object) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.O
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" && i.Object.Hash == "" {
+	if sessionID != "" /*&& i.Object.Hash == ""*/ {
 		i.Object.Hash = curHash
 	}
 
@@ -129,12 +138,12 @@ func (i *Object) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.O
 		return err
 	}
 
-	if err := store.Write(ObjectsPath(), i.Id, buf.Bytes(), opts); err != nil {
+	if err := store.Write(ObjectsPath(), i.GetId(), buf.Bytes(), opts); err != nil {
 		return err
 	}
 
 	key := i.Type + "|" + i.Key
-	if err := store.Write(ObjectsKeyPath(), key, []byte(i.Id), opts); err != nil {
+	if err := store.Write(ObjectsKeyPath(), key, []byte(i.GetId()), opts); err != nil {
 		return err
 	}
 
@@ -154,12 +163,12 @@ func DeleteObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.Bo
 		return err
 	}
 
-	if err := store.DeleteKey(ObjectsPath(), current.Id, opts); err != nil {
+	key := current.Type + "|" + current.Key
+	if err := store.DeleteKey(ObjectsKeyPath(), key, opts); err != nil {
 		return err
 	}
 
-	key := current.Type + "|" + current.Key
-	if err := store.DeleteKey(ObjectsKeyPath(), key, opts); err != nil {
+	if err := store.DeleteKey(ObjectsPath(), current.Id, opts); err != nil {
 		return err
 	}
 

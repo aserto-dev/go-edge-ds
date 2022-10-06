@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -54,20 +53,20 @@ func (i *ObjectType) Normalize() error {
 }
 
 func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*ObjectType, error) {
-	var name string
-	if i.GetName() != "" {
-		name = i.GetName()
-	} else if i.GetId() > 0 {
-		idBuf, err := store.Read(ObjectTypesIDPath(), fmt.Sprintf("%d", i.GetId()), opts)
+	var objTypeID int32
+	if i.GetId() > 0 {
+		objTypeID = i.GetId()
+	} else if i.GetName() != "" {
+		idBuf, err := store.Read(ObjectTypesNamePath(), i.GetName(), opts)
 		if err != nil {
-			return nil, boltdb.ErrKeyNotFound
+			return nil, err
 		}
-		name = string(idBuf)
+		objTypeID = StrToInt32(string(idBuf))
 	} else {
 		return nil, cerr.ErrInvalidArgument
 	}
 
-	buf, err := store.Read(ObjectTypesPath(), name, opts)
+	buf, err := store.Read(ObjectTypesPath(), Int32ToStr(objTypeID), opts)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +98,7 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" && i.ObjectType.Hash == "" {
+	if sessionID != "" /*&& i.ObjectType.Hash == "" */ {
 		i.ObjectType.Hash = curHash
 	}
 
@@ -127,10 +126,10 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 		return err
 	}
 
-	if err := store.Write(ObjectTypesPath(), i.Name, buf.Bytes(), opts); err != nil {
+	if err := store.Write(ObjectTypesPath(), Int32ToStr(i.GetId()), buf.Bytes(), opts); err != nil {
 		return err
 	}
-	if err := store.Write(ObjectTypesIDPath(), fmt.Sprintf("%d", i.Id), []byte(i.Name), opts); err != nil {
+	if err := store.Write(ObjectTypesNamePath(), i.Name, []byte(Int32ToStr(i.GetId())), opts); err != nil {
 		return err
 	}
 
@@ -150,11 +149,11 @@ func DeleteObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *b
 		return err
 	}
 
-	if err := store.DeleteKey(ObjectTypesIDPath(), fmt.Sprintf("%d", current.Id), opts); err != nil {
+	if err := store.DeleteKey(ObjectTypesNamePath(), current.Name, opts); err != nil {
 		return err
 	}
 
-	if err := store.DeleteKey(ObjectTypesPath(), current.Name, opts); err != nil {
+	if err := store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.GetId()), opts); err != nil {
 		return err
 	}
 

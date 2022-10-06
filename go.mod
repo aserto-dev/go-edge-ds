@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	github.com/aserto-dev/go-directory v0.0.13-0.20220926223453-6c62ae285876
+	github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3
 	github.com/aserto-dev/go-grpc v0.8.51 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect

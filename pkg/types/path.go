@@ -4,24 +4,24 @@ func ObjectTypesPath() []string {
 	return []string{"object_types"}
 }
 
-func ObjectTypesIDPath() []string {
-	return []string{"object_types_id"}
+func ObjectTypesNamePath() []string {
+	return []string{"object_types_name"}
 }
 
 func PermissionsPath() []string {
 	return []string{"permissions"}
 }
 
-func PermissionsIDPath() []string {
-	return []string{"permissions_id"}
+func PermissionsNamePath() []string {
+	return []string{"permissions_name"}
 }
 
 func RelationTypesPath() []string {
 	return []string{"relation_types"}
 }
 
-func RelationTypesIDPath() []string {
-	return []string{"relation_types_id"}
+func RelationTypesNamePath() []string {
+	return []string{"relation_types_name"}
 }
 
 func ObjectsPath() []string {

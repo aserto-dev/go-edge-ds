@@ -51,20 +51,20 @@ func (i *Permission) Normalize() error {
 }
 
 func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Permission, error) {
-	var name string
-	if i.GetName() != "" {
-		name = i.GetName()
-	} else if i.GetId() != "" {
-		idBuf, err := store.Read(PermissionsIDPath(), i.GetId(), opts)
+	var permID string
+	if i.GetId() != "" {
+		permID = i.GetId()
+	} else if i.GetName() != "" {
+		idBuf, err := store.Read(PermissionsNamePath(), i.GetName(), opts)
 		if err != nil {
 			return nil, boltdb.ErrKeyNotFound
 		}
-		name = string(idBuf)
+		permID = string(idBuf)
 	} else {
 		return nil, cerr.ErrInvalidArgument
 	}
 
-	buf, err := store.Read(PermissionsPath(), name, opts)
+	buf, err := store.Read(PermissionsPath(), permID, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" && i.Permission.Hash == "" {
+	if sessionID != "" /*&& i.Permission.Hash == "" */ {
 		i.Permission.Hash = curHash
 	}
 
@@ -124,10 +124,10 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 		return err
 	}
 
-	if err := store.Write(PermissionsPath(), i.Name, buf.Bytes(), opts); err != nil {
+	if err := store.Write(PermissionsPath(), i.GetId(), buf.Bytes(), opts); err != nil {
 		return err
 	}
-	if err := store.Write(PermissionsIDPath(), i.Id, []byte(i.Name), opts); err != nil {
+	if err := store.Write(PermissionsNamePath(), i.Name, []byte(i.GetId()), opts); err != nil {
 		return err
 	}
 
@@ -147,11 +147,11 @@ func DeletePermission(ctx context.Context, i *dsc.PermissionIdentifier, store *b
 		return err
 	}
 
-	if err := store.DeleteKey(PermissionsIDPath(), current.Id, opts); err != nil {
+	if err := store.DeleteKey(PermissionsNamePath(), current.GetName(), opts); err != nil {
 		return err
 	}
 
-	if err := store.DeleteKey(PermissionsPath(), current.Name, opts); err != nil {
+	if err := store.DeleteKey(PermissionsPath(), current.GetId(), opts); err != nil {
 		return err
 	}
 

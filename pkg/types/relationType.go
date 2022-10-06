@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -58,27 +57,22 @@ func (i *RelationType) Normalize() error {
 }
 
 func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*RelationType, error) {
-	var (
-		relTypeName string
-		objTypeName string
-	)
+	var relTypeID int32
+	if i.GetId() > 0 {
+		relTypeID = i.GetId()
+	} else if i.GetName() != "" && i.GetObjectType() != "" {
+		key := i.GetObjectType() + "|" + i.GetName()
 
-	if i.GetName() != "" && i.GetObjectType() != "" {
-		relTypeName = i.GetName()
-		objTypeName = i.GetObjectType()
-	} else if i.GetId() > 0 {
-		idBuf, err := store.Read(RelationTypesIDPath(), fmt.Sprintf("%d", i.GetId()), opts)
+		idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
 		if err != nil {
 			return nil, boltdb.ErrKeyNotFound
 		}
-		s := strings.Split(string(idBuf), "|")
-		objTypeName, relTypeName = s[0], s[1]
+		relTypeID = StrToInt32(string(idBuf))
 	} else {
 		return nil, cerr.ErrInvalidArgument
 	}
 
-	key := objTypeName + "|" + relTypeName
-	buf, err := store.Read(RelationTypesPath(), key, opts)
+	buf, err := store.Read(RelationTypesPath(), Int32ToStr(relTypeID), opts)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +107,7 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" && i.RelationType.Hash == "" {
+	if sessionID != "" /*&& i.RelationType.Hash == "" */ {
 		i.RelationType.Hash = curHash
 	}
 
@@ -141,11 +135,12 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 		return err
 	}
 
-	key := i.ObjectType + "|" + i.Name
-	if err := store.Write(RelationTypesPath(), key, buf.Bytes(), opts); err != nil {
+	if err := store.Write(RelationTypesPath(), Int32ToStr(i.GetId()), buf.Bytes(), opts); err != nil {
 		return err
 	}
-	if err := store.Write(RelationTypesIDPath(), fmt.Sprintf("%d", i.Id), []byte(key), opts); err != nil {
+
+	key := i.ObjectType + "|" + i.Name
+	if err := store.Write(RelationTypesNamePath(), key, []byte(Int32ToStr(i.GetId())), opts); err != nil {
 		return err
 	}
 
@@ -165,12 +160,12 @@ func DeleteRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, stor
 		return err
 	}
 
-	if err := store.DeleteKey(RelationTypesIDPath(), fmt.Sprintf("%d", current.Id), opts); err != nil {
+	key := current.ObjectType + "|" + current.Name
+	if err := store.DeleteKey(RelationTypesNamePath(), key, opts); err != nil {
 		return err
 	}
 
-	key := current.ObjectType + "|" + current.Name
-	if err := store.DeleteKey(RelationTypesPath(), key, opts); err != nil {
+	if err := store.DeleteKey(RelationTypesPath(), Int32ToStr(current.Id), opts); err != nil {
 		return err
 	}
 
