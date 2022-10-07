@@ -4,6 +4,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/aserto-dev/aserto-grpc v0.0.4 h1:dDz2HidwIK9vi8hAKVFBtW/EZtL+LKG0yy1OUH9zvnw=
 github.com/aserto-dev/aserto-grpc v0.0.4/go.mod h1:cnogGHtz6jMA84j1whCNkcl95DhDGv5+1f8+Jn+upMM=
+github.com/aserto-dev/certs v0.0.2 h1:IFF+my4pu3BoUDDg31uLYb/JdoIESktecq153QYVxYE=
+github.com/aserto-dev/certs v0.0.2/go.mod h1:9mFvZ1NR92aEGj4ce6QleZGPXJuDZKTv+CWIOX28Xj8=
 github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3 h1:1srdC+9+vGigmLXStL/hXvDmwAE4oOpuS/pWXgDApzE=
 github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
 github.com/aserto-dev/go-grpc v0.8.51 h1:mRyj9Dn4debqZ2RyV/++Lzy5nUIisZbmcH5w7T1xmt0=
