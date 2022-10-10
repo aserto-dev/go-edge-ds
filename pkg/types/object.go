@@ -108,7 +108,7 @@ func (i *Object) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.O
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" /*&& i.Object.Hash == ""*/ {
+	if sessionID != "" {
 		i.Object.Hash = curHash
 	}
 

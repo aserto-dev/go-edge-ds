@@ -107,7 +107,7 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" /*&& i.RelationType.Hash == "" */ {
+	if sessionID != "" {
 		i.RelationType.Hash = curHash
 	}
 

@@ -96,7 +96,7 @@ func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" /*&& i.Permission.Hash == "" */ {
+	if sessionID != "" {
 		i.Permission.Hash = curHash
 	}
 
