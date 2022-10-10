@@ -13,6 +13,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
 	"github.com/aserto-dev/go-utils/cerr"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,32 +24,30 @@ type ObjectType struct {
 }
 
 func NewObjectType(i *dsc.ObjectType) *ObjectType {
-	return &ObjectType{
-		ObjectType: i,
-	}
+	return &ObjectType{i}
 }
 
 func (i *ObjectType) Validate() (bool, error) {
-	if i.ObjectType == nil {
+	if i == nil {
 		return false, errors.Errorf("object_type not instantiated")
 	}
-	if !(i.GetId() > 0) {
+	if !(i.Id > 0) {
 		return false, errors.Errorf("object type id must be larger than zero")
 	}
-	if strings.TrimSpace(i.GetName()) == "" {
+	if strings.TrimSpace(i.Name) == "" {
 		return false, errors.Errorf("name cannot be empty")
 	}
-	if !(i.GetOrdinal() >= 0) {
+	if !(i.Ordinal >= 0) {
 		return false, errors.Errorf("ordinal must be larger or equal than zero")
 	}
-	if !Status(i.GetStatus()).Validate() {
+	if !Status(i.Status).Validate() {
 		return false, errors.Errorf("illegal status flag value")
 	}
 	return true, nil
 }
 
 func (i *ObjectType) Normalize() error {
-	i.Name = strings.ToLower(i.GetName())
+	i.Name = strings.ToLower(i.Name)
 	return nil
 }
 
@@ -76,9 +75,29 @@ func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *bolt
 		return nil, err
 	}
 
-	return &ObjectType{
-		ObjectType: &objType,
-	}, nil
+	return &ObjectType{&objType}, nil
+}
+
+func GetObjectTypes(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*ObjectType, *av2.PaginationResponse, error) {
+	_, values, nextToken, _, err := store.List(ObjectTypesPath(), page.Token, page.Size, opts)
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	objTypes := []*ObjectType{}
+	for i := 0; i < len(values); i++ {
+		var objType dsc.ObjectType
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &objType); err != nil {
+			return nil, nil, err
+		}
+		objTypes = append(objTypes, &ObjectType{&objType})
+	}
+
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	return objTypes, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}, nil
 }
 
 func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
@@ -94,26 +113,26 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 	curHash := ""
 	current, err := GetObjectType(ctx, &dsc.ObjectTypeIdentifier{Name: &i.Name}, store, opts...)
 	if err == nil {
-		curHash = current.ObjectType.Hash
+		curHash = current.Hash
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
 	if sessionID != "" {
-		i.ObjectType.Hash = curHash
+		i.Hash = curHash
 	}
 
-	if curHash != "" && curHash != i.ObjectType.Hash {
-		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.ObjectType.Hash)
+	if curHash != "" && curHash != i.Hash {
+		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
 	if curHash == "" {
-		i.ObjectType.CreatedAt = ts
+		i.CreatedAt = ts
 	}
-	i.ObjectType.UpdatedAt = ts
+	i.UpdatedAt = ts
 
-	newHash, _ := i.Hash()
-	i.ObjectType.Hash = newHash
+	newHash, _ := i.GetHash()
+	i.Hash = newHash
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
@@ -122,14 +141,14 @@ func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bolt
 
 	buf := new(bytes.Buffer)
 
-	if err := pb.ProtoToBuf(buf, i.ObjectType); err != nil {
+	if err := pb.ProtoToBuf(buf, i); err != nil {
 		return err
 	}
 
-	if err := store.Write(ObjectTypesPath(), Int32ToStr(i.GetId()), buf.Bytes(), opts); err != nil {
+	if err := store.Write(ObjectTypesPath(), Int32ToStr(i.Id), buf.Bytes(), opts); err != nil {
 		return err
 	}
-	if err := store.Write(ObjectTypesNamePath(), i.Name, []byte(Int32ToStr(i.GetId())), opts); err != nil {
+	if err := store.Write(ObjectTypesNamePath(), i.Name, []byte(Int32ToStr(i.Id)), opts); err != nil {
 		return err
 	}
 
@@ -153,7 +172,7 @@ func DeleteObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *b
 		return err
 	}
 
-	if err := store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.GetId()), opts); err != nil {
+	if err := store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.Id), opts); err != nil {
 		return err
 	}
 
@@ -161,13 +180,13 @@ func DeleteObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *b
 }
 
 func (i *ObjectType) Msg() *dsc.ObjectType {
-	if i == nil || i.ObjectType == nil {
+	if i == nil {
 		return &dsc.ObjectType{}
 	}
 	return i.ObjectType
 }
 
-func (i *ObjectType) Hash() (string, error) {
+func (i *ObjectType) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 

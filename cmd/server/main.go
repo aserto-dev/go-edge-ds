@@ -6,14 +6,11 @@ import (
 	"log"
 	"os"
 	"path"
-	"time"
 
 	ds "github.com/aserto-dev/edge-ds/pkg/directory"
 	"github.com/aserto-dev/edge-ds/pkg/server"
 	"github.com/rs/zerolog"
 )
-
-const connectionTimeout time.Duration = 5 * time.Second
 
 var port int
 
@@ -35,7 +32,7 @@ func main() {
 
 	edge := server.NewEdgeServer(config, nil, "localhost", port, &logger)
 
-	defer edge.Stop(context.Background())
+	defer func() { _ = edge.Stop(context.Background()) }()
 
 	if err := edge.Start(context.Background()); err != nil {
 		log.Printf("failed to serve: %v", err)

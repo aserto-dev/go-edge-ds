@@ -13,6 +13,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
 	"github.com/aserto-dev/go-utils/cerr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -77,6 +78,28 @@ func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *bolt
 	return &Permission{
 		Permission: &perm,
 	}, nil
+}
+
+func GetPermissions(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Permission, *av2.PaginationResponse, error) {
+	_, values, nextToken, _, err := store.List(PermissionsPath(), page.Token, page.Size, opts)
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	permissions := []*Permission{}
+	for i := 0; i < len(values); i++ {
+		var permission dsc.Permission
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &permission); err != nil {
+			return nil, nil, err
+		}
+		permissions = append(permissions, &Permission{&permission})
+	}
+
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	return permissions, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}, nil
 }
 
 func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {

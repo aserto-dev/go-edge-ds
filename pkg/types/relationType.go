@@ -13,6 +13,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
 	"github.com/aserto-dev/go-utils/cerr"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -85,6 +86,28 @@ func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *
 	return &RelationType{
 		RelationType: &relType,
 	}, nil
+}
+
+func GetRelationTypes(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*RelationType, *av2.PaginationResponse, error) {
+	_, values, nextToken, _, err := store.List(ObjectTypesPath(), page.Token, page.Size, opts)
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	relTypes := []*RelationType{}
+	for i := 0; i < len(values); i++ {
+		var relType dsc.RelationType
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &relType); err != nil {
+			return nil, nil, err
+		}
+		relTypes = append(relTypes, &RelationType{&relType})
+	}
+
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	return relTypes, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relTypes))}, nil
 }
 
 func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {

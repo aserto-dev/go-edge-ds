@@ -13,6 +13,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
 	"github.com/aserto-dev/go-utils/cerr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -146,6 +147,28 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 	return &Relation{
 		Relation: &rel,
 	}, nil
+}
+
+func GetRelations(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Relation, *av2.PaginationResponse, error) {
+	_, values, nextToken, _, err := store.List(RelationsSubPath(), page.Token, page.Size, opts)
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	relations := []*Relation{}
+	for i := 0; i < len(values); i++ {
+		var relation dsc.Relation
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &relation); err != nil {
+			return nil, nil, err
+		}
+		relations = append(relations, &Relation{&relation})
+	}
+
+	if err != nil {
+		return nil, &av2.PaginationResponse{}, err
+	}
+
+	return relations, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}, nil
 }
 
 func (i *Relation) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {

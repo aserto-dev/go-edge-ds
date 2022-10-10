@@ -7,6 +7,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/types"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/v2"
+	"github.com/aserto-dev/go-grpc/aserto/api/v2"
 )
 
 // object type metadata methods
@@ -27,7 +28,32 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 }
 
 func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (*dsr.GetObjectTypesResponse, error) {
-	return nil, nil
+	if req.Page == nil {
+		req.Page = &api.PaginationRequest{}
+	}
+
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	objTypes, page, err := types.GetObjectTypes(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.ObjectType, len(objTypes))
+	for i := 0; i < len(objTypes); i++ {
+		results[i] = objTypes[i].ObjectType
+	}
+
+	return &dsr.GetObjectTypesResponse{
+		Results: results,
+		Page:    page,
+	}, err
 }
 
 // relation type metadata methods
@@ -48,7 +74,32 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 }
 
 func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest) (*dsr.GetRelationTypesResponse, error) {
-	return nil, nil
+	if req.Page == nil {
+		req.Page = &api.PaginationRequest{}
+	}
+
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	relTypes, page, err := types.GetRelationTypes(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.RelationType, len(relTypes))
+	for i := 0; i < len(relTypes); i++ {
+		results[i] = relTypes[i].RelationType
+	}
+
+	return &dsr.GetRelationTypesResponse{
+		Results: results,
+		Page:    page,
+	}, err
 }
 
 // permission metadata methods
@@ -69,7 +120,32 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 }
 
 func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (*dsr.GetPermissionsResponse, error) {
-	return nil, nil
+	if req.Page == nil {
+		req.Page = &api.PaginationRequest{}
+	}
+
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	permissions, page, err := types.GetPermissions(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.Permission, len(permissions))
+	for i := 0; i < len(permissions); i++ {
+		results[i] = permissions[i].Permission
+	}
+
+	return &dsr.GetPermissionsResponse{
+		Results: results,
+		Page:    page,
+	}, err
 }
 
 // object methods
@@ -111,7 +187,32 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 }
 
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
-	return nil, nil
+	if req.Page == nil {
+		req.Page = &api.PaginationRequest{}
+	}
+
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	objects, page, err := types.GetObjects(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.Object, len(objects))
+	for i := 0; i < len(objects); i++ {
+		results[i] = objects[i].Object
+	}
+
+	return &dsr.GetObjectsResponse{
+		Results: results,
+		Page:    page,
+	}, err
 }
 
 // relation methods
@@ -132,7 +233,32 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 }
 
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {
-	return nil, nil
+	if req.Page == nil {
+		req.Page = &api.PaginationRequest{}
+	}
+
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	relations, page, err := types.GetRelations(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.Relation, len(relations))
+	for i := 0; i < len(relations); i++ {
+		results[i] = relations[i].Relation
+	}
+
+	return &dsr.GetRelationsResponse{
+		Results: results,
+		Page:    page,
+	}, err
 }
 
 // check methods
