@@ -1,14 +1,37 @@
 # ToDo List
 
-1. Implement ID generation when no-ID is specified
-
-2. Adjust validation logic when no-ID is provided, currently this will fail validation, need to check if alternate key values are provided instead.
-	* 	For an Int32 ID generator, investigate if can we use the BoltDB Sequence and SetSequence constructs to generate the value, which returns an uint64?
-	* 	UUID ID generator, add ID.New() to the ID type
-
-3. Unify types/* implementations right now this is a mix of instance type functions and type based functions
-
-4. Verify hash consistency between the existing directory model which uses SQL Boiler models vs using the protobuf message representation.
-	*	Especially for properties and schema (JSON objects)
-
-5. Add ID.ValidIfSet() version (DONE)
+- [ ] Impl CheckPermission
+- [ ] Impl CheckRelation
+- [ ] Impl GetGraph
+- [X] Impl GetObject
+- [X] Impl GetObjectMany
+- [X] Impl GetObjectType
+- [X] Impl GetObjectTypes
+- [X] Impl GetObjects
+- [X] Impl GetPermission
+- [X] Impl GetPermissions
+- [X] Impl GetRelation
+- [X] Impl GetRelationType
+- [X] Impl GetRelationTypes
+- [X] Impl GetRelations
+- [X] Impl DeleteObject
+- [X] Impl DeleteObjectType
+- [X] Impl DeletePermission
+- [X] Impl DeleteRelation
+- [X] Impl DeleteRelationType
+- [X] Impl SetObject
+- [X] Impl SetObjectType
+- [X] Impl SetPermission
+- [X] Impl SetRelation
+- [X] Impl SetRelationType
+- [ ] Impl Export
+- [ ] Impl Import
+- [ ] Enforce inbound RelationType constraints (ValidateConstraints)
+- [ ] Enforce outbound ObjectType constraints (ValidateConstraints)
+- [ ] Enforce outbound Permission constraints (ValidateConstraints)
+- [ ] Implement ID generation when no-ID is specified  (import)
+- [ ] Improve validation logic when no-ID is provided, currently this will fail validation, need to check if alternate key values are provided instead.
+- [ ] Implement Int32 ID generator (use the BoltDB Sequence and SetSequence?)
+- [ ] Unify/cleanup Types* implementations 
+- [ ] Verify hash consistency with existing directory model which uses SQL Boiler models vs using the protobuf message representation, especially for properties and schema (JSON objects)
+- [X] Add ID.ValidIfSet() version
