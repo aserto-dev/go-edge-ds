@@ -24,6 +24,7 @@ const connectionTimeout time.Duration = 5 * time.Second
 
 type edgeServer struct {
 	server   *grpc.Server
+	edgeDir  *edgeDirectory.Directory
 	host     string
 	grpcPort int
 	logger   *zerolog.Logger
@@ -61,6 +62,7 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 
 	reflection.Register(s)
 	return &edgeServer{server: s,
+		edgeDir:  edgeDirServer,
 		host:     host,
 		grpcPort: grpcPort,
 		logger:   &edgeDSLogger}
@@ -84,6 +86,7 @@ func (s *edgeServer) Start(ctx context.Context) error {
 
 func (s *edgeServer) Stop(ctx context.Context) error {
 	s.logger.Info().Msg("Stopping edge directory server")
+	s.edgeDir.Close()
 	s.server.Stop()
 	return nil
 }
