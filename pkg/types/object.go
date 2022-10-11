@@ -58,7 +58,7 @@ func (i *Object) Normalize() error {
 	return nil
 }
 
-func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Object, error) {
+func GetObjectID(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (string, error) {
 	var objID string
 	if ID.IsValid(i.GetId()) {
 		objID = i.GetId()
@@ -66,11 +66,19 @@ func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltD
 		key := i.GetType() + "|" + i.GetKey()
 		idBuf, err := store.Read(ObjectsKeyPath(), key, opts)
 		if err != nil {
-			return nil, boltdb.ErrKeyNotFound
+			return "", boltdb.ErrKeyNotFound
 		}
 		objID = string(idBuf)
 	} else {
-		return nil, cerr.ErrInvalidArgument
+		return "", cerr.ErrInvalidArgument
+	}
+	return objID, nil
+}
+
+func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Object, error) {
+	objID, err := GetObjectID(ctx, i, store, opts...)
+	if err != nil {
+		return nil, err
 	}
 
 	buf, err := store.Read(ObjectsPath(), objID, opts)
@@ -88,8 +96,16 @@ func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltD
 	}, nil
 }
 
-func GetObjectMany(ctx context.Context, i []*dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, error) {
-	return nil, nil
+func GetObjectMany(ctx context.Context, identifiers []*dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, error) {
+	objects := []*Object{}
+	for i := 0; i < len(identifiers); i++ {
+		obj, err := GetObject(ctx, identifiers[i], store, opts...)
+		if err != nil {
+			return []*Object{}, err
+		}
+		objects = append(objects, obj)
+	}
+	return objects, nil
 }
 
 func GetObjects(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, *av2.PaginationResponse, error) {

@@ -177,12 +177,15 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 		}
 	}()
 
-	_, err = types.GetObjectMany(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	objects, err := types.GetObjectMany(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
 	if err != nil {
 		return nil, err
 	}
 
-	results := []*dsc.Object{}
+	results := make([]*dsc.Object, len(objects))
+	for i := 0; i < len(objects); i++ {
+		results[i] = objects[i].Object
+	}
 	return &dsr.GetObjectManyResponse{Results: results}, err
 }
 
