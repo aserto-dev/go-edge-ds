@@ -233,13 +233,11 @@ func (i *Relation) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb
 		return err
 	}
 
-	subKey := i.Relation.Relation + "|" + *i.Subject.Id + "|" + *i.Object.Id
-	if err := store.Write(RelationsSubPath(), subKey, buf.Bytes(), opts); err != nil {
+	if err := store.Write(RelationsSubPath(), i.SubjectKey(), buf.Bytes(), opts); err != nil {
 		return err
 	}
 
-	objKey := i.Relation.Relation + "|" + *i.Object.Id + "|" + *i.Subject.Id
-	if err := store.Write(RelationsObjPath(), objKey, buf.Bytes(), opts); err != nil {
+	if err := store.Write(RelationsObjPath(), i.ObjectKey(), buf.Bytes(), opts); err != nil {
 		return err
 	}
 
@@ -259,13 +257,11 @@ func DeleteRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltd
 		return err
 	}
 
-	subKey := current.Relation.GetRelation() + "|" + current.Subject.GetId() + "|" + current.Object.GetId()
-	if err := store.DeleteKey(RelationsSubPath(), subKey, opts); err != nil {
+	if err := store.DeleteKey(RelationsSubPath(), current.SubjectKey(), opts); err != nil {
 		return err
 	}
 
-	objKey := current.Relation.GetRelation() + "|" + current.Object.GetId() + "|" + current.Subject.GetId()
-	if err := store.DeleteKey(RelationsObjPath(), objKey, opts); err != nil {
+	if err := store.DeleteKey(RelationsObjPath(), current.ObjectKey(), opts); err != nil {
 		return err
 	}
 
@@ -316,4 +312,12 @@ func (i *Relation) Hash() (string, error) {
 	}
 
 	return strconv.FormatUint(h.Sum64(), 10), nil
+}
+
+func (i *Relation) SubjectKey() string {
+	return i.Subject.GetId() + "|" + i.GetRelation() + "|" + i.Object.GetId()
+}
+
+func (i *Relation) ObjectKey() string {
+	return i.Object.GetId() + "|" + i.GetRelation() + "|" + i.Subject.GetId()
 }

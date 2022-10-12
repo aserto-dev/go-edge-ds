@@ -275,5 +275,25 @@ func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationReq
 
 // graph methods
 func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*dsr.GetGraphResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	dependencies, err := types.GetGraph(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.ObjectDependency, len(dependencies))
+	for i := 0; i < len(dependencies); i++ {
+		results[i] = dependencies[i].ObjectDependency
+	}
+
+	return &dsr.GetGraphResponse{
+		Results: results,
+	}, nil
 }

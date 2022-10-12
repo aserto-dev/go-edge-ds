@@ -96,7 +96,7 @@ func GetObject(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.BoltD
 	}, nil
 }
 
-func GetObjectMany(ctx context.Context, identifiers []*dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, error) {
+func GetObjectMany(ctx context.Context, identifiers []*dsc.ObjectIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (Objects, error) {
 	objects := []*Object{}
 	for i := 0; i < len(identifiers); i++ {
 		obj, err := GetObject(ctx, identifiers[i], store, opts...)
@@ -108,7 +108,7 @@ func GetObjectMany(ctx context.Context, identifiers []*dsc.ObjectIdentifier, sto
 	return objects, nil
 }
 
-func GetObjects(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Object, *av2.PaginationResponse, error) {
+func GetObjects(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (Objects, *av2.PaginationResponse, error) {
 	_, values, nextToken, _, err := store.List(ObjectsPath(), page.Token, page.Size, opts)
 	if err != nil {
 		return nil, &av2.PaginationResponse{}, err

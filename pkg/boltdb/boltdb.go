@@ -743,3 +743,50 @@ func PageSize(input int32) int32 {
 		return input
 	}
 }
+
+// ReadScan returns list of key-value pairs which match the scan prefix filter
+func (s *BoltDB) ReadScan(path []string, prefix string, opts []Opts) ([]string, [][]byte, error) {
+	s.logger.Trace().Interface("path", path).Str("prefix", prefix).Msg("ReadScan")
+
+	var (
+		keys   = make([]string, 0)
+		values = make([][]byte, 0)
+	)
+
+	read := func(tx *bolt.Tx) error {
+		b, err := s.setBucket(tx, path)
+		if err != nil {
+			return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+		}
+
+		c := b.Cursor()
+
+		prefix := []byte(prefix)
+		for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+			if k == nil {
+				break
+			}
+
+			fmt.Printf("key=%s, value=%s\n", k, v)
+			keys = append(keys, string(k))
+			values = append(values, v)
+		}
+
+		return nil
+	}
+
+	var err error
+	txo := getTxOpts(opts)
+	if txo.tx == nil {
+		err = s.db.View(read)
+	} else {
+		err = read(txo.tx)
+	}
+
+	if err != nil {
+		s.logger.Trace().Err(err).Msg("ReadScan")
+		return []string{}, [][]byte{}, err
+	}
+
+	return keys, values, nil
+}
