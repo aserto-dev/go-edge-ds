@@ -45,7 +45,7 @@ func GetGraph(ctx context.Context, i *dsr.GetGraphRequest, store *boltdb.BoltDB,
 		if deps[i].Depth < deps[j].Depth {
 			return true
 		}
-		if deps[i].Depth == deps[j].Depth && strings.Compare(deps[i].Path, deps[j].Path) == -1 {
+		if (deps[i].Depth == deps[j].Depth) && (deps[i].Path < deps[j].Path) {
 			return true
 		}
 		return false
