@@ -2,7 +2,7 @@ package types
 
 import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-utils/cerr"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
 type objectTypeIdentifier struct{}
@@ -11,7 +11,7 @@ var ObjectTypeIdentifier = objectTypeIdentifier{}
 
 func (objectTypeIdentifier) Validate(i *dsc.ObjectTypeIdentifier) (bool, error) {
 	if i == nil {
-		return false, cerr.ErrInvalidArgument.Msg("object_type_identifier")
+		return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 	}
 
 	if i.Id != nil && *i.Id > 0 {
@@ -21,5 +21,5 @@ func (objectTypeIdentifier) Validate(i *dsc.ObjectTypeIdentifier) (bool, error) 
 		return true, nil
 	}
 
-	return false, cerr.ErrInvalidArgument.Msg("object_type_identifier")
+	return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 }

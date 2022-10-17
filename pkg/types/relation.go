@@ -12,9 +12,8 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/pb"
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
-	"github.com/aserto-dev/go-utils/cerr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/errors"
@@ -41,7 +40,7 @@ func (i *Relation) Validate() (bool, error) {
 		return false, err
 	}
 	if strings.TrimSpace(i.GetRelation()) == "" {
-		return false, cerr.ErrInvalidArgument.Msg("relation cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("relation cannot be empty")
 	}
 	return true, nil
 }
@@ -141,10 +140,10 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 	}, nil
 }
 
-func GetRelations(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Relation, *av2.PaginationResponse, error) {
-	_, values, nextToken, _, err := store.List(RelationsSubPath(), page.Token, page.Size, opts)
+func GetRelations(ctx context.Context, req *dsr.GetRelationsRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Relation, *dsc.PaginationResponse, error) {
+	_, values, nextToken, _, err := store.List(RelationsSubPath(), req.Page.Token, req.Page.Size, opts)
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
 	relations := []*Relation{}
@@ -156,11 +155,13 @@ func GetRelations(ctx context.Context, page *av2.PaginationRequest, store *boltd
 		relations = append(relations, &Relation{&relation})
 	}
 
+	relations = filterRelations(req.Param, relations)
+
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return relations, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}, nil
+	return relations, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}, nil
 }
 
 func (i *Relation) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
@@ -312,4 +313,56 @@ func (i *Relation) SubjectKey() string {
 
 func (i *Relation) ObjectKey() string {
 	return i.Object.GetId() + "|" + i.Key() + "|" + i.Subject.GetId()
+}
+
+type relationFilter func(*Relation) bool
+
+func filterRelations(req *dsc.RelationIdentifier, relations []*Relation) []*Relation {
+	filters := []relationFilter{}
+
+	if req.Subject != nil && req.Subject.Id != nil && ID.IsValidIfSet(req.Subject.GetId()) {
+		filters = append(filters, func(r *Relation) bool {
+			return r.Subject.GetId() == req.Subject.GetId()
+		})
+	}
+	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
+		filters = append(filters, func(r *Relation) bool {
+			return strings.EqualFold(r.Subject.GetType(), req.Subject.GetType())
+		})
+	}
+
+	if req.Relation != nil && req.Relation.Name != nil && *req.Relation.Name != "" {
+		filters = append(filters, func(r *Relation) bool {
+			return strings.EqualFold(r.Relation.GetRelation(), req.Relation.GetName())
+		})
+	}
+
+	if req.Object != nil && req.Object.Id != nil && ID.IsValidIfSet(req.Object.GetId()) {
+		filters = append(filters, func(r *Relation) bool {
+			return r.Object.GetId() == req.Object.GetId()
+		})
+	}
+	if req.Object != nil && req.Object.Type != nil && *req.Object.Type != "" {
+		filters = append(filters, func(r *Relation) bool {
+			return strings.EqualFold(r.Object.GetType(), req.Object.GetType())
+		})
+	}
+
+	results := []*Relation{}
+	for i := 0; i < len(relations); i++ {
+		if includeRelation(relations[i], filters) {
+			results = append(results, relations[i])
+		}
+	}
+
+	return results
+}
+
+func includeRelation(rel *Relation, filters []relationFilter) bool {
+	for _, fn := range filters {
+		if !fn(rel) {
+			return false
+		}
+	}
+	return true
 }

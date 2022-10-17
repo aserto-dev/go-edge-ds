@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
-
-	"github.com/aserto-dev/go-utils/cerr"
 )
 
 var (
@@ -85,7 +84,7 @@ func (m *HeaderMiddleware) withSessionID(ctx context.Context, sessionID string) 
 		return ctx, nil
 	}
 	if err := CheckSessionID(sessionID); err != nil {
-		return ctx, cerr.ErrInvalidID
+		return ctx, derr.ErrInvalidID
 	}
 	return ContextWithSessionID(ctx, sessionID), nil
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/types"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	"github.com/aserto-dev/go-grpc/aserto/api/v2"
 )
 
 // object type metadata methods
@@ -29,7 +28,7 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 
 func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (*dsr.GetObjectTypesResponse, error) {
 	if req.Page == nil {
-		req.Page = &api.PaginationRequest{}
+		req.Page = &dsc.PaginationRequest{}
 	}
 
 	txOpt, cleanup, err := s.store.ReadTxOpts()
@@ -75,7 +74,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 
 func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest) (*dsr.GetRelationTypesResponse, error) {
 	if req.Page == nil {
-		req.Page = &api.PaginationRequest{}
+		req.Page = &dsc.PaginationRequest{}
 	}
 
 	txOpt, cleanup, err := s.store.ReadTxOpts()
@@ -121,7 +120,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 
 func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (*dsr.GetPermissionsResponse, error) {
 	if req.Page == nil {
-		req.Page = &api.PaginationRequest{}
+		req.Page = &dsc.PaginationRequest{}
 	}
 
 	txOpt, cleanup, err := s.store.ReadTxOpts()
@@ -191,7 +190,7 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
 	if req.Page == nil {
-		req.Page = &api.PaginationRequest{}
+		req.Page = &dsc.PaginationRequest{}
 	}
 
 	txOpt, cleanup, err := s.store.ReadTxOpts()
@@ -231,19 +230,24 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		}
 	}()
 
-	relations, _, err := types.GetRelations(ctx, &api.PaginationRequest{}, s.store, []boltdb.Opts{txOpt}...)
+	relations, _, err := types.GetRelations(ctx, &dsr.GetRelationsRequest{
+		Param: req.Param,
+		Page:  &dsc.PaginationRequest{},
+	}, s.store, []boltdb.Opts{txOpt}...)
 
 	results := make([]*dsc.Relation, len(relations))
 	for i := 0; i < len(relations); i++ {
 		results[i] = relations[i].Relation
 	}
 
-	return &dsr.GetRelationResponse{Results: results}, err
+	return &dsr.GetRelationResponse{
+		Results: results,
+	}, nil
 }
 
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {
 	if req.Page == nil {
-		req.Page = &api.PaginationRequest{}
+		req.Page = &dsc.PaginationRequest{}
 	}
 
 	txOpt, cleanup, err := s.store.ReadTxOpts()
@@ -257,7 +261,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		}
 	}()
 
-	relations, page, err := types.GetRelations(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+	relations, page, err := types.GetRelations(ctx, req, s.store, []boltdb.Opts{txOpt}...)
 
 	results := make([]*dsc.Relation, len(relations))
 	for i := 0; i < len(relations); i++ {

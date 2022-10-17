@@ -7,8 +7,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	"github.com/aserto-dev/go-grpc/aserto/api/v2"
-	"github.com/aserto-dev/go-utils/cerr"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 )
@@ -27,17 +26,17 @@ func CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest, store *bo
 
 	subjectID, err := GetObjectID(ctx, req.Subject, store, opts...)
 	if err != nil {
-		return nil, cerr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
 
 	objectID, err := GetObjectID(ctx, req.Object, store, opts...)
 	if err != nil {
-		return nil, cerr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
 
 	relationTypeID, err := GetRelationTypeID(ctx, req.Relation, store, opts...)
 	if err != nil {
-		return nil, cerr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
 
 	r, err := sc.check(subjectID, objectID, []int32{relationTypeID}, req.Trace)
@@ -115,7 +114,7 @@ func (sc *StoreContext) expandUnions(relationIDs []int32) []string {
 		// get all relation types for given object type of relType, to find the ones that union the relType
 		objRelTypes, _, _ := GetRelationTypes(sc.Context, &dsr.GetRelationTypesRequest{
 			Param: &dsc.ObjectTypeIdentifier{Name: &relType.ObjectType},
-			Page:  &api.PaginationRequest{},
+			Page:  &dsc.PaginationRequest{},
 		}, sc.Store, sc.Opts...)
 
 		for _, objRelType := range objRelTypes {

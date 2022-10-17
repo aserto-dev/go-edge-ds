@@ -13,8 +13,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
-	"github.com/aserto-dev/go-utils/cerr"
 	"github.com/mitchellh/hashstructure/v2"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -45,10 +43,10 @@ func (i *Object) Validate() (bool, error) {
 		return false, errors.Errorf("invalid object id")
 	}
 	if strings.TrimSpace(i.GetKey()) == "" {
-		return false, cerr.ErrInvalidArgument.Msg("object key cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("object key cannot be empty")
 	}
 	if strings.TrimSpace(i.GetType()) == "" {
-		return false, cerr.ErrInvalidArgument.Msg("object type cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("object type cannot be empty")
 	}
 	return true, nil
 }
@@ -70,7 +68,7 @@ func GetObjectID(ctx context.Context, i *dsc.ObjectIdentifier, store *boltdb.Bol
 		}
 		objID = string(idBuf)
 	} else {
-		return "", cerr.ErrInvalidArgument
+		return "", derr.ErrInvalidArgument
 	}
 	return objID, nil
 }
@@ -108,10 +106,10 @@ func GetObjectMany(ctx context.Context, identifiers []*dsc.ObjectIdentifier, sto
 	return objects, nil
 }
 
-func GetObjects(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (Objects, *av2.PaginationResponse, error) {
+func GetObjects(ctx context.Context, page *dsc.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (Objects, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := store.List(ObjectsPath(), page.Token, page.Size, opts)
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
 	objects := []*Object{}
@@ -124,10 +122,10 @@ func GetObjects(ctx context.Context, page *av2.PaginationRequest, store *boltdb.
 	}
 
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return objects, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objects))}, nil
+	return objects, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objects))}, nil
 }
 
 func (i *Object) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {

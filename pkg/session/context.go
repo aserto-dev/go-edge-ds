@@ -5,8 +5,6 @@ import (
 	"net/textproto"
 	"strings"
 
-	"github.com/aserto-dev/aserto-grpc/grpcutil"
-
 	"github.com/google/uuid"
 )
 
@@ -32,7 +30,7 @@ func CheckSessionID(id string) error {
 
 // ExtractSessionID extracts a session id from a context
 func ExtractSessionID(ctx context.Context) string {
-	id, ok := ctx.Value(grpcutil.HeaderAsertoSessionID).(string)
+	id, ok := ctx.Value(HeaderAsertoSessionID).(string)
 	if !ok {
 		return ""
 	}
@@ -41,5 +39,5 @@ func ExtractSessionID(ctx context.Context) string {
 }
 
 func ContextWithSessionID(ctx context.Context, sessionID string) context.Context {
-	return context.WithValue(ctx, grpcutil.HeaderAsertoSessionID, sessionID)
+	return context.WithValue(ctx, HeaderAsertoSessionID, sessionID)
 }

@@ -13,8 +13,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
-	"github.com/aserto-dev/go-utils/cerr"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -62,7 +60,7 @@ func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *bolt
 		}
 		objTypeID = StrToInt32(string(idBuf))
 	} else {
-		return nil, cerr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
 
 	buf, err := store.Read(ObjectTypesPath(), Int32ToStr(objTypeID), opts)
@@ -78,10 +76,10 @@ func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *bolt
 	return &ObjectType{&objType}, nil
 }
 
-func GetObjectTypes(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*ObjectType, *av2.PaginationResponse, error) {
+func GetObjectTypes(ctx context.Context, page *dsc.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*ObjectType, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := store.List(ObjectTypesPath(), page.Token, page.Size, opts)
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
 	objTypes := []*ObjectType{}
@@ -94,10 +92,10 @@ func GetObjectTypes(ctx context.Context, page *av2.PaginationRequest, store *bol
 	}
 
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return objTypes, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}, nil
+	return objTypes, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}, nil
 }
 
 func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {

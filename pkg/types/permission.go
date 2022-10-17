@@ -13,8 +13,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
-	"github.com/aserto-dev/go-utils/cerr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/pkg/errors"
@@ -62,7 +60,7 @@ func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *bolt
 		}
 		permID = string(idBuf)
 	} else {
-		return nil, cerr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
 
 	buf, err := store.Read(PermissionsPath(), permID, opts)
@@ -80,10 +78,10 @@ func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *bolt
 	}, nil
 }
 
-func GetPermissions(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Permission, *av2.PaginationResponse, error) {
+func GetPermissions(ctx context.Context, page *dsc.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Permission, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := store.List(PermissionsPath(), page.Token, page.Size, opts)
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
 	permissions := []*Permission{}
@@ -96,10 +94,10 @@ func GetPermissions(ctx context.Context, page *av2.PaginationRequest, store *bol
 	}
 
 	if err != nil {
-		return nil, &av2.PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return permissions, &av2.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}, nil
+	return permissions, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}, nil
 }
 
 func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
