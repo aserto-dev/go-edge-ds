@@ -12,6 +12,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/pb"
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	av2 "github.com/aserto-dev/go-grpc/aserto/api/v2"
 	"github.com/aserto-dev/go-utils/cerr"
@@ -57,12 +58,16 @@ func (i *RelationType) Normalize() error {
 	return nil
 }
 
+func (i *RelationType) Key() string {
+	return i.ObjectType + ":" + i.Name
+}
+
 func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*RelationType, error) {
 	var relTypeID int32
 	if i.GetId() > 0 {
 		relTypeID = i.GetId()
 	} else if i.GetName() != "" && i.GetObjectType() != "" {
-		key := i.GetObjectType() + "|" + i.GetName()
+		key := i.GetObjectType() + ":" + i.GetName()
 
 		idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
 		if err != nil {
@@ -88,8 +93,18 @@ func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *
 	}, nil
 }
 
-func GetRelationTypes(ctx context.Context, page *av2.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*RelationType, *av2.PaginationResponse, error) {
-	_, values, nextToken, _, err := store.List(ObjectTypesPath(), page.Token, page.Size, opts)
+func GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*RelationType, *av2.PaginationResponse, error) {
+	// filter by object type
+	var objType *ObjectType
+	if ok, _ := ObjectTypeIdentifier.Validate(req.Param); ok {
+		var err error
+		objType, err = GetObjectType(ctx, req.Param, store, opts...)
+		if err != nil {
+			return nil, &av2.PaginationResponse{}, err
+		}
+	}
+
+	_, values, nextToken, _, err := store.List(RelationTypesPath(), req.Page.Token, req.Page.Size, opts)
 	if err != nil {
 		return nil, &av2.PaginationResponse{}, err
 	}
@@ -98,7 +113,10 @@ func GetRelationTypes(ctx context.Context, page *av2.PaginationRequest, store *b
 	for i := 0; i < len(values); i++ {
 		var relType dsc.RelationType
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &relType); err != nil {
-			return nil, nil, err
+			return nil, &av2.PaginationResponse{}, err
+		}
+		if objType != nil && !strings.EqualFold(objType.Name, relType.ObjectType) {
+			continue
 		}
 		relTypes = append(relTypes, &RelationType{&relType})
 	}
@@ -162,8 +180,7 @@ func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...bo
 		return err
 	}
 
-	key := i.ObjectType + "|" + i.Name
-	if err := store.Write(RelationTypesNamePath(), key, []byte(Int32ToStr(i.GetId())), opts); err != nil {
+	if err := store.Write(RelationTypesNamePath(), i.Key(), []byte(Int32ToStr(i.GetId())), opts); err != nil {
 		return err
 	}
 
@@ -183,7 +200,7 @@ func DeleteRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, stor
 		return err
 	}
 
-	key := current.ObjectType + "|" + current.Name
+	key := current.ObjectType + ":" + current.Name
 	if err := store.DeleteKey(RelationTypesNamePath(), key, opts); err != nil {
 		return err
 	}
@@ -238,4 +255,21 @@ func (i *RelationType) Hash() (string, error) {
 	}
 
 	return strconv.FormatUint(h.Sum64(), 10), nil
+}
+
+func GetRelationTypeID(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (int32, error) {
+	var relTypeID int32
+	if i.GetId() > 0 {
+		relTypeID = i.GetId()
+	} else if i.GetName() != "" && i.GetObjectType() != "" {
+		key := i.GetObjectType() + ":" + i.GetName()
+		idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
+		if err != nil {
+			return 0, boltdb.ErrKeyNotFound
+		}
+		relTypeID = StrToInt32(string(idBuf))
+	} else {
+		return 0, cerr.ErrInvalidArgument
+	}
+	return relTypeID, nil
 }

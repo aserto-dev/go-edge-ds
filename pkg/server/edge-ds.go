@@ -14,10 +14,10 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/aserto-dev/edge-ds/pkg/session"
-	"github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	"github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	"github.com/aserto-dev/go-directory/aserto/directory/v2"
-	"github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 )
 
 const connectionTimeout time.Duration = 5 * time.Second
@@ -55,10 +55,10 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 	}
 	s := grpc.NewServer(opts...)
 
-	directory.RegisterDirectoryServer(s, edgeDirServer)
-	writer.RegisterWriterServer(s, edgeDirServer)
-	exporter.RegisterExporterServer(s, edgeDirServer)
-	importer.RegisterImporterServer(s, edgeDirServer)
+	dsr.RegisterReaderServer(s, edgeDirServer)
+	dsw.RegisterWriterServer(s, edgeDirServer)
+	dse.RegisterExporterServer(s, edgeDirServer)
+	dsi.RegisterImporterServer(s, edgeDirServer)
 
 	reflection.Register(s)
 	return &edgeServer{server: s,

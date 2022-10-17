@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/v2"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/pb"
@@ -41,13 +41,13 @@ func GetGraph(ctx context.Context, req *dsr.GetGraphRequest, store *boltdb.BoltD
 		return []*ObjectDependency{}, err
 	}
 
-	deps, err = filterObjectDependencies(req, deps)
+	deps = filterObjectDependencies(req, deps)
 
 	sort.Slice(deps, func(i, j int) bool {
 		if deps[i].Depth < deps[j].Depth {
 			return true
 		}
-		if (deps[i].Depth == deps[j].Depth) && (deps[i].Path < deps[j].Path) {
+		if (deps[i].Depth == deps[j].Depth) && (strings.Join(deps[i].Path, ",") < strings.Join(deps[j].Path, ",")) {
 			return true
 		}
 		return false
@@ -85,7 +85,8 @@ func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path
 				SubjectId:   *rel.Subject.Id,
 				SubjectKey:  "",
 				Depth:       depth,
-				Path:        strings.Join(p, ","),
+				IsCycle:     false,
+				Path:        p,
 			},
 		}
 
@@ -100,7 +101,7 @@ func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path
 
 type filter func(*ObjectDependency) bool
 
-func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies) (ObjectDependencies, error) {
+func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies) ObjectDependencies {
 	filters := []filter{}
 
 	if req.Object != nil && req.Object.Id != nil && ID.IsValidIfSet(req.Object.GetId()) {
@@ -138,7 +139,7 @@ func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies)
 		}
 	}
 
-	return results, nil
+	return results
 }
 
 func includeObjectDependency(dep *ObjectDependency, filters []filter) bool {

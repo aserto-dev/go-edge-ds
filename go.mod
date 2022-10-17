@@ -12,6 +12,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.28.0
+	github.com/spf13/pflag v1.0.5
 	go.etcd.io/bbolt v1.3.6
 )
 
@@ -22,7 +23,7 @@ require (
 )
 
 require (
-	github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3
+	github.com/aserto-dev/go-directory v0.0.13-0.20221016220617-c95aa98d66ff
 	github.com/aserto-dev/go-grpc v0.8.51
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect

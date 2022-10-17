@@ -149,8 +149,10 @@ github.com/aserto-dev/certs v0.0.2 h1:IFF+my4pu3BoUDDg31uLYb/JdoIESktecq153QYVxY
 github.com/aserto-dev/certs v0.0.2/go.mod h1:9mFvZ1NR92aEGj4ce6QleZGPXJuDZKTv+CWIOX28Xj8=
 github.com/aserto-dev/clui v0.8.0/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
 github.com/aserto-dev/clui v0.8.1/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
-github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3 h1:1srdC+9+vGigmLXStL/hXvDmwAE4oOpuS/pWXgDApzE=
-github.com/aserto-dev/go-directory v0.0.13-0.20221003210414-868150d355d3/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
+github.com/aserto-dev/go-directory v0.0.13-0.20221013130031-412a1b529d3a h1:4DDasnqYE9a1fObRe2H0KPQ4xzfCgSpiP1sBdHfjHn8=
+github.com/aserto-dev/go-directory v0.0.13-0.20221013130031-412a1b529d3a/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
+github.com/aserto-dev/go-directory v0.0.13-0.20221016220617-c95aa98d66ff h1:Hzu7sdyEr0j18Wl6PfTCUke1+mucpHpJNvx8fHz05F4=
+github.com/aserto-dev/go-directory v0.0.13-0.20221016220617-c95aa98d66ff/go.mod h1:sIK1oYaGG39+0mjBuE1CIHEy7zyQNf1nVtA3SWUGF9s=
 github.com/aserto-dev/go-grpc v0.8.51 h1:mRyj9Dn4debqZ2RyV/++Lzy5nUIisZbmcH5w7T1xmt0=
 github.com/aserto-dev/go-grpc v0.8.51/go.mod h1:ZHKobEadfjzb39dKhc/iy8JyQDRuB/IsSwVa8YuWkQY=
 github.com/aserto-dev/go-utils v0.8.26/go.mod h1:s5XhjJMG1UCarMpI4E01cgW35zls+E+eGqiPmGssXsU=
@@ -1036,6 +1038,7 @@ github.com/spf13/pflag v0.0.0-20170130214245-9ff6c6923cff/go.mod h1:DYY7MBk1bdzu
 github.com/spf13/pflag v1.0.1-0.20171106142849-4c012f6dcd95/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/pflag v1.0.1/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
 github.com/spf13/pflag v1.0.3/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
+github.com/spf13/pflag v1.0.5 h1:iy+VFUOCP1a+8yFto/drg2CJ5u0yRoB7fZw3DKv/JXA=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/viper v1.3.2/go.mod h1:ZiWeW+zYFKm7srdB9IoDzzZXaJaI5eL9QjNiN/DMA2s=
 github.com/spf13/viper v1.4.0/go.mod h1:PTJ7Z/lr49W6bUbkmS1V3by4uWynFiR9p7+dSq/yZzE=

@@ -1,6 +1,8 @@
 package types
 
-import dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+import (
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+)
 
 type StatusFlag uint32
 

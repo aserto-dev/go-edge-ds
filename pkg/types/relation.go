@@ -53,13 +53,15 @@ func (i *Relation) Normalize() error {
 	return nil
 }
 
+func (i *Relation) Key() string {
+	return i.Object.GetType() + ":" + i.GetRelation()
+}
+
 func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Relation, error) {
 	var (
 		subID   string
 		subType string
-
 		relName string
-		// relID   int32
 		objID   string
 		objType string
 	)
@@ -75,11 +77,6 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 				return nil, err
 			}
 			subID = string(buf)
-			// var obj dsc.Object
-			// if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
-			// 	return nil, err
-			// }
-			// subID = obj.GetId()
 		} else if i.Subject.Type != nil {
 			subType = i.Subject.GetType()
 		}
@@ -97,11 +94,6 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 				return nil, err
 			}
 			objID = string(buf)
-			// var obj dsc.Object
-			// if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
-			// 	return nil, err
-			// }
-			// objID = obj.GetId()
 		} else if i.Object.Type != nil {
 			objType = i.Object.GetType()
 		}
@@ -111,7 +103,7 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 	if ok, _ := RelationTypeIdentifier.Validate(i.Relation); ok {
 		var relID int32
 		if i.Relation.Id != nil && *i.Relation.Id > 0 {
-			relID = *i.Relation.Id
+			relID = i.Relation.GetId()
 		} else {
 			key := *i.Relation.ObjectType + "|" + *i.Relation.Name
 			idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
@@ -132,7 +124,7 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 		relName = relType.Name
 	}
 
-	filter := relName + "|" + objID + "|" + subID
+	filter := objID + "|" + relName + "|" + subID
 
 	buf, err := store.ReadPrefix(RelationsObjPath(), filter, opts)
 	if err != nil {
@@ -315,9 +307,9 @@ func (i *Relation) Hash() (string, error) {
 }
 
 func (i *Relation) SubjectKey() string {
-	return i.Subject.GetId() + "|" + i.GetRelation() + "|" + i.Object.GetId()
+	return i.Subject.GetId() + "|" + i.Key() + "|" + i.Object.GetId()
 }
 
 func (i *Relation) ObjectKey() string {
-	return i.Object.GetId() + "|" + i.GetRelation() + "|" + i.Subject.GetId()
+	return i.Object.GetId() + "|" + i.Key() + "|" + i.Subject.GetId()
 }

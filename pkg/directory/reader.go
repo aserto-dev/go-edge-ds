@@ -6,7 +6,7 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/types"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/v2"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-grpc/aserto/api/v2"
 )
 
@@ -89,7 +89,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 		}
 	}()
 
-	relTypes, page, err := types.GetRelationTypes(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+	relTypes, page, err := types.GetRelationTypes(ctx, req, s.store, []boltdb.Opts{txOpt}...)
 
 	results := make([]*dsc.RelationType, len(relTypes))
 	for i := 0; i < len(relTypes); i++ {
@@ -231,8 +231,14 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		}
 	}()
 
-	rel, err := types.GetRelation(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
-	return &dsr.GetRelationResponse{Result: rel.Msg()}, err
+	relations, _, err := types.GetRelations(ctx, &api.PaginationRequest{}, s.store, []boltdb.Opts{txOpt}...)
+
+	results := make([]*dsc.Relation, len(relations))
+	for i := 0; i < len(relations); i++ {
+		results[i] = relations[i].Relation
+	}
+
+	return &dsr.GetRelationResponse{Results: results}, err
 }
 
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {
@@ -266,11 +272,43 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 
 // check methods
 func (s *Directory) CheckPermission(ctx context.Context, req *dsr.CheckPermissionRequest) (*dsr.CheckPermissionResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	result, err := types.CheckPermission(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+
+	return &dsr.CheckPermissionResponse{
+		Check: result.Check,
+		Trace: result.Trace,
+	}, err
 }
 
 func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest) (*dsr.CheckRelationResponse, error) {
-	return nil, nil
+	txOpt, cleanup, err := s.store.ReadTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		cErr := cleanup()
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	result, err := types.CheckRelation(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+
+	return &dsr.CheckRelationResponse{
+		Check: result.Check,
+		Trace: result.Trace,
+	}, err
 }
 
 // graph methods

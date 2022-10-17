@@ -2,20 +2,27 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
 	"path"
+	"time"
 
 	ds "github.com/aserto-dev/edge-ds/pkg/directory"
 	"github.com/aserto-dev/edge-ds/pkg/server"
 	"github.com/rs/zerolog"
+	flag "github.com/spf13/pflag"
 )
 
-var port int
+var (
+	dbPath string
+	port   int
+	seed   bool
+)
 
 func main() {
+	flag.StringVar(&dbPath, "db_path", "", "database file path")
 	flag.IntVar(&port, "port", 12345, "port number")
+	flag.BoolVar(&seed, "seed", false, "seed metadata objects")
 	flag.Parse()
 
 	cwd, err := os.Getwd()
@@ -24,8 +31,9 @@ func main() {
 	}
 
 	config := ds.Config{
-		DBPath: path.Join(cwd, ".db", "eds.db"),
-		Seed:   true,
+		DBPath:         path.Join(cwd, dbPath),
+		RequestTimeout: time.Second * 2,
+		Seed:           seed,
 	}
 
 	logger := zerolog.New(os.Stdout)
