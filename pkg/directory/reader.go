@@ -230,14 +230,26 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		}
 	}()
 
-	relations, _, err := types.GetRelations(ctx, &dsr.GetRelationsRequest{
-		Param: req.Param,
-		Page:  &dsc.PaginationRequest{},
-	}, s.store, []boltdb.Opts{txOpt}...)
+	var relations []*types.Relation
+	var resp *dsc.PaginationResponse
+	var results []*dsc.Relation
+	hasNext := true
+	nextToken := ""
 
-	results := make([]*dsc.Relation, len(relations))
-	for i := 0; i < len(relations); i++ {
-		results[i] = relations[i].Relation
+	for hasNext {
+		relations, resp, err = types.GetRelations(ctx, &dsr.GetRelationsRequest{
+			Param: req.Param,
+			Page:  &dsc.PaginationRequest{Token: nextToken},
+		}, s.store, []boltdb.Opts{txOpt}...)
+
+		for _, rel := range relations {
+			results = append(results, rel.Relation)
+		}
+
+		nextToken = resp.NextToken
+		if nextToken == "" {
+			hasNext = false
+		}
 	}
 
 	return &dsr.GetRelationResponse{

@@ -2,10 +2,11 @@ module github.com/aserto-dev/edge-ds
 
 go 1.17
 
-replace github.com/aserto-dev/go-directory => ../go-directory
+// replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/aserto-dev/certs v0.0.2
+	github.com/aserto-dev/go-directory v0.0.14
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magefile/mage v1.14.0
@@ -23,8 +24,6 @@ require (
 )
 
 require (
-	github.com/aserto-dev/go-directory v0.0.13-0.20221016220617-c95aa98d66ff
-	github.com/aserto-dev/go-grpc v0.8.51
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
