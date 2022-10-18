@@ -104,7 +104,7 @@ func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.B
 		if i.Relation.Id != nil && *i.Relation.Id > 0 {
 			relID = i.Relation.GetId()
 		} else {
-			key := *i.Relation.ObjectType + "|" + *i.Relation.Name
+			key := *i.Relation.ObjectType + ":" + *i.Relation.Name
 			idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
 			if err != nil {
 				return nil, err

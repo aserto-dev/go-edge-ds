@@ -53,6 +53,11 @@ func (i *Object) Validate() (bool, error) {
 
 func (i *Object) Normalize() error {
 	i.Type = strings.ToLower(i.GetType())
+
+	if i.Properties == nil {
+		i.Properties = pb.NewStruct()
+	}
+
 	return nil
 }
 

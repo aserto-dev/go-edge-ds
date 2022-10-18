@@ -65,24 +65,13 @@ func (s *Directory) Seed() error {
 	if !s.config.Seed {
 		return nil
 	}
-	root := true
 
 	ctx := session.ContextWithSessionID(context.Background(), uuid.NewString())
 
 	for _, objType := range metadata.ObjectTypes {
-
 		_, err := s.SetObjectType(ctx, &dsw.SetObjectTypeRequest{ObjectType: objType})
 		if err != nil {
 			return err
-		}
-	}
-
-	if root {
-		for _, objType := range metadata.RootObjectTypes {
-			_, err := s.SetObjectType(ctx, &dsw.SetObjectTypeRequest{ObjectType: objType})
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -93,13 +82,5 @@ func (s *Directory) Seed() error {
 		}
 	}
 
-	if root {
-		for _, relType := range metadata.RootRelationTypes {
-			_, err := s.SetRelationType(ctx, &dsw.SetRelationTypeRequest{RelationType: relType})
-			if err != nil {
-				return err
-			}
-		}
-	}
 	return nil
 }
