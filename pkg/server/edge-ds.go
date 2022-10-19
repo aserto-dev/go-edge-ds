@@ -69,7 +69,7 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 }
 
 func (s *edgeServer) Start(ctx context.Context) error {
-	s.logger.Info().Msg("Starting edge directory server")
+	s.logger.Info().Str("host", s.host).Int("port", s.grpcPort).Msg("Starting edge directory server")
 
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", s.host, s.grpcPort))
 	if err != nil {
