@@ -1,4 +1,4 @@
-module github.com/aserto-dev/edge-ds
+module github.com/aserto-dev/go-edge-ds
 
 go 1.17
 
