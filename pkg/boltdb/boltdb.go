@@ -150,7 +150,7 @@ func (s *BoltDB) Read(path []string, key string, opts []Opts) ([]byte, error) {
 	var res []byte
 
 	read := func(tx *bolt.Tx) error {
-		b, err := s.setBucket(tx, path)
+		b, err := s.setBucketIfNotExist(tx, path)
 		if err != nil {
 			return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 		}
@@ -207,7 +207,7 @@ func (s *BoltDB) KeyExists(path []string, key string, opts []Opts) bool {
 	s.logger.Trace().Interface("path", path).Str("key", key).Msg("KeyExists")
 
 	exists := func(tx *bolt.Tx) error {
-		b, err := s.setBucket(tx, path)
+		b, err := s.setBucketIfNotExist(tx, path)
 		if err != nil {
 			return errors.Wrapf(err, "KeyExist path [%s]", path)
 		}
@@ -402,7 +402,7 @@ func (s *BoltDB) List(path []string, pageToken string, pageSize int32, opts []Op
 	)
 
 	list := func(tx *bolt.Tx) error {
-		b, err := s.setBucket(tx, path)
+		b, err := s.setBucketIfNotExist(tx, path)
 		if err != nil {
 			return err
 		}
