@@ -28,5 +28,5 @@ func (id) IsValidIfSet(id string) bool {
 }
 
 func (id) New() string {
-	return uuid.NewString()
+	return strings.ToLower(uuid.NewString())
 }

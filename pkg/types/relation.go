@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/pb"
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -23,241 +21,37 @@ type Relation struct {
 	*dsc.Relation
 }
 
-func NewRelation(i *dsc.Relation) *Relation {
-	return &Relation{
-		Relation: i,
-	}
-}
-
 func (i *Relation) Validate() (bool, error) {
 	if i.Relation == nil {
 		return false, errors.Errorf("relation not instantiated")
 	}
-	if ok, err := ObjectIdentifier.Validate(i.Object); !ok {
+
+	if i.Subject == nil {
+		return false, derr.ErrInvalidArgument.Msg("subject not set")
+	}
+	subject := ObjectIdentifier{ObjectIdentifier: i.Subject}
+	if ok, err := subject.Validate(); !ok {
 		return false, err
 	}
-	if ok, err := ObjectIdentifier.Validate(i.Subject); !ok {
+
+	if i.Object == nil {
+		return false, derr.ErrInvalidArgument.Msg("object not set")
+	}
+	object := ObjectIdentifier{ObjectIdentifier: i.Object}
+	if ok, err := object.Validate(); !ok {
 		return false, err
 	}
+
 	if strings.TrimSpace(i.GetRelation()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("relation cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("relation not set")
 	}
 	return true, nil
 }
 
 func (i *Relation) Normalize() error {
-	i.Relation.Relation = strings.ToLower(i.Relation.Relation)
-	*i.Relation.Subject.Type = strings.ToLower(*i.Relation.Subject.Type)
-	*i.Relation.Object.Type = strings.ToLower(*i.Relation.Object.Type)
-	return nil
-}
-
-func (i *Relation) Key() string {
-	return i.Object.GetType() + ":" + i.GetRelation()
-}
-
-func GetRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Relation, error) {
-	var (
-		subID   string
-		subType string
-		relName string
-		objID   string
-		objType string
-	)
-
-	if ok, _ := ObjectIdentifier.Validate(i.Subject); ok {
-		if i.Subject.Id != nil {
-			subID = *i.Subject.Id
-		} else if i.Subject.Key != nil && i.Subject.Type != nil {
-			subKey := *i.Subject.Type + "|" + *i.Subject.Key
-
-			buf, err := store.Read(ObjectsKeyPath(), subKey, opts)
-			if err != nil {
-				return nil, err
-			}
-			subID = string(buf)
-		} else if i.Subject.Type != nil {
-			subType = i.Subject.GetType()
-		}
-	}
-	_ = subType
-
-	if ok, _ := ObjectIdentifier.Validate(i.Object); ok {
-		if i.Object.Id != nil {
-			objID = *i.Object.Id
-		} else if i.Object.Type != nil && i.Object.Key != nil {
-			objKey := *i.Object.Type + "|" + *i.Object.Key
-
-			buf, err := store.Read(ObjectsKeyPath(), objKey, opts)
-			if err != nil {
-				return nil, err
-			}
-			objID = string(buf)
-		} else if i.Object.Type != nil {
-			objType = i.Object.GetType()
-		}
-	}
-	_ = objType
-
-	if ok, _ := RelationTypeIdentifier.Validate(i.Relation); ok {
-		var relID int32
-		if i.Relation.Id != nil && *i.Relation.Id > 0 {
-			relID = i.Relation.GetId()
-		} else {
-			key := *i.Relation.ObjectType + ":" + *i.Relation.Name
-			idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
-			if err != nil {
-				return nil, err
-			}
-			relID = StrToInt32(string(idBuf))
-		}
-
-		buf, err := store.Read(RelationTypesPath(), Int32ToStr(relID), opts)
-		if err != nil {
-			return nil, err
-		}
-		var relType dsc.RelationType
-		if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
-			return nil, err
-		}
-		relName = relType.Name
-	}
-
-	filter := objID + "|" + relName + "|" + subID
-
-	buf, err := store.ReadPrefix(RelationsObjPath(), filter, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var rel dsc.Relation
-	if err := pb.BufToProto(bytes.NewReader(buf), &rel); err != nil {
-		return nil, err
-	}
-
-	return &Relation{
-		Relation: &rel,
-	}, nil
-}
-
-func GetRelations(ctx context.Context, req *dsr.GetRelationsRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Relation, *dsc.PaginationResponse, error) {
-	_, values, nextToken, _, err := store.List(RelationsSubPath(), req.Page.Token, req.Page.Size, opts)
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	relations := []*Relation{}
-	for i := 0; i < len(values); i++ {
-		var relation dsc.Relation
-		if err := pb.BufToProto(bytes.NewReader(values[i]), &relation); err != nil {
-			return nil, nil, err
-		}
-		relations = append(relations, &Relation{&relation})
-	}
-
-	relations = filterRelations(req.Param, relations)
-
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	return relations, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}, nil
-}
-
-func (i *Relation) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	sessionID := session.ExtractSessionID(ctx)
-
-	if ok, err := i.Validate(); !ok {
-		return err
-	}
-	if err := i.Normalize(); err != nil {
-		return err
-	}
-
-	ri := &dsc.RelationIdentifier{
-		Subject: &dsc.ObjectIdentifier{
-			Id:   i.Subject.Id,
-			Key:  i.Subject.Key,
-			Type: i.Subject.Type,
-		},
-		Relation: &dsc.RelationTypeIdentifier{
-			Name:       &i.Relation.Relation,
-			ObjectType: i.Object.Type,
-		},
-		Object: &dsc.ObjectIdentifier{
-			Id:   i.Object.Id,
-			Key:  i.Object.Key,
-			Type: i.Object.Type,
-		},
-	}
-	curHash := ""
-	current, err := GetRelation(ctx, ri, store, opts...)
-	if err == nil {
-		curHash = current.Relation.Hash
-	}
-
-	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" {
-		i.Relation.Hash = curHash
-	}
-
-	if curHash != i.Relation.Hash {
-		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.Relation.Hash)
-	}
-
-	ts := timestamppb.New(time.Now().UTC())
-	if curHash == "" {
-		i.Relation.CreatedAt = ts
-	}
-	i.Relation.UpdatedAt = ts
-
-	newHash, _ := i.Hash()
-	i.Relation.Hash = newHash
-
-	// when equal, no changes, skip write
-	if curHash == newHash {
-		i.Relation.CreatedAt = current.CreatedAt
-		i.Relation.UpdatedAt = current.UpdatedAt
-		return nil
-	}
-
-	buf := new(bytes.Buffer)
-	if err := pb.ProtoToBuf(buf, i); err != nil {
-		return err
-	}
-
-	if err := store.Write(RelationsSubPath(), i.SubjectKey(), buf.Bytes(), opts); err != nil {
-		return err
-	}
-
-	if err := store.Write(RelationsObjPath(), i.ObjectKey(), buf.Bytes(), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func DeleteRelation(ctx context.Context, i *dsc.RelationIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	if ok, err := RelationIdentifier.Validate(i); !ok {
-		return err
-	}
-
-	current, err := GetRelation(ctx, i, store, opts...)
-	switch {
-	case errors.Is(err, boltdb.ErrKeyNotFound):
-		return nil
-	case err != nil:
-		return err
-	}
-
-	if err := store.DeleteKey(RelationsSubPath(), current.SubjectKey(), opts); err != nil {
-		return err
-	}
-
-	if err := store.DeleteKey(RelationsObjPath(), current.ObjectKey(), opts); err != nil {
-		return err
-	}
-
+	i.Relation.Relation = strings.ToLower(i.Relation.GetRelation())
+	*i.Relation.Subject.Type = strings.ToLower(i.Relation.Subject.GetType())
+	*i.Relation.Object.Type = strings.ToLower(i.Relation.Object.GetType())
 	return nil
 }
 
@@ -268,7 +62,7 @@ func (i *Relation) Msg() *dsc.Relation {
 	return i.Relation
 }
 
-func (i *Relation) Hash() (string, error) {
+func (i *Relation) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -307,6 +101,10 @@ func (i *Relation) Hash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
+func (i *Relation) Key() string {
+	return i.Object.GetType() + ":" + i.GetRelation()
+}
+
 func (i *Relation) SubjectKey() string {
 	return i.Subject.GetId() + "|" + i.Key() + "|" + i.Object.GetId()
 }
@@ -315,54 +113,213 @@ func (i *Relation) ObjectKey() string {
 	return i.Object.GetId() + "|" + i.Key() + "|" + i.Subject.GetId()
 }
 
-type relationFilter func(*Relation) bool
-
-func filterRelations(req *dsc.RelationIdentifier, relations []*Relation) []*Relation {
-	filters := []relationFilter{}
-
-	if req.Subject != nil && req.Subject.Id != nil && ID.IsValidIfSet(req.Subject.GetId()) {
-		filters = append(filters, func(r *Relation) bool {
-			return r.Subject.GetId() == req.Subject.GetId()
-		})
-	}
-	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
-		filters = append(filters, func(r *Relation) bool {
-			return strings.EqualFold(r.Subject.GetType(), req.Subject.GetType())
-		})
+func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Relation, error) {
+	if ok, err := relationIdentifier.Validate(); !ok {
+		return &Relation{}, err
 	}
 
-	if req.Relation != nil && req.Relation.Name != nil && *req.Relation.Name != "" {
-		filters = append(filters, func(r *Relation) bool {
-			return strings.EqualFold(r.Relation.GetRelation(), req.Relation.GetName())
-		})
+	buf, err := sc.Store.Read(RelationsObjPath(), relationIdentifier.ObjKey(), sc.Opts)
+	if err != nil {
+		return nil, err
 	}
 
-	if req.Object != nil && req.Object.Id != nil && ID.IsValidIfSet(req.Object.GetId()) {
-		filters = append(filters, func(r *Relation) bool {
-			return r.Object.GetId() == req.Object.GetId()
-		})
-	}
-	if req.Object != nil && req.Object.Type != nil && *req.Object.Type != "" {
-		filters = append(filters, func(r *Relation) bool {
-			return strings.EqualFold(r.Object.GetType(), req.Object.GetType())
-		})
+	var rel dsc.Relation
+	if err := pb.BufToProto(bytes.NewReader(buf), &rel); err != nil {
+		return nil, err
 	}
 
-	results := []*Relation{}
-	for i := 0; i < len(relations); i++ {
-		if includeRelation(relations[i], filters) {
-			results = append(results, relations[i])
-		}
-	}
-
-	return results
+	return &Relation{&rel}, nil
 }
 
-func includeRelation(rel *Relation, filters []relationFilter) bool {
-	for _, fn := range filters {
-		if !fn(rel) {
-			return false
+func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*Relation, error) {
+	var subID, objID, objType, relName, filter string
+	var path []string
+
+	subIdentifier := &ObjectIdentifier{relationIdentifier.Subject}
+	if ok, _ := subIdentifier.Validate(); ok {
+		if subIdentifier.Id != nil {
+			subID = subIdentifier.GetId()
+		} else if subIdentifier.GetKey() != "" && subIdentifier.GetType() != "" {
+			buf, err := sc.Store.Read(ObjectsKeyPath(), subIdentifier.Key(), sc.Opts)
+			if err != nil {
+				return nil, err
+			}
+			subID = string(buf)
 		}
 	}
-	return true
+
+	objIdentifier := &ObjectIdentifier{relationIdentifier.Object}
+	if ok, _ := objIdentifier.Validate(); ok {
+		if objIdentifier.Id != nil {
+			objID = objIdentifier.GetId()
+		} else if objIdentifier.GetType() != "" && objIdentifier.GetKey() != "" {
+			buf, err := sc.Store.Read(ObjectsKeyPath(), objIdentifier.Key(), sc.Opts)
+			if err != nil {
+				return nil, err
+			}
+			objID = string(buf)
+		} else if objIdentifier.Type != nil {
+			objType = objIdentifier.GetType()
+		}
+	}
+
+	relIdentifier := &RelationTypeIdentifier{relationIdentifier.Relation}
+	if relIdentifier.GetObjectType() == "" {
+		relIdentifier.ObjectType = &objType
+	}
+	if ok, _ := relIdentifier.Validate(); ok {
+		relTypeName, err := sc.GetRelationTypeName(relIdentifier)
+		if err != nil {
+			return nil, err
+		}
+		relName = relTypeName
+	}
+
+	switch {
+	case ID.IsValid(objID):
+		path = RelationsObjPath()
+		filter = makeFilter(objID, "|", relName, "|", subID)
+	case ID.IsValid(subID):
+		path = RelationsSubPath()
+		filter = makeFilter(subID, "|", relName, "|", objID)
+	default:
+		return []*Relation{}, derr.ErrInvalidArgument.Msg("no anchor: subject or object id")
+	}
+
+	_, values, err := sc.Store.ReadScan(path, filter, sc.Opts)
+	if err != nil {
+		return nil, err
+	}
+
+	relations := []*Relation{}
+	for i := 0; i < len(values); i++ {
+		var rel dsc.Relation
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &rel); err != nil {
+			return nil, err
+		}
+		relations = append(relations, &Relation{&rel})
+	}
+
+	return relations, nil
+}
+
+func (sc *StoreContext) GetRelations(param *RelationIdentifier, page *PaginationRequest) ([]*Relation, *PaginationResponse, error) {
+	_, values, nextToken, _, err := sc.Store.List(RelationsSubPath(), page.Token, page.Size, sc.Opts)
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	relations := []*Relation{}
+	for i := 0; i < len(values); i++ {
+		var relation dsc.Relation
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &relation); err != nil {
+			return nil, nil, err
+		}
+		relations = append(relations, &Relation{&relation})
+	}
+
+	relations = filterRelations(param, relations)
+
+	return relations, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}}, nil
+}
+
+func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
+	sessionID := session.ExtractSessionID(sc.Context)
+
+	if ok, err := rel.Validate(); !ok {
+		return &Relation{}, err
+	}
+
+	if err := rel.Normalize(); err != nil {
+		return &Relation{}, err
+	}
+
+	relIdentifier := &RelationIdentifier{
+		&dsc.RelationIdentifier{
+			Subject: &dsc.ObjectIdentifier{
+				Id:   rel.Subject.Id,
+				Key:  rel.Subject.Key,
+				Type: rel.Subject.Type,
+			},
+			Relation: &dsc.RelationTypeIdentifier{
+				Name:       &rel.Relation.Relation,
+				ObjectType: rel.Object.Type,
+			},
+			Object: &dsc.ObjectIdentifier{
+				Id:   rel.Object.Id,
+				Key:  rel.Object.Key,
+				Type: rel.Object.Type,
+			},
+		},
+	}
+
+	curHash := ""
+	current, err := sc.getRelation(relIdentifier)
+	if err == nil {
+		curHash = current.Hash
+	}
+
+	// if in streaming mode, adopt current object hash, if not provided
+	if sessionID != "" {
+		rel.Hash = curHash
+	}
+
+	if curHash != rel.Hash {
+		return &Relation{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", rel.Hash)
+	}
+
+	ts := timestamppb.New(time.Now().UTC())
+	if curHash == "" {
+		rel.CreatedAt = ts
+	}
+	rel.UpdatedAt = ts
+
+	newHash, _ := rel.GetHash()
+	rel.Hash = newHash
+
+	// when equal, no changes, skip write
+	if curHash == newHash {
+		rel.CreatedAt = current.CreatedAt
+		rel.UpdatedAt = current.UpdatedAt
+		return rel, nil
+	}
+
+	buf := new(bytes.Buffer)
+	if err := pb.ProtoToBuf(buf, rel); err != nil {
+		return &Relation{}, err
+	}
+
+	if err := sc.Store.Write(RelationsSubPath(), rel.SubjectKey(), buf.Bytes(), sc.Opts); err != nil {
+		return &Relation{}, err
+	}
+
+	if err := sc.Store.Write(RelationsObjPath(), rel.ObjectKey(), buf.Bytes(), sc.Opts); err != nil {
+		return &Relation{}, err
+	}
+
+	return rel, nil
+}
+
+func (sc *StoreContext) DeleteRelation(relIdentifier *RelationIdentifier) error {
+	if ok, err := relIdentifier.Validate(); !ok {
+		return err
+	}
+
+	current, err := sc.getRelation(relIdentifier)
+	switch {
+	case errors.Is(err, boltdb.ErrKeyNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(RelationsSubPath(), current.SubjectKey(), sc.Opts); err != nil {
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(RelationsObjPath(), current.ObjectKey(), sc.Opts); err != nil {
+		return err
+	}
+
+	return nil
 }

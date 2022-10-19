@@ -5,11 +5,11 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type objectTypeIdentifier struct{}
+type ObjectTypeIdentifier struct {
+	*dsc.ObjectTypeIdentifier
+}
 
-var ObjectTypeIdentifier = objectTypeIdentifier{}
-
-func (objectTypeIdentifier) Validate(i *dsc.ObjectTypeIdentifier) (bool, error) {
+func (i *ObjectTypeIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 	}

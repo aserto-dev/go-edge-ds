@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -21,15 +20,11 @@ type ObjectType struct {
 	*dsc.ObjectType
 }
 
-func NewObjectType(i *dsc.ObjectType) *ObjectType {
-	return &ObjectType{i}
-}
-
 func (i *ObjectType) Validate() (bool, error) {
 	if i == nil {
 		return false, errors.Errorf("object_type not instantiated")
 	}
-	if !(i.Id > 0) {
+	if !(i.Id >= 0) {
 		return false, errors.Errorf("object type id must be larger than zero")
 	}
 	if strings.TrimSpace(i.Name) == "" {
@@ -46,134 +41,6 @@ func (i *ObjectType) Validate() (bool, error) {
 
 func (i *ObjectType) Normalize() error {
 	i.Name = strings.ToLower(i.Name)
-	return nil
-}
-
-func GetObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*ObjectType, error) {
-	var objTypeID int32
-	if i.GetId() > 0 {
-		objTypeID = i.GetId()
-	} else if i.GetName() != "" {
-		idBuf, err := store.Read(ObjectTypesNamePath(), i.GetName(), opts)
-		if err != nil {
-			return nil, err
-		}
-		objTypeID = StrToInt32(string(idBuf))
-	} else {
-		return nil, derr.ErrInvalidArgument
-	}
-
-	buf, err := store.Read(ObjectTypesPath(), Int32ToStr(objTypeID), opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var objType dsc.ObjectType
-	if err := pb.BufToProto(bytes.NewReader(buf), &objType); err != nil {
-		return nil, err
-	}
-
-	return &ObjectType{&objType}, nil
-}
-
-func GetObjectTypes(ctx context.Context, page *dsc.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*ObjectType, *dsc.PaginationResponse, error) {
-	_, values, nextToken, _, err := store.List(ObjectTypesPath(), page.Token, page.Size, opts)
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	objTypes := []*ObjectType{}
-	for i := 0; i < len(values); i++ {
-		var objType dsc.ObjectType
-		if err := pb.BufToProto(bytes.NewReader(values[i]), &objType); err != nil {
-			return nil, nil, err
-		}
-		objTypes = append(objTypes, &ObjectType{&objType})
-	}
-
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	return objTypes, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}, nil
-}
-
-func (i *ObjectType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	sessionID := session.ExtractSessionID(ctx)
-
-	if ok, err := i.Validate(); !ok {
-		return err
-	}
-	if err := i.Normalize(); err != nil {
-		return err
-	}
-
-	curHash := ""
-	current, err := GetObjectType(ctx, &dsc.ObjectTypeIdentifier{Name: &i.Name}, store, opts...)
-	if err == nil {
-		curHash = current.Hash
-	}
-
-	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" {
-		i.Hash = curHash
-	}
-
-	if curHash != "" && curHash != i.Hash {
-		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.Hash)
-	}
-
-	ts := timestamppb.New(time.Now().UTC())
-	if curHash == "" {
-		i.CreatedAt = ts
-	}
-	i.UpdatedAt = ts
-
-	newHash, _ := i.GetHash()
-	i.Hash = newHash
-
-	// when equal, no changes, skip write
-	if curHash == newHash {
-		return nil
-	}
-
-	buf := new(bytes.Buffer)
-
-	if err := pb.ProtoToBuf(buf, i); err != nil {
-		return err
-	}
-
-	if err := store.Write(ObjectTypesPath(), Int32ToStr(i.Id), buf.Bytes(), opts); err != nil {
-		return err
-	}
-	if err := store.Write(ObjectTypesNamePath(), i.Name, []byte(Int32ToStr(i.Id)), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func DeleteObjectType(ctx context.Context, i *dsc.ObjectTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	if ok, err := ObjectTypeIdentifier.Validate(i); !ok {
-		return err
-	}
-
-	current, err := GetObjectType(ctx, i, store, opts...)
-	switch {
-	case errors.Is(err, boltdb.ErrKeyNotFound):
-		return nil
-	case err != nil:
-		return err
-	}
-
-	if err := store.DeleteKey(ObjectTypesNamePath(), current.Name, opts); err != nil {
-		return err
-	}
-
-	if err := store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.Id), opts); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -208,4 +75,173 @@ func (i *ObjectType) GetHash() (string, error) {
 	}
 
 	return strconv.FormatUint(h.Sum64(), 10), nil
+}
+
+func (sc *StoreContext) GetObjectType(objTypeIdentifier *ObjectTypeIdentifier) (*ObjectType, error) {
+	var objTypeID int32
+
+	if objTypeIdentifier.GetId() > 0 {
+		objTypeID = objTypeIdentifier.GetId()
+	} else if objTypeIdentifier.GetName() != "" {
+		var err error
+		objTypeID, err = sc.GetObjectTypeID(objTypeIdentifier)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, derr.ErrInvalidArgument
+	}
+
+	buf, err := sc.Store.Read(ObjectTypesPath(), Int32ToStr(objTypeID), sc.Opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var objType dsc.ObjectType
+	if err := pb.BufToProto(bytes.NewReader(buf), &objType); err != nil {
+		return nil, err
+	}
+
+	return &ObjectType{&objType}, nil
+}
+
+func (sc *StoreContext) GetObjectTypeID(objTypeIdentifier *ObjectTypeIdentifier) (int32, error) {
+	if objTypeIdentifier.GetId() > 0 {
+		return objTypeIdentifier.GetId(), nil
+	}
+
+	idBuf, err := sc.Store.Read(ObjectTypesNamePath(), objTypeIdentifier.GetName(), sc.Opts)
+	if err != nil {
+		return 0, err
+	}
+	objTypeID := StrToInt32(string(idBuf))
+
+	return objTypeID, nil
+}
+
+func (sc *StoreContext) GetObjectTypeName(objTypeIdentifier *ObjectTypeIdentifier) (string, error) {
+	if objTypeIdentifier.GetName() != "" {
+		return objTypeIdentifier.GetName(), nil
+	}
+
+	buf, err := sc.Store.Read(ObjectTypesPath(), Int32ToStr(objTypeIdentifier.GetId()), sc.Opts)
+	if err != nil {
+		return "", err
+	}
+
+	var objType dsc.ObjectType
+	if err := pb.BufToProto(bytes.NewReader(buf), &objType); err != nil {
+		return "", err
+	}
+
+	return objType.GetName(), nil
+}
+
+func (sc *StoreContext) GetObjectTypes(page *PaginationRequest) ([]*ObjectType, *PaginationResponse, error) {
+	_, values, nextToken, _, err := sc.Store.List(ObjectTypesPath(), page.Token, page.Size, sc.Opts)
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	objTypes := []*ObjectType{}
+	for i := 0; i < len(values); i++ {
+		var objType dsc.ObjectType
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &objType); err != nil {
+			return nil, nil, err
+		}
+		objTypes = append(objTypes, &ObjectType{&objType})
+	}
+
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	return objTypes, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}}, nil
+}
+
+func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) {
+	sessionID := session.ExtractSessionID(sc.Context)
+
+	if ok, err := objType.Validate(); !ok {
+		return &ObjectType{}, err
+	}
+
+	if err := objType.Normalize(); err != nil {
+		return &ObjectType{}, err
+	}
+
+	curHash := ""
+	current, err := sc.GetObjectType(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &objType.Name}})
+	if err == nil {
+		curHash = current.Hash
+		if objType.Id == 0 {
+			objType.Id = current.Id
+		}
+	} else if objType.Id == 0 {
+		if id, err := sc.Store.NextSeq(ObjectTypesPath(), sc.Opts); err == nil {
+			objType.Id = int32(id)
+		}
+	}
+
+	// if in streaming mode, adopt current object hash, if not provided
+	if sessionID != "" {
+		objType.Hash = curHash
+	}
+
+	if curHash != "" && curHash != objType.Hash {
+		return &ObjectType{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", objType.Hash)
+	}
+
+	ts := timestamppb.New(time.Now().UTC())
+	if curHash == "" {
+		objType.CreatedAt = ts
+	}
+	objType.UpdatedAt = ts
+
+	newHash, _ := objType.GetHash()
+	objType.Hash = newHash
+
+	// when equal, no changes, skip write
+	if curHash == newHash {
+		return objType, nil
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := pb.ProtoToBuf(buf, objType); err != nil {
+		return &ObjectType{}, err
+	}
+
+	if err := sc.Store.Write(ObjectTypesPath(), Int32ToStr(objType.Id), buf.Bytes(), sc.Opts); err != nil {
+		return &ObjectType{}, err
+	}
+	if err := sc.Store.Write(ObjectTypesNamePath(), objType.Name, []byte(Int32ToStr(objType.Id)), sc.Opts); err != nil {
+		return &ObjectType{}, err
+	}
+
+	return objType, nil
+}
+
+func (sc *StoreContext) DeleteObjectType(objTypeIdentifier *ObjectTypeIdentifier) error {
+	if ok, err := objTypeIdentifier.Validate(); !ok {
+		return err
+	}
+
+	current, err := sc.GetObjectType(objTypeIdentifier)
+	switch {
+	case errors.Is(err, boltdb.ErrKeyNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(ObjectTypesNamePath(), current.Name, sc.Opts); err != nil {
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.Id), sc.Opts); err != nil {
+		return err
+	}
+
+	return nil
 }

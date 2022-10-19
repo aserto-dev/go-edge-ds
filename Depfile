@@ -12,6 +12,9 @@ bin:
       darwin-arm64: "20aead134ef8e77cb70efcfe047fc2e381793004fba103e7692b7dab00fe5131"
 
 go:
+  sver:
+    importPath: "github.com/aserto-dev/sver/cmd/sver"
+    version: "v1.3.9"
   gotestsum:
     importPath: "gotest.tools/gotestsum"
     version: "v1.7.0"

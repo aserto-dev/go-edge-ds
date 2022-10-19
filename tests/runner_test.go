@@ -3,8 +3,10 @@ package tests_test
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -33,8 +35,13 @@ var (
 func TestMain(m *testing.M) {
 	ctx := context.Background()
 	logger := zerolog.New(io.Discard)
+
+	dbPath := path.Join(os.TempDir(), "edge-ds", "test-eds.db")
+	os.Remove(dbPath)
+	fmt.Println(dbPath)
+
 	cfg := directory.Config{
-		DBPath:         "test-eds.db",
+		DBPath:         dbPath,
 		RequestTimeout: time.Second * 2,
 		Seed:           true,
 	}

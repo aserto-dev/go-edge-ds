@@ -5,11 +5,11 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type relationTypeIdentifier struct{}
+type RelationTypeIdentifier struct {
+	*dsc.RelationTypeIdentifier
+}
 
-var RelationTypeIdentifier = relationTypeIdentifier{}
-
-func (relationTypeIdentifier) Validate(i *dsc.RelationTypeIdentifier) (bool, error) {
+func (i *RelationTypeIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 	}
@@ -17,10 +17,15 @@ func (relationTypeIdentifier) Validate(i *dsc.RelationTypeIdentifier) (bool, err
 	if i.Id != nil && *i.Id > 0 {
 		return true, nil
 	}
+
 	if i.Name != nil && i.ObjectType != nil &&
 		*i.Name != "" && *i.ObjectType != "" {
 		return true, nil
 	}
 
 	return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
+}
+
+func (i *RelationTypeIdentifier) Key() string {
+	return i.GetObjectType() + ":" + i.GetName()
 }

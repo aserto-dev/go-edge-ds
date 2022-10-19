@@ -5,23 +5,26 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type objectIdentifier struct{}
+type ObjectIdentifier struct {
+	*dsc.ObjectIdentifier
+}
 
-var ObjectIdentifier = objectIdentifier{}
-
-func (objectIdentifier) Validate(i *dsc.ObjectIdentifier) (bool, error) {
+func (i *ObjectIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_identifier")
 	}
-	if i.Id != nil && ID.IsValid(*i.Id) {
+	if ID.IsValid(i.GetId()) {
 		return true, nil
 	}
-	if i.Key != nil && i.Type != nil &&
-		*i.Key != "" && *i.Type != "" {
+	if i.GetKey() != "" && i.GetType() != "" {
 		return true, nil
 	}
-	if i.Type != nil && *i.Type != "" {
+	if i.GetType() != "" {
 		return true, nil
 	}
 	return false, derr.ErrInvalidArgument.Msg("object_identifier")
+}
+
+func (i *ObjectIdentifier) Key() string {
+	return i.GetType() + "|" + i.GetKey()
 }

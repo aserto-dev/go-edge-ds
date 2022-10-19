@@ -5,11 +5,11 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type permissionIdentifier struct{}
+type PermissionIdentifier struct {
+	*dsc.PermissionIdentifier
+}
 
-var PermissionIdentifier = permissionIdentifier{}
-
-func (permissionIdentifier) Validate(i *dsc.PermissionIdentifier) (bool, error) {
+func (i *PermissionIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("permission_identifier")
 	}

@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -22,10 +21,14 @@ type Permission struct {
 	*dsc.Permission
 }
 
-func NewPermission(i *dsc.Permission) *Permission {
-	return &Permission{
-		Permission: i,
+func (i *Permission) PreValidate() (bool, error) {
+	if i.Permission == nil {
+		return false, errors.Errorf("permission not instantiated")
 	}
+	if strings.TrimSpace(i.Permission.GetName()) == "" {
+		return false, errors.Errorf("name cannot be empty")
+	}
+	return true, nil
 }
 
 func (i *Permission) Validate() (bool, error) {
@@ -49,136 +52,6 @@ func (i *Permission) Normalize() error {
 	return nil
 }
 
-func GetPermission(ctx context.Context, i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*Permission, error) {
-	var permID string
-	if i.GetId() != "" {
-		permID = i.GetId()
-	} else if i.GetName() != "" {
-		idBuf, err := store.Read(PermissionsNamePath(), i.GetName(), opts)
-		if err != nil {
-			return nil, boltdb.ErrKeyNotFound
-		}
-		permID = string(idBuf)
-	} else {
-		return nil, derr.ErrInvalidArgument
-	}
-
-	buf, err := store.Read(PermissionsPath(), permID, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var perm dsc.Permission
-	if err := pb.BufToProto(bytes.NewReader(buf), &perm); err != nil {
-		return nil, err
-	}
-
-	return &Permission{
-		Permission: &perm,
-	}, nil
-}
-
-func GetPermissions(ctx context.Context, page *dsc.PaginationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*Permission, *dsc.PaginationResponse, error) {
-	_, values, nextToken, _, err := store.List(PermissionsPath(), page.Token, page.Size, opts)
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	permissions := []*Permission{}
-	for i := 0; i < len(values); i++ {
-		var permission dsc.Permission
-		if err := pb.BufToProto(bytes.NewReader(values[i]), &permission); err != nil {
-			return nil, nil, err
-		}
-		permissions = append(permissions, &Permission{&permission})
-	}
-
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	return permissions, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}, nil
-}
-
-func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	sessionID := session.ExtractSessionID(ctx)
-
-	if ok, err := i.Validate(); !ok {
-		return err
-	}
-	if err := i.Normalize(); err != nil {
-		return err
-	}
-
-	curHash := ""
-	current, err := GetPermission(ctx, &dsc.PermissionIdentifier{Name: &i.Name}, store, opts...)
-	if err == nil {
-		curHash = current.Permission.Hash
-	}
-
-	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" {
-		i.Permission.Hash = curHash
-	}
-
-	if curHash != "" && curHash != i.Permission.Hash {
-		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.Permission.Hash)
-	}
-
-	ts := timestamppb.New(time.Now().UTC())
-	if curHash == "" {
-		i.Permission.CreatedAt = ts
-	}
-	i.Permission.UpdatedAt = ts
-
-	newHash, _ := i.Hash()
-	i.Permission.Hash = newHash
-
-	// when equal, no changes, skip write
-	if curHash == newHash {
-		return nil
-	}
-
-	buf := new(bytes.Buffer)
-
-	if err := pb.ProtoToBuf(buf, i.Permission); err != nil {
-		return err
-	}
-
-	if err := store.Write(PermissionsPath(), i.GetId(), buf.Bytes(), opts); err != nil {
-		return err
-	}
-	if err := store.Write(PermissionsNamePath(), i.Name, []byte(i.GetId()), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func DeletePermission(ctx context.Context, i *dsc.PermissionIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	if ok, err := PermissionIdentifier.Validate(i); !ok {
-		return err
-	}
-
-	current, err := GetPermission(ctx, i, store, opts...)
-	switch {
-	case errors.Is(err, boltdb.ErrKeyNotFound):
-		return nil
-	case err != nil:
-		return err
-	}
-
-	if err := store.DeleteKey(PermissionsNamePath(), current.GetName(), opts); err != nil {
-		return err
-	}
-
-	if err := store.DeleteKey(PermissionsPath(), current.GetId(), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (i *Permission) Msg() *dsc.Permission {
 	if i == nil || i.Permission == nil {
 		return &dsc.Permission{}
@@ -186,7 +59,7 @@ func (i *Permission) Msg() *dsc.Permission {
 	return i.Permission
 }
 
-func (i *Permission) Hash() (string, error) {
+func (i *Permission) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -201,4 +74,177 @@ func (i *Permission) Hash() (string, error) {
 	}
 
 	return strconv.FormatUint(h.Sum64(), 10), nil
+}
+
+func (sc *StoreContext) GetPermission(permissionIdentifier *PermissionIdentifier) (*Permission, error) {
+	var permID string
+
+	if permissionIdentifier.GetId() != "" {
+		permID = permissionIdentifier.GetId()
+	} else if permissionIdentifier.GetName() != "" {
+		var err error
+		permID, err = sc.GetPermissionID(permissionIdentifier)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, derr.ErrInvalidArgument
+	}
+
+	buf, err := sc.Store.Read(PermissionsPath(), permID, sc.Opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var perm dsc.Permission
+	if err := pb.BufToProto(bytes.NewReader(buf), &perm); err != nil {
+		return nil, err
+	}
+
+	return &Permission{
+		Permission: &perm,
+	}, nil
+}
+
+func (sc *StoreContext) GetPermissionID(permissionIdentifier *PermissionIdentifier) (string, error) {
+	if permissionIdentifier.GetId() != "" {
+		return permissionIdentifier.GetId(), nil
+	}
+
+	idBuf, err := sc.Store.Read(PermissionsNamePath(), permissionIdentifier.GetName(), sc.Opts)
+	if err != nil {
+		return "", err
+	}
+
+	return string(idBuf), nil
+}
+
+func (sc *StoreContext) GetPermissionName(permissionIdentifier *PermissionIdentifier) (string, error) {
+	if permissionIdentifier.GetName() != "" {
+		return permissionIdentifier.GetName(), nil
+	}
+
+	buf, err := sc.Store.Read(PermissionsPath(), permissionIdentifier.GetId(), sc.Opts)
+	if err != nil {
+		return "", err
+	}
+
+	var permission dsc.Permission
+	if err := pb.BufToProto(bytes.NewReader(buf), &permission); err != nil {
+		return "", err
+	}
+
+	return permission.GetName(), nil
+}
+
+func (sc *StoreContext) GetPermissions(page *PaginationRequest) ([]*Permission, *PaginationResponse, error) {
+	_, values, nextToken, _, err := sc.Store.List(PermissionsPath(), page.Token, page.Size, sc.Opts)
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	permissions := []*Permission{}
+	for i := 0; i < len(values); i++ {
+		var permission dsc.Permission
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &permission); err != nil {
+			return nil, nil, err
+		}
+		permissions = append(permissions, &Permission{&permission})
+	}
+
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	return permissions, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}}, nil
+}
+
+// func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
+func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, error) {
+	sessionID := session.ExtractSessionID(sc.Context)
+
+	if ok, err := permission.PreValidate(); !ok {
+		return &Permission{}, err
+	}
+
+	curHash := ""
+	current, err := sc.GetPermission(&PermissionIdentifier{&dsc.PermissionIdentifier{Name: &permission.Name}})
+	if err == nil {
+		curHash = current.Permission.Hash
+		if permission.Id == "" {
+			permission.Id = current.Id
+		}
+	} else if permission.Id == "" {
+		permission.Id = ID.New()
+	}
+
+	if ok, err := permission.Validate(); !ok {
+		return &Permission{}, err
+	}
+
+	if err := permission.Normalize(); err != nil {
+		return &Permission{}, err
+	}
+
+	// if in streaming mode, adopt current object hash, if not provided
+	if sessionID != "" {
+		permission.Hash = curHash
+	}
+
+	if curHash != "" && curHash != permission.Hash {
+		return &Permission{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", permission.Hash)
+	}
+
+	ts := timestamppb.New(time.Now().UTC())
+	if curHash == "" {
+		permission.CreatedAt = ts
+	}
+	permission.UpdatedAt = ts
+
+	newHash, _ := permission.GetHash()
+	permission.Hash = newHash
+
+	// when equal, no changes, skip write
+	if curHash == newHash {
+		return permission, nil
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := pb.ProtoToBuf(buf, permission); err != nil {
+		return permission, err
+	}
+
+	if err := sc.Store.Write(PermissionsPath(), permission.GetId(), buf.Bytes(), sc.Opts); err != nil {
+		return &Permission{}, err
+	}
+	if err := sc.Store.Write(PermissionsNamePath(), permission.GetName(), []byte(permission.GetId()), sc.Opts); err != nil {
+		return &Permission{}, err
+	}
+
+	return permission, nil
+}
+
+func (sc *StoreContext) DeletePermission(permissionIdentifier *PermissionIdentifier) error {
+	if ok, err := permissionIdentifier.Validate(); !ok {
+		return err
+	}
+
+	current, err := sc.GetPermission(permissionIdentifier)
+	switch {
+	case errors.Is(err, boltdb.ErrKeyNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(PermissionsNamePath(), current.GetName(), sc.Opts); err != nil {
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(PermissionsPath(), current.GetId(), sc.Opts); err != nil {
+		return err
+	}
+
+	return nil
 }

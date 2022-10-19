@@ -22,7 +22,8 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 		}
 	}()
 
-	objType, err := types.GetObjectType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	objType, err := sc.GetObjectType(&types.ObjectTypeIdentifier{ObjectTypeIdentifier: req.Param})
 	return &dsr.GetObjectTypeResponse{Result: objType.Msg()}, err
 }
 
@@ -42,7 +43,8 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 		}
 	}()
 
-	objTypes, page, err := types.GetObjectTypes(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	objTypes, page, err := sc.GetObjectTypes(&types.PaginationRequest{PaginationRequest: req.Page})
 
 	results := make([]*dsc.ObjectType, len(objTypes))
 	for i := 0; i < len(objTypes); i++ {
@@ -51,7 +53,7 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 
 	return &dsr.GetObjectTypesResponse{
 		Results: results,
-		Page:    page,
+		Page:    page.PaginationResponse,
 	}, err
 }
 
@@ -68,7 +70,8 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 		}
 	}()
 
-	relType, err := types.GetRelationType(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	relType, err := sc.GetRelationType(&types.RelationTypeIdentifier{RelationTypeIdentifier: req.Param})
 	return &dsr.GetRelationTypeResponse{Result: relType.Msg()}, err
 }
 
@@ -88,7 +91,8 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 		}
 	}()
 
-	relTypes, page, err := types.GetRelationTypes(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	relTypes, page, err := sc.GetRelationTypes(&types.ObjectTypeIdentifier{ObjectTypeIdentifier: req.Param}, &types.PaginationRequest{PaginationRequest: req.Page})
 
 	results := make([]*dsc.RelationType, len(relTypes))
 	for i := 0; i < len(relTypes); i++ {
@@ -97,7 +101,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 
 	return &dsr.GetRelationTypesResponse{
 		Results: results,
-		Page:    page,
+		Page:    page.PaginationResponse,
 	}, err
 }
 
@@ -114,7 +118,8 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 		}
 	}()
 
-	perm, err := types.GetPermission(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	perm, err := sc.GetPermission(&types.PermissionIdentifier{PermissionIdentifier: req.Param})
 	return &dsr.GetPermissionResponse{Result: perm.Msg()}, err
 }
 
@@ -134,7 +139,8 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 		}
 	}()
 
-	permissions, page, err := types.GetPermissions(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	permissions, page, err := sc.GetPermissions(&types.PaginationRequest{PaginationRequest: req.Page})
 
 	results := make([]*dsc.Permission, len(permissions))
 	for i := 0; i < len(permissions); i++ {
@@ -143,7 +149,7 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 
 	return &dsr.GetPermissionsResponse{
 		Results: results,
-		Page:    page,
+		Page:    page.PaginationResponse,
 	}, err
 }
 
@@ -160,7 +166,8 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 		}
 	}()
 
-	obj, err := types.GetObject(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	obj, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: req.Param})
 	return &dsr.GetObjectResponse{Result: obj.Msg()}, err
 }
 
@@ -176,7 +183,12 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 		}
 	}()
 
-	objects, err := types.GetObjectMany(ctx, req.Param, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	objIdentifiers := []*types.ObjectIdentifier{}
+	for i := 0; i < len(req.Param); i++ {
+		objIdentifiers = append(objIdentifiers, &types.ObjectIdentifier{ObjectIdentifier: req.Param[i]})
+	}
+	objects, err := sc.GetObjectMany(objIdentifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +216,8 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 		}
 	}()
 
-	objects, page, err := types.GetObjects(ctx, req.Page, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	objects, page, err := sc.GetObjects(&types.ObjectTypeIdentifier{ObjectTypeIdentifier: req.Param}, &types.PaginationRequest{PaginationRequest: req.Page})
 
 	results := make([]*dsc.Object, len(objects))
 	for i := 0; i < len(objects); i++ {
@@ -213,7 +226,7 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 
 	return &dsr.GetObjectsResponse{
 		Results: results,
-		Page:    page,
+		Page:    page.PaginationResponse,
 	}, err
 }
 
@@ -230,10 +243,8 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		}
 	}()
 
-	relations, _, err := types.GetRelations(ctx, &dsr.GetRelationsRequest{
-		Param: req.Param,
-		Page:  &dsc.PaginationRequest{},
-	}, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	relations, err := sc.GetRelation(&types.RelationIdentifier{RelationIdentifier: req.Param})
 
 	results := make([]*dsc.Relation, len(relations))
 	for i := 0; i < len(relations); i++ {
@@ -261,7 +272,8 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		}
 	}()
 
-	relations, page, err := types.GetRelations(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	relations, page, err := sc.GetRelations(&types.RelationIdentifier{RelationIdentifier: req.Param}, &types.PaginationRequest{PaginationRequest: req.Page})
 
 	results := make([]*dsc.Relation, len(relations))
 	for i := 0; i < len(relations); i++ {
@@ -270,7 +282,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 
 	return &dsr.GetRelationsResponse{
 		Results: results,
-		Page:    page,
+		Page:    page.PaginationResponse,
 	}, err
 }
 
@@ -287,7 +299,8 @@ func (s *Directory) CheckPermission(ctx context.Context, req *dsr.CheckPermissio
 		}
 	}()
 
-	result, err := types.CheckPermission(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	result, err := sc.CheckPermission(req)
 
 	return &dsr.CheckPermissionResponse{
 		Check: result.Check,
@@ -307,7 +320,8 @@ func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationReq
 		}
 	}()
 
-	result, err := types.CheckRelation(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	result, err := sc.CheckRelation(req)
 
 	return &dsr.CheckRelationResponse{
 		Check: result.Check,
@@ -328,7 +342,8 @@ func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*ds
 		}
 	}()
 
-	dependencies, err := types.GetGraph(ctx, req, s.store, []boltdb.Opts{txOpt}...)
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	dependencies, err := sc.GetGraph(req)
 
 	results := make([]*dsc.ObjectDependency, len(dependencies))
 	for i := 0; i < len(dependencies); i++ {

@@ -2,14 +2,12 @@ package types
 
 import (
 	"bytes"
-	"context"
 	"sort"
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/edge-ds/pkg/pb"
 )
 
@@ -19,19 +17,14 @@ type ObjectDependency struct {
 
 type ObjectDependencies []*ObjectDependency
 
-func GetGraph(ctx context.Context, req *dsr.GetGraphRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (ObjectDependencies, error) {
-	if ok, err := ObjectIdentifier.Validate(req.Anchor); !ok {
+func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, error) {
+	anchorIdentifier := &ObjectIdentifier{req.Anchor}
+	if ok, err := anchorIdentifier.Validate(); !ok {
 		return []*ObjectDependency{}, err
 	}
 
-	sc := StoreContext{
-		Context: ctx,
-		Store:   store,
-		Opts:    opts,
-	}
-
 	// resolve anchor object
-	anchor, err := GetObject(ctx, req.Anchor, store, opts...)
+	anchor, err := sc.GetObject(anchorIdentifier)
 	if err != nil {
 		return []*ObjectDependency{}, err
 	}

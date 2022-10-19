@@ -2,7 +2,6 @@ package types
 
 import (
 	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 	"strings"
@@ -12,7 +11,6 @@ import (
 	"github.com/aserto-dev/edge-ds/pkg/pb"
 	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -32,7 +30,7 @@ func (i *RelationType) Validate() (bool, error) {
 	if i.RelationType == nil {
 		return false, errors.Errorf("relation_type not instantiated")
 	}
-	if !(i.GetId() > 0) {
+	if !(i.GetId() >= 0) {
 		return false, errors.Errorf("relation type id must be larger than zero")
 	}
 	if strings.TrimSpace(i.GetName()) == "" {
@@ -56,160 +54,6 @@ func (i *RelationType) Normalize() error {
 	return nil
 }
 
-func (i *RelationType) Key() string {
-	return i.ObjectType + ":" + i.Name
-}
-
-func GetRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (*RelationType, error) {
-	var relTypeID int32
-	if i.GetId() > 0 {
-		relTypeID = i.GetId()
-	} else if i.GetName() != "" && i.GetObjectType() != "" {
-		key := i.GetObjectType() + ":" + i.GetName()
-
-		idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
-		if err != nil {
-			return nil, boltdb.ErrKeyNotFound
-		}
-		relTypeID = StrToInt32(string(idBuf))
-	} else {
-		return nil, derr.ErrInvalidArgument
-	}
-
-	buf, err := store.Read(RelationTypesPath(), Int32ToStr(relTypeID), opts)
-	if err != nil {
-		return nil, err
-	}
-
-	var relType dsc.RelationType
-	if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
-		return nil, err
-	}
-
-	return &RelationType{
-		RelationType: &relType,
-	}, nil
-}
-
-func GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) ([]*RelationType, *dsc.PaginationResponse, error) {
-	// filter by object type
-	var objType *ObjectType
-	if ok, _ := ObjectTypeIdentifier.Validate(req.Param); ok {
-		var err error
-		objType, err = GetObjectType(ctx, req.Param, store, opts...)
-		if err != nil {
-			return nil, &dsc.PaginationResponse{}, err
-		}
-	}
-
-	_, values, nextToken, _, err := store.List(RelationTypesPath(), req.Page.Token, req.Page.Size, opts)
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	relTypes := []*RelationType{}
-	for i := 0; i < len(values); i++ {
-		var relType dsc.RelationType
-		if err := pb.BufToProto(bytes.NewReader(values[i]), &relType); err != nil {
-			return nil, &dsc.PaginationResponse{}, err
-		}
-		if objType != nil && !strings.EqualFold(objType.Name, relType.ObjectType) {
-			continue
-		}
-		relTypes = append(relTypes, &RelationType{&relType})
-	}
-
-	if err != nil {
-		return nil, &dsc.PaginationResponse{}, err
-	}
-
-	return relTypes, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relTypes))}, nil
-}
-
-func (i *RelationType) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	sessionID := session.ExtractSessionID(ctx)
-
-	if ok, err := i.Validate(); !ok {
-		return err
-	}
-	if err := i.Normalize(); err != nil {
-		return err
-	}
-
-	curHash := ""
-	current, err := GetRelationType(ctx, &dsc.RelationTypeIdentifier{
-		Name:       &i.Name,
-		ObjectType: &i.ObjectType,
-	}, store, opts...)
-	if err == nil {
-		curHash = current.RelationType.Hash
-	}
-
-	// if in streaming mode, adopt current object hash, if not provided
-	if sessionID != "" {
-		i.RelationType.Hash = curHash
-	}
-
-	if curHash != "" && curHash != i.RelationType.Hash {
-		return derr.ErrHashMismatch.Str("current", curHash).Str("incoming", i.RelationType.Hash)
-	}
-
-	ts := timestamppb.New(time.Now().UTC())
-	if curHash == "" {
-		i.RelationType.CreatedAt = ts
-	}
-	i.RelationType.UpdatedAt = ts
-
-	newHash, _ := i.Hash()
-	i.RelationType.Hash = newHash
-
-	// when equal, no changes, skip write
-	if curHash == newHash {
-		return nil
-	}
-
-	buf := new(bytes.Buffer)
-
-	if err := pb.ProtoToBuf(buf, i.RelationType); err != nil {
-		return err
-	}
-
-	if err := store.Write(RelationTypesPath(), Int32ToStr(i.GetId()), buf.Bytes(), opts); err != nil {
-		return err
-	}
-
-	if err := store.Write(RelationTypesNamePath(), i.Key(), []byte(Int32ToStr(i.GetId())), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func DeleteRelationType(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
-	if ok, err := RelationTypeIdentifier.Validate(i); !ok {
-		return err
-	}
-
-	current, err := GetRelationType(ctx, i, store, opts...)
-	switch {
-	case errors.Is(err, boltdb.ErrKeyNotFound):
-		return nil
-	case err != nil:
-		return err
-	}
-
-	key := current.ObjectType + ":" + current.Name
-	if err := store.DeleteKey(RelationTypesNamePath(), key, opts); err != nil {
-		return err
-	}
-
-	if err := store.DeleteKey(RelationTypesPath(), Int32ToStr(current.Id), opts); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (i *RelationType) Msg() *dsc.RelationType {
 	if i == nil || i.RelationType == nil {
 		return &dsc.RelationType{}
@@ -217,7 +61,7 @@ func (i *RelationType) Msg() *dsc.RelationType {
 	return i.RelationType
 }
 
-func (i *RelationType) Hash() (string, error) {
+func (i *RelationType) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -255,19 +99,189 @@ func (i *RelationType) Hash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
-func GetRelationTypeID(ctx context.Context, i *dsc.RelationTypeIdentifier, store *boltdb.BoltDB, opts ...boltdb.Opts) (int32, error) {
+func (i *RelationType) Key() string {
+	return i.ObjectType + ":" + i.Name
+}
+
+func (sc *StoreContext) GetRelationType(relTypeIdentifier *RelationTypeIdentifier) (*RelationType, error) {
 	var relTypeID int32
-	if i.GetId() > 0 {
-		relTypeID = i.GetId()
-	} else if i.GetName() != "" && i.GetObjectType() != "" {
-		key := i.GetObjectType() + ":" + i.GetName()
-		idBuf, err := store.Read(RelationTypesNamePath(), key, opts)
+
+	if relTypeIdentifier.GetId() > 0 {
+		relTypeID = relTypeIdentifier.GetId()
+	} else if relTypeIdentifier.GetName() != "" && relTypeIdentifier.GetObjectType() != "" {
+		var err error
+		relTypeID, err = sc.GetRelationTypeID(relTypeIdentifier)
 		if err != nil {
-			return 0, boltdb.ErrKeyNotFound
+			return nil, err
 		}
-		relTypeID = StrToInt32(string(idBuf))
 	} else {
-		return 0, derr.ErrInvalidArgument
+		return nil, derr.ErrInvalidArgument
 	}
-	return relTypeID, nil
+
+	buf, err := sc.Store.Read(RelationTypesPath(), Int32ToStr(relTypeID), sc.Opts)
+	if err != nil {
+		return nil, err
+	}
+
+	var relType dsc.RelationType
+	if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
+		return nil, err
+	}
+
+	return &RelationType{&relType}, nil
+}
+
+func (sc *StoreContext) GetRelationTypeID(relTypeIdentifier *RelationTypeIdentifier) (int32, error) {
+	if relTypeIdentifier.GetId() > 0 {
+		return relTypeIdentifier.GetId(), nil
+	}
+
+	idBuf, err := sc.Store.Read(RelationTypesNamePath(), relTypeIdentifier.Key(), sc.Opts)
+	if err != nil {
+		return 0, err
+	}
+	objTypeID := StrToInt32(string(idBuf))
+
+	return objTypeID, nil
+}
+
+func (sc *StoreContext) GetRelationTypeName(relTypeIdentifier *RelationTypeIdentifier) (string, error) {
+	if relTypeIdentifier.GetName() != "" && relTypeIdentifier.GetObjectType() != "" {
+		return relTypeIdentifier.Key(), nil
+	}
+
+	buf, err := sc.Store.Read(RelationTypesPath(), Int32ToStr(relTypeIdentifier.GetId()), sc.Opts)
+	if err != nil {
+		return "", err
+	}
+
+	relType := RelationType{}
+	if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
+		return "", err
+	}
+
+	return relType.Key(), nil
+}
+
+func (sc *StoreContext) GetRelationTypes(param *ObjectTypeIdentifier, page *PaginationRequest) ([]*RelationType, *PaginationResponse, error) {
+	_, values, nextToken, _, err := sc.Store.List(RelationTypesPath(), page.Token, page.Size, sc.Opts)
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	var objType *ObjectType
+	if ot, err := sc.GetObjectType(param); err == nil && ot != nil {
+		objType = ot
+	}
+
+	relTypes := []*RelationType{}
+	for i := 0; i < len(values); i++ {
+		var relType dsc.RelationType
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &relType); err != nil {
+			return nil, &PaginationResponse{}, err
+		}
+		if objType != nil && !strings.EqualFold(objType.GetName(), relType.GetObjectType()) {
+			continue
+		}
+		relTypes = append(relTypes, &RelationType{&relType})
+	}
+
+	if err != nil {
+		return nil, &PaginationResponse{}, err
+	}
+
+	return relTypes, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relTypes))}}, nil
+}
+
+func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, error) {
+	sessionID := session.ExtractSessionID(sc.Context)
+
+	if ok, err := relType.Validate(); !ok {
+		return &RelationType{}, err
+	}
+
+	if err := relType.Normalize(); err != nil {
+		return &RelationType{}, err
+	}
+
+	curHash := ""
+	current, err := sc.GetRelationType(&RelationTypeIdentifier{
+		&dsc.RelationTypeIdentifier{
+			Name:       &relType.Name,
+			ObjectType: &relType.ObjectType,
+		},
+	})
+	if err == nil {
+		curHash = current.Hash
+		if relType.Id == 0 {
+			relType.Id = current.Id
+		}
+	} else if relType.Id == 0 {
+		if id, err := sc.Store.NextSeq(RelationTypesPath(), sc.Opts); err == nil {
+			relType.Id = int32(id)
+		}
+	}
+
+	// if in streaming mode, adopt current object hash, if not provided
+	if sessionID != "" {
+		relType.Hash = curHash
+	}
+
+	if curHash != "" && curHash != relType.Hash {
+		return &RelationType{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", relType.Hash)
+	}
+
+	ts := timestamppb.New(time.Now().UTC())
+	if curHash == "" {
+		relType.CreatedAt = ts
+	}
+	relType.UpdatedAt = ts
+
+	newHash, _ := relType.GetHash()
+	relType.Hash = newHash
+
+	// when equal, no changes, skip write
+	if curHash == newHash {
+		return relType, nil
+	}
+
+	buf := new(bytes.Buffer)
+
+	if err := pb.ProtoToBuf(buf, relType); err != nil {
+		return &RelationType{}, err
+	}
+
+	if err := sc.Store.Write(RelationTypesPath(), Int32ToStr(relType.GetId()), buf.Bytes(), sc.Opts); err != nil {
+		return &RelationType{}, err
+	}
+
+	if err := sc.Store.Write(RelationTypesNamePath(), relType.Key(), []byte(Int32ToStr(relType.GetId())), sc.Opts); err != nil {
+		return &RelationType{}, err
+	}
+
+	return relType, nil
+}
+
+func (sc *StoreContext) DeleteRelationType(relTypeIdentifier *RelationTypeIdentifier) error {
+	if ok, err := relTypeIdentifier.Validate(); !ok {
+		return err
+	}
+
+	current, err := sc.GetRelationType(relTypeIdentifier)
+	switch {
+	case errors.Is(err, boltdb.ErrKeyNotFound):
+		return nil
+	case err != nil:
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(RelationTypesNamePath(), current.Key(), sc.Opts); err != nil {
+		return err
+	}
+
+	if err := sc.Store.DeleteKey(RelationTypesPath(), Int32ToStr(current.Id), sc.Opts); err != nil {
+		return err
+	}
+
+	return nil
 }

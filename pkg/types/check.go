@@ -1,15 +1,12 @@
 package types
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
 )
 
 type CheckResult struct {
@@ -17,24 +14,19 @@ type CheckResult struct {
 	Trace []string
 }
 
-func CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (*CheckResult, error) {
-	sc := StoreContext{
-		Context: ctx,
-		Store:   store,
-		Opts:    opts,
-	}
+func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResult, error) {
 
-	subjectID, err := GetObjectID(ctx, req.Subject, store, opts...)
+	subjectID, err := sc.GetObjectID(&ObjectIdentifier{req.Subject})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	objectID, err := GetObjectID(ctx, req.Object, store, opts...)
+	objectID, err := sc.GetObjectID(&ObjectIdentifier{req.Object})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	relationTypeID, err := GetRelationTypeID(ctx, req.Relation, store, opts...)
+	relationTypeID, err := sc.GetRelationTypeID(&RelationTypeIdentifier{req.Relation})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
@@ -44,13 +36,8 @@ func CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest, store *bo
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
 }
 
-func CheckPermission(ctx context.Context, req *dsr.CheckPermissionRequest, store *boltdb.BoltDB, opts ...boltdb.Opts) (*CheckResult, error) {
-	sc := StoreContext{
-		Context: ctx,
-		Store:   store,
-		Opts:    opts,
-	}
-
+func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*CheckResult, error) {
+	// TBD
 	// resolve permission to covering relations
 	relations := []int32{}
 	r, err := sc.check(req.Subject.GetId(), req.Object.GetId(), relations, req.Trace)
@@ -62,7 +49,7 @@ func (sc *StoreContext) check(subjectID, objectID string, relationIDs []int32, t
 	// expand relation union
 	relations := sc.expandUnions(relationIDs)
 
-	objDeps, err := GetGraph(sc.Context, &dsr.GetGraphRequest{Anchor: &dsc.ObjectIdentifier{Id: &subjectID}}, sc.Store, sc.Opts...)
+	objDeps, err := sc.GetGraph(&dsr.GetGraphRequest{Anchor: &dsc.ObjectIdentifier{Id: &subjectID}})
 	if err != nil {
 		return &CheckResult{}, err
 	}
@@ -108,14 +95,11 @@ func (sc *StoreContext) expandUnions(relationIDs []int32) []string {
 	result := []string{}
 	for _, relationID := range relationIDs {
 		rid := relationID
-		relType, _ := GetRelationType(sc.Context, &dsc.RelationTypeIdentifier{Id: &rid}, sc.Store, sc.Opts...)
+		relType, _ := sc.GetRelationType(&RelationTypeIdentifier{&dsc.RelationTypeIdentifier{Id: &rid}})
 		result = append(result, relType.Name)
 
 		// get all relation types for given object type of relType, to find the ones that union the relType
-		objRelTypes, _, _ := GetRelationTypes(sc.Context, &dsr.GetRelationTypesRequest{
-			Param: &dsc.ObjectTypeIdentifier{Name: &relType.ObjectType},
-			Page:  &dsc.PaginationRequest{},
-		}, sc.Store, sc.Opts...)
+		objRelTypes, _, _ := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relType.ObjectType}}, &PaginationRequest{})
 
 		for _, objRelType := range objRelTypes {
 			for _, union := range objRelType.Unions {

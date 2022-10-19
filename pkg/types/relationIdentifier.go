@@ -5,22 +5,43 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type relationIdentifier struct{}
+type RelationIdentifier struct {
+	*dsc.RelationIdentifier
+}
 
-var RelationIdentifier = relationIdentifier{}
-
-func (relationIdentifier) Validate(i *dsc.RelationIdentifier) (bool, error) {
+func (i *RelationIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
 	}
-	if ok, err := ObjectIdentifier.Validate(i.Subject); !ok {
+
+	subject := ObjectIdentifier{ObjectIdentifier: i.Subject}
+	if ok, err := subject.Validate(); !ok {
 		return false, err
 	}
-	if ok, err := RelationTypeIdentifier.Validate(i.Relation); !ok {
+
+	relation := RelationTypeIdentifier{RelationTypeIdentifier: i.Relation}
+	if ok, err := relation.Validate(); !ok {
 		return false, err
 	}
-	if ok, err := ObjectIdentifier.Validate(i.Object); !ok {
+
+	object := ObjectIdentifier{ObjectIdentifier: i.Object}
+	if ok, err := object.Validate(); !ok {
 		return false, err
 	}
+
 	return true, nil
+}
+
+func (i *RelationIdentifier) ObjKey() string {
+	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
+		i.Relation.ObjectType = i.Object.Type
+	}
+	return i.Object.GetId() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Subject.GetId()
+}
+
+func (i *RelationIdentifier) SubKey() string {
+	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
+		i.Relation.ObjectType = i.Object.Type
+	}
+	return i.Subject.GetId() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetId()
 }

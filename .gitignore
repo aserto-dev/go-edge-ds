@@ -6,3 +6,5 @@ cover.out
 /.dev/
 # external dependencies from Depfile
 /.ext/
+# build output
+/bin/

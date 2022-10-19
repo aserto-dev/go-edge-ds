@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -48,7 +49,7 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 
 	conn, _ := grpc.DialContext(ctx, "", grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
-	}), grpc.WithInsecure(), grpc.WithBlock())
+	}), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
 	client := TestEdgeClient{
 		Reader:   dsr.NewReaderClient(conn),

@@ -2,7 +2,7 @@
 
 - [ ] Impl CheckPermission
 - [ ] Impl CheckRelation
-- [ ] Impl GetGraph
+- [X] Impl GetGraph
 - [X] Impl GetObject
 - [X] Impl GetObjectMany
 - [X] Impl GetObjectType
@@ -29,9 +29,9 @@
 - [ ] Enforce inbound RelationType constraints (ValidateConstraints)
 - [ ] Enforce outbound ObjectType constraints (ValidateConstraints)
 - [ ] Enforce outbound Permission constraints (ValidateConstraints)
-- [ ] Implement ID generation when no-ID is specified  (import)
-- [ ] Improve validation logic when no-ID is provided, currently this will fail validation, need to check if alternate key values are provided instead.
-- [ ] Implement Int32 ID generator (use the BoltDB Sequence and SetSequence?)
-- [ ] Unify/cleanup Types* implementations 
-- [ ] Verify hash consistency with existing directory model which uses SQL Boiler models vs using the protobuf message representation, especially for properties and schema (JSON objects)
+- [X] Implement ID generation when no-ID is specified  (import)
+- [X] Improve validation logic when no-ID is provided, currently this will fail validation, need to check if alternate key values are provided instead.
+- [X] Implement Int32 ID generator (use the BoltDB Sequence and SetSequence?)
+- [X] Unify/cleanup Types* implementations 
+- [X] Verify hash consistency with existing directory model which uses SQL Boiler models vs using the protobuf message representation, especially for properties and schema (JSON objects)
 - [X] Add ID.ValidIfSet() version
