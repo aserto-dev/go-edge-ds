@@ -21,11 +21,27 @@ type ObjectType struct {
 	*dsc.ObjectType
 }
 
+func (i *ObjectType) PreValidate() (bool, error) {
+	if i == nil {
+		return false, errors.Errorf("object_type not instantiated")
+	}
+	if strings.TrimSpace(i.Name) == "" {
+		return false, errors.Errorf("name cannot be empty")
+	}
+	if !(i.Ordinal >= 0) {
+		return false, errors.Errorf("ordinal must be larger or equal than zero")
+	}
+	if !Status(i.Status).Validate() {
+		return false, errors.Errorf("illegal status flag value")
+	}
+	return true, nil
+}
+
 func (i *ObjectType) Validate() (bool, error) {
 	if i == nil {
 		return false, errors.Errorf("object_type not instantiated")
 	}
-	if !(i.Id >= 0) {
+	if !(i.Id > 0) {
 		return false, errors.Errorf("object type id must be larger than zero")
 	}
 	if strings.TrimSpace(i.Name) == "" {
@@ -163,11 +179,7 @@ func (sc *StoreContext) GetObjectTypes(page *PaginationRequest) ([]*ObjectType, 
 func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := objType.Validate(); !ok {
-		return &ObjectType{}, err
-	}
-
-	if err := objType.Normalize(); err != nil {
+	if ok, err := objType.PreValidate(); !ok {
 		return &ObjectType{}, err
 	}
 
@@ -182,6 +194,14 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 		if id, err := sc.Store.NextSeq(ObjectTypesPath(), sc.Opts); err == nil {
 			objType.Id = int32(id)
 		}
+	}
+
+	if ok, err := objType.Validate(); !ok {
+		return &ObjectType{}, err
+	}
+
+	if err := objType.Normalize(); err != nil {
+		return &ObjectType{}, err
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided

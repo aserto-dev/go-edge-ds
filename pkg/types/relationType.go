@@ -21,17 +21,30 @@ type RelationType struct {
 	*dsc.RelationType
 }
 
-func NewRelationType(i *dsc.RelationType) *RelationType {
-	return &RelationType{
-		RelationType: i,
+func (i *RelationType) PreValidate() (bool, error) {
+	if i.RelationType == nil {
+		return false, errors.Errorf("relation_type not instantiated")
 	}
+	if strings.TrimSpace(i.GetName()) == "" {
+		return false, errors.Errorf("name cannot be empty")
+	}
+	if strings.TrimSpace(i.GetObjectType()) == "" {
+		return false, errors.Errorf("object_type cannot be empty")
+	}
+	if !(i.GetOrdinal() >= 0) {
+		return false, errors.Errorf("ordinal must be larger or equal than zero")
+	}
+	if !Status(i.GetStatus()).Validate() {
+		return false, errors.Errorf("illegal status flag value")
+	}
+	return true, nil
 }
 
 func (i *RelationType) Validate() (bool, error) {
 	if i.RelationType == nil {
 		return false, errors.Errorf("relation_type not instantiated")
 	}
-	if !(i.GetId() >= 0) {
+	if !(i.GetId() > 0) {
 		return false, errors.Errorf("relation type id must be larger than zero")
 	}
 	if strings.TrimSpace(i.GetName()) == "" {
@@ -197,11 +210,7 @@ func (sc *StoreContext) GetRelationTypes(param *ObjectTypeIdentifier, page *Pagi
 func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := relType.Validate(); !ok {
-		return &RelationType{}, err
-	}
-
-	if err := relType.Normalize(); err != nil {
+	if ok, err := relType.PreValidate(); !ok {
 		return &RelationType{}, err
 	}
 
@@ -221,6 +230,14 @@ func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, e
 		if id, err := sc.Store.NextSeq(RelationTypesPath(), sc.Opts); err == nil {
 			relType.Id = int32(id)
 		}
+	}
+
+	if ok, err := relType.Validate(); !ok {
+		return &RelationType{}, err
+	}
+
+	if err := relType.Normalize(); err != nil {
+		return &RelationType{}, err
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided

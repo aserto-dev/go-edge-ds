@@ -21,7 +21,7 @@ var (
 
 func main() {
 	flag.StringVar(&dbPath, "db_path", "", "database file path")
-	flag.IntVar(&port, "port", 12345, "port number")
+	flag.IntVar(&port, "port", 9292, "port number")
 	flag.BoolVar(&seed, "seed", false, "seed metadata objects")
 	flag.Parse()
 
