@@ -7,8 +7,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-
-	"github.com/aserto-dev/edge-ds/pkg/pb"
+	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 )
 
 type ObjectDependency struct {

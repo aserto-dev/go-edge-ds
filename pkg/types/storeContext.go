@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 )
 
 type StoreContext struct {

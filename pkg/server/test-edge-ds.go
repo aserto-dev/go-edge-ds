@@ -4,12 +4,12 @@ import (
 	"context"
 	"net"
 
-	eds "github.com/aserto-dev/edge-ds"
-	"github.com/aserto-dev/edge-ds/pkg/directory"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	eds "github.com/aserto-dev/go-edge-ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/rs/zerolog"
 
 	"google.golang.org/grpc"

@@ -3,11 +3,10 @@ package tests_test
 import (
 	"testing"
 
-	"github.com/aserto-dev/edge-ds/pkg/types"
-
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

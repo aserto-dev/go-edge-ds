@@ -7,17 +7,17 @@ import (
 	"time"
 
 	"github.com/aserto-dev/certs"
-	eds "github.com/aserto-dev/edge-ds"
-	edgeDirectory "github.com/aserto-dev/edge-ds/pkg/directory"
-	"github.com/rs/zerolog"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
-
-	"github.com/aserto-dev/edge-ds/pkg/session"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	eds "github.com/aserto-dev/go-edge-ds"
+	edgeDirectory "github.com/aserto-dev/go-edge-ds/pkg/directory"
+	"github.com/aserto-dev/go-edge-ds/pkg/session"
+
+	"github.com/rs/zerolog"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 const connectionTimeout time.Duration = 5 * time.Second

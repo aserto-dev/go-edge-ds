@@ -3,9 +3,9 @@ package directory
 import (
 	"context"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/edge-ds/pkg/types"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/types"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 

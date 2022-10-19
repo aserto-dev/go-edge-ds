@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/edge-ds/pkg/pb"
-	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/aserto-dev/go-edge-ds/pkg/session"
 
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Permission struct {

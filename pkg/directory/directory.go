@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/edge-ds/pkg/directory/metadata"
-	"github.com/aserto-dev/edge-ds/pkg/session"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/directory/metadata"
+	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/google/uuid"
 
 	"github.com/rs/zerolog"

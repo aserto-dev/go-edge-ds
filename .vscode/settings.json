@@ -9,7 +9,9 @@
         "Hasher",
         "hashstructure",
         "mitchellh",
+        "nolint",
         "protobuf",
+        "stretchr",
         "timestamppb",
         "wrapf",
         "zerolog"

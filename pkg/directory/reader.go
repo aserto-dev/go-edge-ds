@@ -3,10 +3,10 @@ package directory
 import (
 	"context"
 
-	"github.com/aserto-dev/edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/edge-ds/pkg/types"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/types"
 )
 
 // object type metadata methods

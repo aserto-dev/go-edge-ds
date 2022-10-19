@@ -7,8 +7,8 @@ import (
 	"path"
 	"time"
 
-	ds "github.com/aserto-dev/edge-ds/pkg/directory"
-	"github.com/aserto-dev/edge-ds/pkg/server"
+	ds "github.com/aserto-dev/go-edge-ds/pkg/directory"
+	"github.com/aserto-dev/go-edge-ds/pkg/server"
 	"github.com/rs/zerolog"
 	flag "github.com/spf13/pflag"
 )
