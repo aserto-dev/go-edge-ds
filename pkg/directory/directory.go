@@ -8,6 +8,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory/metadata"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
+	"github.com/aserto-dev/go-edge-ds/pkg/types"
 	"github.com/google/uuid"
 
 	"github.com/rs/zerolog"
@@ -47,6 +48,10 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		store:  store,
 	}
 
+	if err := ds.Init(); err != nil {
+		return nil, err
+	}
+
 	if err := ds.Seed(); err != nil {
 		return nil, err
 	}
@@ -59,6 +64,40 @@ func (s *Directory) Close() {
 		s.store.Close()
 		s.store = nil
 	}
+}
+
+func (s *Directory) Init() error {
+	paths := []func() []string{
+		types.ObjectTypesPath,
+		types.ObjectTypesNamePath,
+		types.PermissionsPath,
+		types.PermissionsNamePath,
+		types.RelationTypesPath,
+		types.RelationTypesNamePath,
+		types.ObjectsPath,
+		types.ObjectsKeyPath,
+		types.RelationsSubPath,
+		types.RelationsObjPath,
+	}
+
+	txOpt, cleanup, err := s.store.WriteTxOpts()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cErr := cleanup(err)
+		if cErr != nil {
+			err = cErr
+		}
+	}()
+
+	for _, path := range paths {
+		if err := s.store.CreateBucket(path(), []boltdb.Opts{txOpt}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Directory) Seed() error {
