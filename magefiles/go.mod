@@ -2,7 +2,10 @@ module github.com/aserto-dev/go-edge-ds/magefiles
 
 go 1.17
 
-require github.com/aserto-dev/mage-loot v0.8.10
+require (
+	github.com/aserto-dev/mage-loot v0.8.10
+	github.com/magefile/mage v1.14.0
+)
 
 require (
 	github.com/aserto-dev/clui v0.8.1 // indirect
@@ -12,7 +15,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/kyokomi/emoji v2.2.4+incompatible // indirect
-	github.com/magefile/mage v1.14.0 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
