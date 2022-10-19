@@ -12,8 +12,7 @@
             "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/cmd/server",
             "args": [
-                "--db_path", ".db/acmecorp.db",
-                "--seed"
+                "--db_path", ".db/eds-citadel.db"
             ]
         },
         {

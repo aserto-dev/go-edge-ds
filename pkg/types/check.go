@@ -95,11 +95,17 @@ func (sc *StoreContext) expandUnions(relationIDs []int32) []string {
 	result := []string{}
 	for _, relationID := range relationIDs {
 		rid := relationID
-		relType, _ := sc.GetRelationType(&RelationTypeIdentifier{&dsc.RelationTypeIdentifier{Id: &rid}})
+		relType, err := sc.GetRelationType(&RelationTypeIdentifier{&dsc.RelationTypeIdentifier{Id: &rid}})
+		if err != nil {
+			continue
+		}
 		result = append(result, relType.Name)
 
 		// get all relation types for given object type of relType, to find the ones that union the relType
-		objRelTypes, _, _ := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relType.ObjectType}}, &PaginationRequest{})
+		objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relType.ObjectType}}, &PaginationRequest{&dsc.PaginationRequest{}})
+		if err != nil {
+			continue
+		}
 
 		for _, objRelType := range objRelTypes {
 			for _, union := range objRelType.Unions {

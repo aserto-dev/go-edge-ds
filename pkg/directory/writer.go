@@ -47,7 +47,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 }
 
 // relation type metadata methods
-func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
+func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (resp *dsw.SetRelationTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -64,7 +64,7 @@ func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTyp
 	return &dsw.SetRelationTypeResponse{Result: r.RelationType}, err
 }
 
-func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelationTypeRequest) (*dsw.DeleteRelationTypeResponse, error) {
+func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelationTypeRequest) (resp *dsw.DeleteRelationTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 }
 
 // permission metadata methods
-func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (*dsw.SetPermissionResponse, error) {
+func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (resp *dsw.SetPermissionResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 }
 
 // object methods
-func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
+func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (resp *dsw.SetObjectResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -134,7 +134,7 @@ func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*
 	return &dsw.SetObjectResponse{Result: r.Msg()}, err
 }
 
-func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (*dsw.DeleteObjectResponse, error) {
+func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (resp *dsw.DeleteObjectResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 }
 
 // relation methods
-func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
+func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (resp *dsw.SetRelationResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -169,7 +169,7 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 	return &dsw.SetRelationResponse{Result: r.Msg()}, err
 }
 
-func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (*dsw.DeleteRelationResponse, error) {
+func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (resp *dsw.DeleteRelationResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
