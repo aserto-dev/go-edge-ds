@@ -243,6 +243,8 @@ func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, e
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
+		relType.CreatedAt = current.CreatedAt
+		relType.UpdatedAt = current.UpdatedAt
 		return relType, nil
 	}
 

@@ -206,6 +206,8 @@ func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, erro
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
+		permission.CreatedAt = current.CreatedAt
+		permission.UpdatedAt = current.UpdatedAt
 		return permission, nil
 	}
 

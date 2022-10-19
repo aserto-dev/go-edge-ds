@@ -204,6 +204,8 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
+		objType.CreatedAt = current.CreatedAt
+		objType.UpdatedAt = current.UpdatedAt
 		return objType, nil
 	}
 

@@ -149,11 +149,6 @@ func (sc *StoreContext) GetObjectID(objIdentifier *ObjectIdentifier) (string, er
 	return "", derr.ErrInvalidArgument
 }
 
-// TBD if we need this
-func (sc *StoreContext) GetObjectKey(objIdentifier *ObjectIdentifier) (string, error) {
-	return "", nil
-}
-
 func (sc *StoreContext) GetObjectMany(objIdentifiers []*ObjectIdentifier) (Objects, error) {
 	objects := []*Object{}
 
