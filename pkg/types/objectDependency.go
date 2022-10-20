@@ -29,7 +29,7 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 	}
 
 	deps := []*ObjectDependency{}
-	if deps, err = sc.getObjectDependencies(anchor.Id, 0, []string{anchor.Id}, deps); err != nil {
+	if deps, err = sc.getObjectDependencies(anchor.Id, 0, []string{}, deps); err != nil {
 		return []*ObjectDependency{}, err
 	}
 
@@ -65,7 +65,7 @@ func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path
 
 		p := make([]string, len(path))
 		copy(p, path)
-		p = append(p, *rel.Object.Id)
+		p = append(p, *rel.Subject.Type+"|"+*rel.Subject.Id+"|"+rel.Relation+"|"+*rel.Object.Type+"|"+*rel.Object.Id)
 
 		dep := ObjectDependency{
 			ObjectDependency: &dsc.ObjectDependency{
