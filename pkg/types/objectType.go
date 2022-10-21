@@ -21,37 +21,38 @@ type ObjectType struct {
 	*dsc.ObjectType
 }
 
+func NewObjectType(i *dsc.ObjectType) *ObjectType {
+	if i == nil {
+		return &ObjectType{ObjectType: &dsc.ObjectType{}}
+	}
+	return &ObjectType{ObjectType: i}
+}
+
 func (i *ObjectType) PreValidate() (bool, error) {
 	if i == nil {
-		return false, errors.Errorf("object_type not instantiated")
+		return false, derr.ErrInvalidObjectType
+	}
+	if !(i.Id >= 0) {
+		return false, derr.ErrInvalidArgument.Msg("object type id must be larger than zero")
 	}
 	if strings.TrimSpace(i.Name) == "" {
-		return false, errors.Errorf("name cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("name not set")
 	}
 	if !(i.Ordinal >= 0) {
-		return false, errors.Errorf("ordinal must be larger or equal than zero")
+		return false, derr.ErrInvalidArgument.Msg("ordinal must be larger or equal than zero")
 	}
 	if !Status(i.Status).Validate() {
-		return false, errors.Errorf("illegal status flag value")
+		return false, derr.ErrInvalidArgument.Msg("unknown status flag value")
 	}
 	return true, nil
 }
 
 func (i *ObjectType) Validate() (bool, error) {
-	if i == nil {
-		return false, errors.Errorf("object_type not instantiated")
+	if ok, err := i.PreValidate(); !ok {
+		return ok, err
 	}
 	if !(i.Id > 0) {
-		return false, errors.Errorf("object type id must be larger than zero")
-	}
-	if strings.TrimSpace(i.Name) == "" {
-		return false, errors.Errorf("name cannot be empty")
-	}
-	if !(i.Ordinal >= 0) {
-		return false, errors.Errorf("ordinal must be larger or equal than zero")
-	}
-	if !Status(i.Status).Validate() {
-		return false, errors.Errorf("illegal status flag value")
+		return false, derr.ErrInvalidArgument.Msg("object type id must be larger than zero")
 	}
 	return true, nil
 }

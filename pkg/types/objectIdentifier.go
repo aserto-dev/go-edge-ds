@@ -10,6 +10,9 @@ type ObjectIdentifier struct {
 }
 
 func NewObjectIdentifier(i *dsc.ObjectIdentifier) *ObjectIdentifier {
+	if i == nil {
+		return &ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{}}
+	}
 	return &ObjectIdentifier{ObjectIdentifier: i}
 }
 

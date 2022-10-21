@@ -10,6 +10,9 @@ type RelationTypeIdentifier struct {
 }
 
 func NewRelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *RelationTypeIdentifier {
+	if i == nil {
+		return &RelationTypeIdentifier{RelationTypeIdentifier: &dsc.RelationTypeIdentifier{}}
+	}
 	return &RelationTypeIdentifier{RelationTypeIdentifier: i}
 }
 

@@ -24,12 +24,12 @@ type Loader struct {
 func main() {
 	b, err := os.ReadFile("./tests.json")
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	var loader Loader
 
 	if err := json.Unmarshal(b, &loader); err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	ctx := context.Background()
@@ -40,7 +40,7 @@ func main() {
 		client.WithSessionID(uuid.NewString()),
 	)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	writer := dsw.NewWriterClient(conn.Conn)
@@ -48,7 +48,7 @@ func main() {
 	for _, object := range loader.Objects {
 		resp, err := writer.SetObject(ctx, &dsw.SetObjectRequest{Object: object})
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		log.Printf("%s:%s\n", resp.Result.Type, resp.Result.Id)
 	}
@@ -56,9 +56,9 @@ func main() {
 	for _, relation := range loader.Relations {
 		resp, err := writer.SetRelation(ctx, &dsw.SetRelationRequest{Relation: relation})
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
-		log.Printf("%s:%s|%s:%s|%s|%s\n",
+		log.Printf("%s:%s|%s:%s|%s:%s\n",
 			resp.Result.Subject.GetType(),
 			resp.Result.Subject.GetId(),
 			resp.Result.Object.GetType(),

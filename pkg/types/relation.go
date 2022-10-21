@@ -21,9 +21,16 @@ type Relation struct {
 	*dsc.Relation
 }
 
+func NewRelation(i *dsc.Relation) *Relation {
+	if i == nil {
+		return &Relation{Relation: &dsc.Relation{}}
+	}
+	return &Relation{Relation: i}
+}
+
 func (i *Relation) Validate() (bool, error) {
 	if i.Relation == nil {
-		return false, errors.Errorf("relation not instantiated")
+		return false, derr.ErrInvalidRelation
 	}
 
 	if i.Subject == nil {

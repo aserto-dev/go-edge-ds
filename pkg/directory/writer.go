@@ -11,8 +11,6 @@ import (
 
 // object type metadata methods
 func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (resp *dsw.SetObjectTypeResponse, err error) {
-	s.logger.Trace().Msg("SetObjectType")
-
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
 		return nil, err
@@ -25,7 +23,7 @@ func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReq
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	r, err := sc.SetObjectType(&types.ObjectType{ObjectType: req.ObjectType})
+	r, err := sc.SetObjectType(types.NewObjectType(req.ObjectType))
 	return &dsw.SetObjectTypeResponse{Result: r.ObjectType}, err
 }
 
@@ -42,7 +40,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	err = sc.DeleteObjectType(&types.ObjectTypeIdentifier{ObjectTypeIdentifier: req.Param})
+	err = sc.DeleteObjectType(types.NewObjectTypeIdentifier(req.Param))
 	return &dsw.DeleteObjectTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -60,7 +58,7 @@ func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTyp
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	r, err := sc.SetRelationType(&types.RelationType{RelationType: req.RelationType})
+	r, err := sc.SetRelationType(types.NewRelationType(req.RelationType))
 	return &dsw.SetRelationTypeResponse{Result: r.RelationType}, err
 }
 
@@ -77,7 +75,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	err = sc.DeleteRelationType(&types.RelationTypeIdentifier{RelationTypeIdentifier: req.Param})
+	err = sc.DeleteRelationType(types.NewRelationTypeIdentifier(req.Param))
 	return &dsw.DeleteRelationTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -95,7 +93,7 @@ func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionReq
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	r, err := sc.SetPermission(&types.Permission{Permission: req.Permission})
+	r, err := sc.SetPermission(types.NewPermission(req.Permission))
 	return &dsw.SetPermissionResponse{Result: r.Permission}, err
 }
 
@@ -112,7 +110,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	err = sc.DeletePermission(&types.PermissionIdentifier{PermissionIdentifier: req.Param})
+	err = sc.DeletePermission(types.NewPermissionIdentifier(req.Param))
 	return &dsw.DeletePermissionResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -130,7 +128,7 @@ func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (r
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	r, err := sc.SetObject(&types.Object{Object: req.Object})
+	r, err := sc.SetObject(types.NewObject(req.Object))
 	return &dsw.SetObjectResponse{Result: r.Msg()}, err
 }
 
@@ -147,7 +145,7 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	err = sc.DeleteObject(&types.ObjectIdentifier{ObjectIdentifier: req.Param})
+	err = sc.DeleteObject(types.NewObjectIdentifier(req.Param))
 	return &dsw.DeleteObjectResponse{Result: &emptypb.Empty{}}, err
 }
 
@@ -165,7 +163,7 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	r, err := sc.SetRelation(&types.Relation{Relation: req.Relation})
+	r, err := sc.SetRelation(types.NewRelation(req.Relation))
 	return &dsw.SetRelationResponse{Result: r.Msg()}, err
 }
 
@@ -182,6 +180,6 @@ func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationR
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	err = sc.DeleteRelation(&types.RelationIdentifier{RelationIdentifier: req.Param})
+	err = sc.DeleteRelation(types.NewRelationIdentifier(req.Param))
 	return &dsw.DeleteRelationResponse{Result: &emptypb.Empty{}}, err
 }

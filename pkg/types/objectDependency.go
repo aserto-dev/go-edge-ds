@@ -7,6 +7,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 )
 
@@ -17,6 +18,10 @@ type ObjectDependency struct {
 type ObjectDependencies []*ObjectDependency
 
 func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, error) {
+	if req == nil {
+		return nil, derr.ErrInvalidArgument
+	}
+
 	anchorIdentifier := &ObjectIdentifier{req.Anchor}
 	if ok, err := anchorIdentifier.Validate(); !ok {
 		return []*ObjectDependency{}, err

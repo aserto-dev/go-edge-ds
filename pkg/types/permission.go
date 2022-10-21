@@ -21,28 +21,32 @@ type Permission struct {
 	*dsc.Permission
 }
 
+func NewPermission(i *dsc.Permission) *Permission {
+	if i == nil {
+		return &Permission{Permission: &dsc.Permission{}}
+	}
+	return &Permission{Permission: i}
+}
+
 func (i *Permission) PreValidate() (bool, error) {
 	if i.Permission == nil {
-		return false, errors.Errorf("permission not instantiated")
+		return false, derr.ErrInvalidPermission
 	}
 	if strings.TrimSpace(i.Permission.GetName()) == "" {
-		return false, errors.Errorf("name cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("name not set")
 	}
 	return true, nil
 }
 
 func (i *Permission) Validate() (bool, error) {
-	if i.Permission == nil {
-		return false, errors.Errorf("permission not instantiated")
+	if ok, err := i.PreValidate(); !ok {
+		return ok, err
 	}
 	if strings.TrimSpace(i.Permission.GetId()) == "" {
-		return false, errors.Errorf("permission id cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("permission id not set")
 	}
 	if !ID.IsValid(i.Permission.GetId()) {
-		return false, errors.Errorf("invalid permission id")
-	}
-	if strings.TrimSpace(i.Permission.GetName()) == "" {
-		return false, errors.Errorf("name cannot be empty")
+		return false, derr.ErrInvalidPermissionID
 	}
 	return true, nil
 }

@@ -22,6 +22,13 @@ type Object struct {
 	*dsc.Object
 }
 
+func NewObject(i *dsc.Object) *Object {
+	if i == nil {
+		return &Object{Object: &dsc.Object{}}
+	}
+	return &Object{Object: i}
+}
+
 type Objects []*Object
 
 func (o *Objects) Msg() []*dsc.Object {
@@ -30,29 +37,23 @@ func (o *Objects) Msg() []*dsc.Object {
 
 func (i *Object) PreValidate() (bool, error) {
 	if i.Object == nil {
-		return false, errors.Errorf("object not instantiated")
+		return false, derr.ErrInvalidObject
 	}
 	if strings.TrimSpace(i.GetKey()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("object key cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("object key not set")
 	}
 	if strings.TrimSpace(i.GetType()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("object type cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("object type not set")
 	}
 	return true, nil
 }
 
 func (i *Object) Validate() (bool, error) {
-	if i.Object == nil {
-		return false, errors.Errorf("object not instantiated")
+	if ok, err := i.PreValidate(); !ok {
+		return ok, err
 	}
 	if !ID.IsValidIfSet(i.GetId()) {
-		return false, errors.Errorf("invalid object id")
-	}
-	if strings.TrimSpace(i.GetKey()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("object key cannot be empty")
-	}
-	if strings.TrimSpace(i.GetType()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("object type cannot be empty")
+		return false, derr.ErrInvalidID.Msg("object_id")
 	}
 	return true, nil
 }

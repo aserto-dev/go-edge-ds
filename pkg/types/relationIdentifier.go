@@ -10,6 +10,13 @@ type RelationIdentifier struct {
 }
 
 func NewRelationIdentifier(i *dsc.RelationIdentifier) *RelationIdentifier {
+	if i == nil {
+		return &RelationIdentifier{RelationIdentifier: &dsc.RelationIdentifier{
+			Subject:  &dsc.ObjectIdentifier{},
+			Relation: &dsc.RelationTypeIdentifier{},
+			Object:   &dsc.ObjectIdentifier{},
+		}}
+	}
 	return &RelationIdentifier{RelationIdentifier: i}
 }
 

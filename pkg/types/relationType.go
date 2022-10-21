@@ -21,43 +21,38 @@ type RelationType struct {
 	*dsc.RelationType
 }
 
+func NewRelationType(i *dsc.RelationType) *RelationType {
+	if i == nil {
+		return &RelationType{RelationType: &dsc.RelationType{}}
+	}
+	return &RelationType{RelationType: i}
+}
+
 func (i *RelationType) PreValidate() (bool, error) {
 	if i.RelationType == nil {
-		return false, errors.Errorf("relation_type not instantiated")
+		return false, derr.ErrInvalidRelationType
 	}
 	if strings.TrimSpace(i.GetName()) == "" {
-		return false, errors.Errorf("name cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("name not set")
 	}
 	if strings.TrimSpace(i.GetObjectType()) == "" {
-		return false, errors.Errorf("object_type cannot be empty")
+		return false, derr.ErrInvalidArgument.Msg("object_type not set")
 	}
 	if !(i.GetOrdinal() >= 0) {
-		return false, errors.Errorf("ordinal must be larger or equal than zero")
+		return false, derr.ErrInvalidArgument.Msg("ordinal must be larger or equal than zero")
 	}
 	if !Status(i.GetStatus()).Validate() {
-		return false, errors.Errorf("illegal status flag value")
+		return false, derr.ErrInvalidArgument.Msg("unknown status flag value")
 	}
 	return true, nil
 }
 
 func (i *RelationType) Validate() (bool, error) {
-	if i.RelationType == nil {
-		return false, errors.Errorf("relation_type not instantiated")
+	if ok, err := i.PreValidate(); !ok {
+		return ok, err
 	}
 	if !(i.GetId() > 0) {
-		return false, errors.Errorf("relation type id must be larger than zero")
-	}
-	if strings.TrimSpace(i.GetName()) == "" {
-		return false, errors.Errorf("name cannot be empty")
-	}
-	if strings.TrimSpace(i.GetObjectType()) == "" {
-		return false, errors.Errorf("object_type cannot be empty")
-	}
-	if !(i.GetOrdinal() >= 0) {
-		return false, errors.Errorf("ordinal must be larger or equal than zero")
-	}
-	if !Status(i.GetStatus()).Validate() {
-		return false, errors.Errorf("illegal status flag value")
+		return false, derr.ErrInvalidRelationTypeID
 	}
 	return true, nil
 }

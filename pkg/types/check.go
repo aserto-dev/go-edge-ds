@@ -15,6 +15,9 @@ type CheckResult struct {
 }
 
 func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResult, error) {
+	if req == nil {
+		return nil, derr.ErrInvalidArgument
+	}
 
 	subjectID, err := sc.GetObjectID(&ObjectIdentifier{req.Subject})
 	if err != nil {
@@ -37,6 +40,9 @@ func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResu
 }
 
 func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*CheckResult, error) {
+	if req == nil {
+		return nil, derr.ErrInvalidArgument
+	}
 	// TBD
 	// resolve permission to covering relations
 	relations := []int32{}

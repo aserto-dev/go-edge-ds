@@ -10,6 +10,9 @@ type PermissionIdentifier struct {
 }
 
 func NewPermissionIdentifier(i *dsc.PermissionIdentifier) *PermissionIdentifier {
+	if i == nil {
+		return &PermissionIdentifier{PermissionIdentifier: &dsc.PermissionIdentifier{}}
+	}
 	return &PermissionIdentifier{PermissionIdentifier: i}
 }
 
