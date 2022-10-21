@@ -1,0 +1,19 @@
+{
+    "cSpell.words": [
+        "aserto",
+        "bbolt",
+        "boltdb",
+        "cerr",
+        "derr",
+        "emptypb",
+        "Hasher",
+        "hashstructure",
+        "mitchellh",
+        "nolint",
+        "protobuf",
+        "stretchr",
+        "timestamppb",
+        "wrapf",
+        "zerolog"
+    ]
+}

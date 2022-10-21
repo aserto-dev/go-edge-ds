@@ -1,6 +1,10 @@
 .DS_Store
 cover.out
+# database file directory
+/.db/
 # personal developer settings
 /.dev/
 # external dependencies from Depfile
 /.ext/
+# build output
+/bin/

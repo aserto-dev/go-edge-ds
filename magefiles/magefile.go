@@ -5,9 +5,11 @@ package main
 
 import (
 	"os"
+	"runtime"
 
 	"github.com/aserto-dev/mage-loot/common"
 	"github.com/aserto-dev/mage-loot/deps"
+	"github.com/magefile/mage/sh"
 )
 
 func init() {
@@ -27,4 +29,17 @@ func Test() error {
 
 func Deps() {
 	deps.GetAllDeps()
+}
+
+func Build() error {
+	return common.Build()
+}
+
+func Run() error {
+	return sh.RunV(
+		"./bin/"+runtime.GOOS+"-"+runtime.GOARCH+"/server",
+		"run",
+		"--db_path", ".db/acmecorp.db",
+		"--seed",
+	)
 }
