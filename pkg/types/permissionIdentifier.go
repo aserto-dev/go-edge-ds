@@ -9,6 +9,14 @@ type PermissionIdentifier struct {
 	*dsc.PermissionIdentifier
 }
 
+func NewPermissionIdentifier(i *dsc.PermissionIdentifier) *PermissionIdentifier {
+	return &PermissionIdentifier{PermissionIdentifier: i}
+}
+
+func (i *PermissionIdentifier) Msg() *dsc.PermissionIdentifier {
+	return i.PermissionIdentifier
+}
+
 func (i *PermissionIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("permission_identifier")
@@ -22,4 +30,18 @@ func (i *PermissionIdentifier) Validate() (bool, error) {
 	}
 
 	return false, derr.ErrInvalidArgument.Msg("permission_identifier")
+}
+
+func (i *PermissionIdentifier) Resolve(sc *StoreContext) (*PermissionIdentifier, error) {
+	perm, err := sc.GetPermission(i)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PermissionIdentifier{
+		&dsc.PermissionIdentifier{
+			Id:   &perm.Id,
+			Name: &perm.Name,
+		},
+	}, nil
 }

@@ -58,6 +58,13 @@ func (s *Directory) Export(req *dse.ExportRequest, stream dse.Exporter_ExportSer
 		}
 	}
 
+	if req.Options&uint32(dse.Option_OPTION_DATA_RELATIONS_WITH_KEYS) != 0 {
+		if err := exportRelationsWithKeys(&sc, stream); err != nil {
+			logger.Error().Err(err).Msg("export_relations_with_keys")
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -208,6 +215,52 @@ func exportRelations(sc *types.StoreContext, stream dse.Exporter_ExportServer) e
 		}
 
 		for _, rel := range relations {
+
+			if err := stream.Send(&dse.ExportResponse{
+				Msg: &dse.ExportResponse_Relation{
+					Relation: rel.Relation,
+				},
+			}); err != nil {
+				return err
+			}
+		}
+
+		if pageResp.NextToken == "" {
+			break
+		}
+
+		page.Token = pageResp.NextToken
+	}
+	return nil
+}
+
+func exportRelationsWithKeys(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
+	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
+		Size:  100,
+		Token: "",
+	}}
+
+	for {
+		relations, pageResp, err := sc.GetRelations(&types.RelationIdentifier{
+			RelationIdentifier: &dsc.RelationIdentifier{},
+		}, page)
+		if err != nil {
+			return err
+		}
+
+		for _, rel := range relations {
+			sub, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Subject.Id}})
+			if err != nil {
+				return err
+			}
+
+			obj, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Object.Id}})
+			if err != nil {
+				return err
+			}
+
+			rel.Relation.Subject.Key = &sub.Key
+			rel.Relation.Object.Key = &obj.Key
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_Relation{

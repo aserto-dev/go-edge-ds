@@ -9,6 +9,14 @@ type ObjectIdentifier struct {
 	*dsc.ObjectIdentifier
 }
 
+func NewObjectIdentifier(i *dsc.ObjectIdentifier) *ObjectIdentifier {
+	return &ObjectIdentifier{ObjectIdentifier: i}
+}
+
+func (i *ObjectIdentifier) Msg() *dsc.ObjectIdentifier {
+	return i.ObjectIdentifier
+}
+
 func (i *ObjectIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_identifier")
@@ -27,4 +35,19 @@ func (i *ObjectIdentifier) Validate() (bool, error) {
 
 func (i *ObjectIdentifier) Key() string {
 	return i.GetType() + "|" + i.GetKey()
+}
+
+func (i *ObjectIdentifier) Resolve(sc *StoreContext) (*ObjectIdentifier, error) {
+	obj, err := sc.GetObject(i)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ObjectIdentifier{
+		&dsc.ObjectIdentifier{
+			Id:   &obj.Id,
+			Type: &obj.Type,
+			Key:  &obj.Key,
+		},
+	}, nil
 }

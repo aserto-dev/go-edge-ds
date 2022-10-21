@@ -114,11 +114,12 @@ func (i *Relation) ObjectKey() string {
 }
 
 func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Relation, error) {
-	if ok, err := relationIdentifier.Validate(); !ok {
+	ri, err := relationIdentifier.Resolve(sc)
+	if err != nil {
 		return &Relation{}, err
 	}
 
-	buf, err := sc.Store.Read(RelationsObjPath(), relationIdentifier.ObjKey(), sc.Opts)
+	buf, err := sc.Store.Read(RelationsObjPath(), ri.ObjKey(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -226,78 +227,92 @@ func (sc *StoreContext) GetRelations(param *RelationIdentifier, page *Pagination
 func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := rel.Validate(); !ok {
+	sub, err := NewObjectIdentifier(rel.Subject).Resolve(sc)
+	if err != nil {
 		return &Relation{}, err
 	}
 
-	if err := rel.Normalize(); err != nil {
+	obj, err := NewObjectIdentifier(rel.Object).Resolve(sc)
+	if err != nil {
 		return &Relation{}, err
 	}
 
-	relIdentifier := &RelationIdentifier{
-		&dsc.RelationIdentifier{
-			Subject: &dsc.ObjectIdentifier{
-				Id:   rel.Subject.Id,
-				Key:  rel.Subject.Key,
-				Type: rel.Subject.Type,
-			},
-			Relation: &dsc.RelationTypeIdentifier{
-				Name:       &rel.Relation.Relation,
-				ObjectType: rel.Object.Type,
-			},
-			Object: &dsc.ObjectIdentifier{
-				Id:   rel.Object.Id,
-				Key:  rel.Object.Key,
-				Type: rel.Object.Type,
-			},
-		},
+	r, err := NewRelationTypeIdentifier(&dsc.RelationTypeIdentifier{
+		Name:       &rel.Relation.Relation,
+		ObjectType: obj.Type,
+	}).Resolve(sc)
+	if err != nil {
+		return &Relation{}, err
+	}
+
+	relation := &Relation{&dsc.Relation{
+		Subject:   sub.Msg(),
+		Relation:  r.GetName(),
+		Object:    obj.Msg(),
+		CreatedAt: rel.CreatedAt,
+		UpdatedAt: rel.UpdatedAt,
+		DeletedAt: rel.DeletedAt,
+		Hash:      rel.Hash,
+	}}
+
+	if ok, err := relation.Validate(); !ok {
+		return &Relation{}, err
+	}
+
+	if err := relation.Normalize(); err != nil {
+		return &Relation{}, err
 	}
 
 	curHash := ""
-	current, err := sc.getRelation(relIdentifier)
-	if err == nil {
+	current, curErr := sc.getRelation(NewRelationIdentifier(&dsc.RelationIdentifier{
+		Subject:  sub.Msg(),
+		Relation: r.Msg(),
+		Object:   obj.Msg(),
+	}))
+
+	if curErr == nil {
 		curHash = current.Hash
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
 	if sessionID != "" {
-		rel.Hash = curHash
+		relation.Hash = curHash
 	}
 
-	if curHash != rel.Hash {
-		return &Relation{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", rel.Hash)
+	if curHash != relation.Hash {
+		return &Relation{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", relation.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
 	if curHash == "" {
-		rel.CreatedAt = ts
+		relation.CreatedAt = ts
 	}
-	rel.UpdatedAt = ts
+	relation.UpdatedAt = ts
 
-	newHash, _ := rel.GetHash()
-	rel.Hash = newHash
+	newHash, _ := relation.GetHash()
+	relation.Hash = newHash
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
-		rel.CreatedAt = current.CreatedAt
-		rel.UpdatedAt = current.UpdatedAt
-		return rel, nil
+		relation.CreatedAt = current.CreatedAt
+		relation.UpdatedAt = current.UpdatedAt
+		return relation, nil
 	}
 
 	buf := new(bytes.Buffer)
-	if err := pb.ProtoToBuf(buf, rel); err != nil {
+	if err := pb.ProtoToBuf(buf, relation); err != nil {
 		return &Relation{}, err
 	}
 
-	if err := sc.Store.Write(RelationsSubPath(), rel.SubjectKey(), buf.Bytes(), sc.Opts); err != nil {
+	if err := sc.Store.Write(RelationsSubPath(), relation.SubjectKey(), buf.Bytes(), sc.Opts); err != nil {
 		return &Relation{}, err
 	}
 
-	if err := sc.Store.Write(RelationsObjPath(), rel.ObjectKey(), buf.Bytes(), sc.Opts); err != nil {
+	if err := sc.Store.Write(RelationsObjPath(), relation.ObjectKey(), buf.Bytes(), sc.Opts); err != nil {
 		return &Relation{}, err
 	}
 
-	return rel, nil
+	return relation, nil
 }
 
 func (sc *StoreContext) DeleteRelation(relIdentifier *RelationIdentifier) error {

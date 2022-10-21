@@ -257,6 +257,9 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 }
 
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (resp *dsr.GetRelationsResponse, err error) {
+	if req.Param == nil {
+		req.Param = &dsc.RelationIdentifier{}
+	}
 	if req.Page == nil {
 		req.Page = &dsc.PaginationRequest{}
 	}

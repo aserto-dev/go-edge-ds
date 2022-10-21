@@ -49,14 +49,24 @@ func (sc *StoreContext) check(subjectID, objectID string, relationIDs []int32, t
 	// expand relation union
 	relations := sc.expandUnions(relationIDs)
 
-	objDeps, err := sc.GetGraph(&dsr.GetGraphRequest{Anchor: &dsc.ObjectIdentifier{Id: &subjectID}})
-	if err != nil {
-		return &CheckResult{}, err
+	deps := []*ObjectDependency{}
+	for _, relationID := range relationIDs {
+		relID := relationID
+		objDeps, err := sc.GetGraph(&dsr.GetGraphRequest{
+			Anchor:   &dsc.ObjectIdentifier{Id: &subjectID},
+			Subject:  &dsc.ObjectIdentifier{Id: &subjectID},
+			Relation: &dsc.RelationTypeIdentifier{Id: &relID},
+			Object:   &dsc.ObjectIdentifier{Id: &objectID},
+		})
+		if err != nil {
+			return &CheckResult{}, err
+		}
+		deps = append(deps, objDeps...)
 	}
 
 	result := CheckResult{}
 
-	for _, objDep := range objDeps {
+	for _, objDep := range deps {
 
 		if trace {
 			result.Trace = append(result.Trace, fmt.Sprintf("depth:%d, is_cycle:%t, path:%q",

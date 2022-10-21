@@ -24,8 +24,8 @@
 - [X] Impl SetPermission
 - [X] Impl SetRelation
 - [X] Impl SetRelationType
-- [ ] Impl Export
-- [ ] Impl Import
+- [X] Impl Export
+- [X] Impl Import
 - [ ] Enforce inbound RelationType constraints (ValidateConstraints)
 - [ ] Enforce outbound ObjectType constraints (ValidateConstraints)
 - [ ] Enforce outbound Permission constraints (ValidateConstraints)

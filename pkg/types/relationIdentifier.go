@@ -9,6 +9,14 @@ type RelationIdentifier struct {
 	*dsc.RelationIdentifier
 }
 
+func NewRelationIdentifier(i *dsc.RelationIdentifier) *RelationIdentifier {
+	return &RelationIdentifier{RelationIdentifier: i}
+}
+
+func (i *RelationIdentifier) Msg() *dsc.RelationIdentifier {
+	return i.RelationIdentifier
+}
+
 func (i *RelationIdentifier) Validate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
@@ -44,4 +52,29 @@ func (i *RelationIdentifier) SubKey() string {
 		i.Relation.ObjectType = i.Object.Type
 	}
 	return i.Subject.GetId() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetId()
+}
+
+func (i *RelationIdentifier) Resolve(sc *StoreContext) (*RelationIdentifier, error) {
+	s, err := NewObjectIdentifier(i.Subject).Resolve(sc)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := NewRelationTypeIdentifier(i.Relation).Resolve(sc)
+	if err != nil {
+		return nil, err
+	}
+
+	o, err := NewObjectIdentifier(i.Object).Resolve(sc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RelationIdentifier{
+		&dsc.RelationIdentifier{
+			Subject:  s.Msg(),
+			Relation: r.Msg(),
+			Object:   o.Msg(),
+		},
+	}, nil
 }
