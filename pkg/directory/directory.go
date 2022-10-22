@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aserto-dev/certs"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory/metadata"
@@ -18,6 +19,13 @@ type Config struct {
 	DBPath         string        `json:"db_path"`
 	RequestTimeout time.Duration `json:"request_timeout"`
 	Seed           bool          `json:"seed_metadata"`
+	GRPC           struct {
+		ListenAddress string `json:"listen_address"`
+		// Default connection timeout is 120 seconds
+		// https://godoc.org/google.golang.org/grpc#ConnectionTimeout
+		ConnectionTimeoutSeconds uint32               `json:"connection_timeout_seconds"`
+		Certs                    certs.TLSCredsConfig `json:"certs"`
+	} `json:"grpc"`
 }
 
 type Directory struct {
