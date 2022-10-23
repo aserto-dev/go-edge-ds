@@ -43,7 +43,7 @@ func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*Check
 	if req == nil {
 		return nil, derr.ErrInvalidArgument
 	}
-	// TBD
+
 	// resolve permission to covering relations
 	relations := []int32{}
 	r, err := sc.check(req.Subject.GetId(), req.Object.GetId(), relations, req.Trace)
