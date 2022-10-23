@@ -7,7 +7,9 @@ import (
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/aserto-dev/go-edge-ds/pkg/types"
+	"github.com/google/uuid"
 )
 
 func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
@@ -30,7 +32,9 @@ func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
 		}
 	}()
 
-	sc := types.StoreContext{Context: stream.Context(), Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
+
+	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
 
 	for {
 		req, err := stream.Recv()
