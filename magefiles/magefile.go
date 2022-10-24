@@ -4,18 +4,12 @@
 package main
 
 import (
-	"os"
 	"runtime"
 
 	"github.com/aserto-dev/mage-loot/common"
 	"github.com/aserto-dev/mage-loot/deps"
 	"github.com/magefile/mage/sh"
 )
-
-func init() {
-	// Set private repositories
-	os.Setenv("GOPRIVATE", "github.com/aserto-dev")
-}
 
 // Lint runs linting for the entire project.
 func Lint() error {
