@@ -22,23 +22,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Read Configuration
-        uses: hashicorp/vault-action@v2.4.1
-        id: vault
-        with:
-          url: ${{ env.VAULT_ADDR }}
-          token: ${{ secrets.VAULT_TOKEN }}
-          secrets: |
-            kv/data/github  "SSH_PRIVATE_KEY"     | SSH_PRIVATE_KEY;      
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup caching
-        uses: actions/cache@v1
+        uses: actions/cache@v3
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -46,14 +38,6 @@ jobs:
             ${{ runner.os }}-go-
       - name: Install Tools
         run: |
-          mkdir -p $HOME/.ssh
-          umask 0077 && echo -e "${SSH_PRIVATE_KEY}" > $HOME/.ssh/id_rsa
-          ssh-keyscan github.com >> $HOME/.ssh/known_hosts
-          git config --global url."git@github.com:".insteadOf https://github.com/
-          git config --global user.email "github-bot@aserto.com"
-          git config --global user.name "Aserto Bot"
-          eval `ssh-agent`
-          ssh-add $HOME/.ssh/id_rsa
           go run mage.go deps
       - name: Lint
         run: |

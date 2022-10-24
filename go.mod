@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/aserto-dev/aserto-go v0.8.13
 	github.com/aserto-dev/certs v0.0.2
-	github.com/aserto-dev/go-directory v0.20.0
+	github.com/aserto-dev/go-directory v0.20.1
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magefile/mage v1.14.0
@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/aserto-dev/errors v0.0.1 // indirect
+	github.com/aserto-dev/errors v0.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/kr/pretty v0.3.0 // indirect

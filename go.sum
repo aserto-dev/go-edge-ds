@@ -268,10 +268,10 @@ github.com/aserto-dev/certs v0.0.2/go.mod h1:9mFvZ1NR92aEGj4ce6QleZGPXJuDZKTv+CW
 github.com/aserto-dev/clui v0.7.0/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
 github.com/aserto-dev/clui v0.8.0/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
 github.com/aserto-dev/clui v0.8.1/go.mod h1:XpJxwNzSQaGN6rqXONZJEaeez4MUaCPikM2lKSngrXM=
-github.com/aserto-dev/errors v0.0.1 h1:ePJSUeqFtJdlCQ5q96CqYlIfxMskMComVR3FdmlKMgY=
-github.com/aserto-dev/errors v0.0.1/go.mod h1:TBlc5z9t1ClYehyJT614pJ0jknkCFWo7sdyAFkFEndY=
-github.com/aserto-dev/go-directory v0.20.0 h1:CKLtQIkjmvngPdG+6e3cU7WpZt7X7WIT3dpvlO4nVUg=
-github.com/aserto-dev/go-directory v0.20.0/go.mod h1:3faN0G4B+tXQI0UcGOWV8VoznCuK2R9+JkU1S77L0rs=
+github.com/aserto-dev/errors v0.0.2 h1:e7LRqs+WMkOl90MFe3lekfd55PJjRI1oIWRnpYsCfzk=
+github.com/aserto-dev/errors v0.0.2/go.mod h1:TBlc5z9t1ClYehyJT614pJ0jknkCFWo7sdyAFkFEndY=
+github.com/aserto-dev/go-directory v0.20.1 h1:tOoZPUeNqtiuy/kd/24oju0aTTug2tt6dx4qnLFxbJA=
+github.com/aserto-dev/go-directory v0.20.1/go.mod h1:gjg6wZezLGXJj1LBEXaJUS9kpOnaDWeFUYhDG1TAkTY=
 github.com/aserto-dev/go-grpc v0.8.0/go.mod h1:hog+zu5jE3+Y6t7m5PIBlavosmbd2qdF0BGZ9ueWK74=
 github.com/aserto-dev/go-grpc v0.8.43/go.mod h1:ZHKobEadfjzb39dKhc/iy8JyQDRuB/IsSwVa8YuWkQY=
 github.com/aserto-dev/go-grpc-authz v0.8.0/go.mod h1:ssdQrzxQf+IZ+jy8ATz9S6Ys+nqsTMZyKmPpdj0kwHo=
