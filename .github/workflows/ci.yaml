@@ -22,7 +22,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Setup Go
@@ -39,6 +39,9 @@ jobs:
       - name: Install Tools
         run: |
           go run mage.go deps
+      - name: Build
+        run: |
+          go run mage.go build
       - name: Lint
         run: |
           go run mage.go lint
