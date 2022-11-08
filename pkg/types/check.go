@@ -19,22 +19,22 @@ func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResu
 		return nil, derr.ErrInvalidArgument
 	}
 
-	subjectID, err := sc.GetObjectID(&ObjectIdentifier{req.Subject})
+	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	objectID, err := sc.GetObjectID(&ObjectIdentifier{req.Object})
+	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	relationTypeID, err := sc.GetRelationTypeID(&RelationTypeIdentifier{req.Relation})
+	relType, err := sc.GetRelationType(&RelationTypeIdentifier{req.Relation})
 	if err != nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	r, err := sc.check(subjectID, objectID, []int32{relationTypeID}, req.Trace)
+	r, err := sc.check(subject, object, []*RelationType{relType}, req.Trace)
 
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
 }
@@ -44,25 +44,34 @@ func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*Check
 		return nil, derr.ErrInvalidArgument
 	}
 
+	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
+	if err != nil {
+		return nil, derr.ErrInvalidArgument
+	}
+
+	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
+	if err != nil {
+		return nil, derr.ErrInvalidArgument
+	}
+
 	// resolve permission to covering relations
-	relations := []int32{}
-	r, err := sc.check(req.Subject.GetId(), req.Object.GetId(), relations, req.Trace)
+	relations := []*RelationType{}
+	r, err := sc.check(subject, object, relations, req.Trace)
 
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
 }
 
-func (sc *StoreContext) check(subjectID, objectID string, relationIDs []int32, trace bool) (*CheckResult, error) {
+func (sc *StoreContext) check(subject, object *Object, relations []*RelationType, trace bool) (*CheckResult, error) {
 	// expand relation union
-	relations := sc.expandUnions(relationIDs)
+	relations = sc.expandUnions(relations)
 
 	deps := []*ObjectDependency{}
-	for _, relationID := range relationIDs {
-		relID := relationID
+	for _, _ = range relations {
 		objDeps, err := sc.GetGraph(&dsr.GetGraphRequest{
-			Anchor:   &dsc.ObjectIdentifier{Id: &subjectID},
-			Subject:  &dsc.ObjectIdentifier{Id: &subjectID},
-			Relation: &dsc.RelationTypeIdentifier{Id: &relID},
-			Object:   &dsc.ObjectIdentifier{Id: &objectID},
+			Anchor: &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
+			// Subject:  &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
+			// Relation: &dsc.RelationTypeIdentifier{Id: &relation.Id, ObjectType: &relation.ObjectType, Name: &relation.Name},
+			Object: &dsc.ObjectIdentifier{Id: &object.Id, Type: &object.Type, Key: &object.Key},
 		})
 		if err != nil {
 			return &CheckResult{}, err
@@ -80,12 +89,12 @@ func (sc *StoreContext) check(subjectID, objectID string, relationIDs []int32, t
 		}
 
 		// object_id check
-		if objectID == objDep.ObjectId {
+		if object.GetId() == objDep.ObjectId {
 
 			// check if relation in relation set which contain the requested permission
 			relationInSet := false
 			for _, relation := range relations {
-				if relation == objDep.Relation {
+				if relation.GetName() == objDep.Relation {
 					relationInSet = true
 					break
 				}
@@ -106,26 +115,22 @@ func (sc *StoreContext) check(subjectID, objectID string, relationIDs []int32, t
 	return &result, nil
 }
 
-func (sc *StoreContext) expandUnions(relationIDs []int32) []string {
+func (sc *StoreContext) expandUnions(relations []*RelationType) []*RelationType {
 	relTypeMap := map[string]*RelationType{}
-	result := []string{}
-	for _, relationID := range relationIDs {
-		rid := relationID
-		relType, err := sc.GetRelationType(&RelationTypeIdentifier{&dsc.RelationTypeIdentifier{Id: &rid}})
-		if err != nil {
-			continue
-		}
-		result = append(result, relType.Name)
+
+	result := []*RelationType{}
+	for _, relation := range relations {
+		result = append(result, relation)
 
 		// get all relation types for given object type of relType, to find the ones that union the relType
-		objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relType.ObjectType}}, &PaginationRequest{&dsc.PaginationRequest{}})
+		objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relation.ObjectType}}, &PaginationRequest{&dsc.PaginationRequest{}})
 		if err != nil {
 			continue
 		}
 
 		for _, objRelType := range objRelTypes {
 			for _, union := range objRelType.Unions {
-				if strings.EqualFold(union, relType.Name) {
+				if strings.EqualFold(union, relation.Name) {
 					relTypeMap[objRelType.Name] = objRelType
 				}
 			}
@@ -133,7 +138,7 @@ func (sc *StoreContext) expandUnions(relationIDs []int32) []string {
 	}
 
 	for _, v := range relTypeMap {
-		result = append(result, v.Name)
+		result = append(result, v)
 	}
 
 	return result
