@@ -65,36 +65,30 @@ func (sc *StoreContext) check(subject, object *Object, relations []*RelationType
 	// expand relation union
 	relations = sc.expandUnions(relations)
 
-	deps := []*ObjectDependency{}
-	for _, _ = range relations {
-		objDeps, err := sc.GetGraph(&dsr.GetGraphRequest{
-			Anchor: &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
-			// Subject:  &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
-			// Relation: &dsc.RelationTypeIdentifier{Id: &relation.Id, ObjectType: &relation.ObjectType, Name: &relation.Name},
-			Object: &dsc.ObjectIdentifier{Id: &object.Id, Type: &object.Type, Key: &object.Key},
-		})
-		if err != nil {
-			return &CheckResult{}, err
-		}
-		deps = append(deps, objDeps...)
+	deps, err := sc.GetGraph(&dsr.GetGraphRequest{
+		Anchor: &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
+		Object: &dsc.ObjectIdentifier{Id: &object.Id, Type: &object.Type, Key: &object.Key},
+	})
+	if err != nil {
+		return &CheckResult{}, err
 	}
 
 	result := CheckResult{}
 
-	for _, objDep := range deps {
+	for _, dep := range deps {
 
 		if trace {
 			result.Trace = append(result.Trace, fmt.Sprintf("depth:%d, is_cycle:%t, path:%q",
-				objDep.Depth, objDep.IsCycle, objDep.Path))
+				dep.Depth, dep.IsCycle, dep.Path))
 		}
 
 		// object_id check
-		if object.GetId() == objDep.ObjectId {
+		if object.GetId() == dep.ObjectId {
 
 			// check if relation in relation set which contain the requested permission
 			relationInSet := false
 			for _, relation := range relations {
-				if relation.GetName() == objDep.Relation {
+				if relation.GetName() == dep.Relation {
 					relationInSet = true
 					break
 				}
