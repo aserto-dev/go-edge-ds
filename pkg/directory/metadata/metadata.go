@@ -10,7 +10,7 @@ var (
 		{Id: 10000, Name: "system", DisplayName: "System", IsSubject: false, Ordinal: 900, Status: uint32(dsc.Flag_FLAG_HIDDEN | dsc.Flag_FLAG_SYSTEM)},
 		{Id: 10001, Name: "user", DisplayName: "User", IsSubject: true, Ordinal: 100, Status: uint32(dsc.Flag_FLAG_SYSTEM)},
 		{Id: 10002, Name: "identity", DisplayName: "Identity", IsSubject: false, Ordinal: 300, Status: uint32(dsc.Flag_FLAG_SYSTEM | dsc.Flag_FLAG_READONLY)},
-		{Id: 10003, Name: "group", DisplayName: "Group", IsSubject: false, Ordinal: 200, Status: uint32(dsc.Flag_FLAG_SYSTEM)},
+		{Id: 10003, Name: "group", DisplayName: "Group", IsSubject: true, Ordinal: 200, Status: uint32(dsc.Flag_FLAG_SYSTEM)},
 		{Id: 10004, Name: "application", DisplayName: "Application", IsSubject: false, Ordinal: 400, Status: uint32(dsc.Flag_FLAG_SYSTEM)},
 		{Id: 10005, Name: "resource", DisplayName: "Resource", IsSubject: false, Ordinal: 500, Status: uint32(dsc.Flag_FLAG_SYSTEM)},
 		{Id: 10006, Name: "user-v1", DisplayName: "UserV1", IsSubject: true, Ordinal: 1000, Status: uint32(dsc.Flag_FLAG_HIDDEN | dsc.Flag_FLAG_SYSTEM | dsc.Flag_FLAG_SHADOW | dsc.Flag_FLAG_READONLY)},
