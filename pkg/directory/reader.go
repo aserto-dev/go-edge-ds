@@ -236,12 +236,30 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	relations, err := sc.GetRelation(types.NewRelationIdentifier(req.Param))
 
 	results := make([]*dsc.Relation, len(relations))
+	objects := map[string]*dsc.Object{}
+
 	for i := 0; i < len(relations); i++ {
 		results[i] = relations[i].Relation
+
+		if req.GetWithObjects() {
+			sub, err := sc.GetObject(types.NewObjectIdentifier(results[i].Subject))
+			if err != nil {
+				return &dsr.GetRelationResponse{}, err
+			}
+
+			obj, err := sc.GetObject(types.NewObjectIdentifier(results[i].Object))
+			if err != nil {
+				return &dsr.GetRelationResponse{}, err
+			}
+
+			objects[sub.GetId()] = sub.Msg()
+			objects[obj.GetId()] = obj.Msg()
+		}
 	}
 
 	return &dsr.GetRelationResponse{
 		Results: results,
+		Objects: objects,
 	}, nil
 }
 
