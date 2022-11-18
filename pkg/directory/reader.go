@@ -9,7 +9,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/types"
 )
 
-// Get object type (metadata)
+// Get object type (metadata).
 func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeRequest) (resp *dsr.GetObjectTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -27,7 +27,7 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 	return &dsr.GetObjectTypeResponse{Result: objType.Msg()}, err
 }
 
-// Get all objects types (metadata) (paginated)
+// Get all objects types (metadata) (paginated).
 func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (resp *dsr.GetObjectTypesResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 	}, err
 }
 
-// Get relation type (metadata)
+// Get relation type (metadata).
 func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTypeRequest) (resp *dsr.GetRelationTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -72,7 +72,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 	return &dsr.GetRelationTypeResponse{Result: relType.Msg()}, err
 }
 
-// Get all relation types, optionally filtered by object type (metadata) (paginated)
+// Get all relation types, optionally filtered by object type (metadata) (paginated).
 func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest) (resp *dsr.GetRelationTypesResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -99,7 +99,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 	}, err
 }
 
-// Get permission (metadata)
+// Get permission (metadata).
 func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionRequest) (resp *dsr.GetPermissionResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 	return &dsr.GetPermissionResponse{Result: perm.Msg()}, err
 }
 
-// Get all permissions (metadata) (paginated)
+// Get all permissions (metadata) (paginated).
 func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (resp *dsr.GetPermissionsResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -192,7 +192,7 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 	return &dsr.GetObjectManyResponse{Results: results}, err
 }
 
-// Get all object instances, optionally filtered by object type. (paginated)
+// Get all object instances, optionally filtered by object type. (paginated).
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (resp *dsr.GetObjectsResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
@@ -263,7 +263,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}, nil
 }
 
-// Get relation instances based on subject, relation, object filter. (paginated)
+// Get relation instances based on subject, relation, object filter (paginated).
 func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (resp *dsr.GetRelationsResponse, err error) {
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {

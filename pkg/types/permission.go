@@ -163,7 +163,6 @@ func (sc *StoreContext) GetPermissions(page *PaginationRequest) ([]*Permission, 
 	return permissions, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}}, nil
 }
 
-// func (i *Permission) Set(ctx context.Context, store *boltdb.BoltDB, opts ...boltdb.Opts) error {
 func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 

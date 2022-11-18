@@ -200,7 +200,7 @@ var objectTestCasesWithID = []*TestCase{
 	},
 }
 
-// create object without id
+// create object without id.
 var objectTestCasesWithoutID = []*TestCase{
 	{
 		Name: "create test-obj-2 with no-id",
