@@ -237,7 +237,7 @@ var relationTestCasesWithID = []*TestCase{
 	},
 }
 
-// no user cases for setting relation without an ID, as a relation specifies all key values regardlessly
+// no user cases for setting relation without an ID, as a relation specifies all key values regardlessly.
 var relationTestCasesWithoutID = []*TestCase{}
 
 var relationTestCasesStreamMode = []*TestCase{}

@@ -9,7 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-// object type metadata methods
+// object type metadata methods.
 func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (resp *dsw.SetObjectTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
@@ -44,7 +44,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 	return &dsw.DeleteObjectTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
-// relation type metadata methods
+// relation type metadata methods.
 func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (resp *dsw.SetRelationTypeResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 	return &dsw.DeleteRelationTypeResponse{Result: &emptypb.Empty{}}, err
 }
 
-// permission metadata methods
+// permission metadata methods.
 func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (resp *dsw.SetPermissionResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
@@ -114,7 +114,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 	return &dsw.DeletePermissionResponse{Result: &emptypb.Empty{}}, err
 }
 
-// object methods
+// object methods.
 func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (resp *dsw.SetObjectResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {
@@ -149,7 +149,7 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 	return &dsw.DeleteObjectResponse{Result: &emptypb.Empty{}}, err
 }
 
-// relation methods
+// relation methods.
 func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (resp *dsw.SetRelationResponse, err error) {
 	txOpt, cleanup, err := s.store.WriteTxOpts()
 	if err != nil {

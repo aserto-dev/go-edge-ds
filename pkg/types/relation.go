@@ -139,6 +139,7 @@ func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Re
 	return &Relation{&rel}, nil
 }
 
+// nolint: gocyclo
 func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*Relation, error) {
 	var subID, objID, objType, relName, filter string
 	var path []string

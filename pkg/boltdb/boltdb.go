@@ -318,7 +318,7 @@ func (s *BoltDB) ListBuckets(path []string, pageToken string, pageSize int32, op
 	return buckets, nextToken, totalSize, nil
 }
 
-// ListKeys returns paged collection of keys
+// ListKeys returns paged collection of keys.
 func (s *BoltDB) ListKeys(path []string, pageToken string, pageSize int32, opts []Opts) ([]string, string, int32, error) {
 	s.logger.Trace().Interface("path", path).Str("pageToken", pageToken).Int32("pageSize", pageSize).Msg("ListKeys")
 
@@ -390,7 +390,7 @@ func (s *BoltDB) ListKeys(path []string, pageToken string, pageSize int32, opts 
 	return keys, nextToken, totalSize, nil
 }
 
-// List returns paged collection of key and value arrays
+// List returns paged collection of key and value arrays.
 func (s *BoltDB) List(path []string, pageToken string, pageSize int32, opts []Opts) ([]string, [][]byte, string, int32, error) {
 	s.logger.Trace().Interface("path", path).Str("pageToken", pageToken).Int32("pageSize", pageSize).Msg("List")
 
@@ -487,16 +487,6 @@ func (s *BoltDB) Write(path []string, key string, value []byte, opts []Opts) err
 	return err
 }
 
-// Delete key or bucket, convenience function combing DeleteKey and DeleteBucket.
-// func (s *BoltDB) Delete(path []string, key string, opts []Opts) error {
-// 	s.logger.Trace().Interface("path", path).Str("key", key).Msg("Delete")
-
-// 	if key == "" {
-// 		return errors.Wrapf(ErrKeyNotFound, "key empty")
-// 	}
-// 	return s.DeleteKey(path, key, opts)
-// }
-
 // DeleteKey deletes key at given path when present.
 // The call does not return an error when key does not exist.
 func (s *BoltDB) DeleteKey(path []string, key string, opts []Opts) error {
@@ -558,7 +548,7 @@ func (s *BoltDB) DeleteBucket(path []string, opts []Opts) error {
 	return err
 }
 
-// CreateBucket creates the bucket
+// CreateBucket creates the bucket.
 func (s *BoltDB) CreateBucket(path []string, opts []Opts) error {
 	s.logger.Trace().Interface("path", path).Msg("CreateBucket")
 	create := func(tx *bolt.Tx) error {
@@ -629,7 +619,7 @@ func (s *BoltDB) setBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
 	return b, nil
 }
 
-// filePathExists, internal helper function to detect if the file path exists
+// filePathExists, internal helper function to detect if the file path exists.
 func filePathExists(path string) (bool, error) {
 	if _, err := os.Stat(path); err == nil {
 		return true, nil
@@ -704,7 +694,7 @@ func PageSize(input int32) int32 {
 	}
 }
 
-// ReadScan returns list of key-value pairs which match the scan prefix filter
+// ReadScan returns list of key-value pairs which match the scan prefix filter.
 func (s *BoltDB) ReadScan(path []string, prefix string, opts []Opts) ([]string, [][]byte, error) {
 	s.logger.Trace().Interface("path", path).Str("prefix", prefix).Msg("ReadScan")
 
@@ -751,7 +741,7 @@ func (s *BoltDB) ReadScan(path []string, prefix string, opts []Opts) ([]string, 
 	return keys, values, nil
 }
 
-// Generate next ID for bucket
+// Generate next ID for bucket.
 func (s *BoltDB) NextSeq(path []string, opts []Opts) (uint64, error) {
 	s.logger.Trace().Interface("path", path).Msg("NextID")
 
