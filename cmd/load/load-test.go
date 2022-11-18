@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/aserto-dev/aserto-go/client"
+	"github.com/aserto-dev/go-aserto/client"
 
 	"encoding/json"
 	"log"

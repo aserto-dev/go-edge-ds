@@ -3,9 +3,9 @@ module github.com/aserto-dev/go-edge-ds
 go 1.17
 
 require (
-	github.com/aserto-dev/aserto-go v0.8.13
 	github.com/aserto-dev/certs v0.0.2
-	github.com/aserto-dev/go-directory v0.20.1
+	github.com/aserto-dev/go-aserto v0.20.0
+	github.com/aserto-dev/go-directory v0.20.3
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magefile/mage v1.14.0
@@ -13,7 +13,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	go.etcd.io/bbolt v1.3.6
 )
 
