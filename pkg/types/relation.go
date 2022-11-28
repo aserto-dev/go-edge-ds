@@ -173,7 +173,7 @@ func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*
 	}
 
 	relIdentifier := &RelationTypeIdentifier{relationIdentifier.Relation}
-	if relIdentifier.GetObjectType() == "" {
+	if relIdentifier.GetObjectType() == "" && objType != "" {
 		relIdentifier.ObjectType = &objType
 	}
 	if ok, _ := relIdentifier.Validate(); ok {

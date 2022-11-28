@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.17
+go 1.19
 
 require (
 	github.com/aserto-dev/certs v0.0.2
