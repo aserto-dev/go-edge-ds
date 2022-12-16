@@ -6,8 +6,12 @@ github.com/aserto-dev/errors v0.0.2 h1:e7LRqs+WMkOl90MFe3lekfd55PJjRI1oIWRnpYsCf
 github.com/aserto-dev/errors v0.0.2/go.mod h1:TBlc5z9t1ClYehyJT614pJ0jknkCFWo7sdyAFkFEndY=
 github.com/aserto-dev/go-aserto v0.20.0 h1:BbRpVapWZj/7krshUnmui5eQrRXP3yVqSKMkBY33Qxc=
 github.com/aserto-dev/go-aserto v0.20.0/go.mod h1:3xhxKkQmMrzADCZL+5WtA+SuC+syvQMMmDp8GnPRmHc=
+github.com/aserto-dev/go-aserto v0.20.2 h1:oLF9jp36HQmzLAw6Zj47TP63FdfxTXJ1nYPv7llxus8=
+github.com/aserto-dev/go-aserto v0.20.2/go.mod h1:3xhxKkQmMrzADCZL+5WtA+SuC+syvQMMmDp8GnPRmHc=
 github.com/aserto-dev/go-directory v0.20.3 h1:gsUb5mOzdDevazTaYv14YqQ7+q0fIAfh2NmstVuZzEE=
 github.com/aserto-dev/go-directory v0.20.3/go.mod h1:gjg6wZezLGXJj1LBEXaJUS9kpOnaDWeFUYhDG1TAkTY=
+github.com/aserto-dev/go-directory v0.20.4 h1:vZlgrirt9o/9p20aJSuQ7DZgKWiAJku2Aqy3p0XF6Ho=
+github.com/aserto-dev/go-directory v0.20.4/go.mod h1:gjg6wZezLGXJj1LBEXaJUS9kpOnaDWeFUYhDG1TAkTY=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=

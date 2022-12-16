@@ -11,6 +11,8 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 )
 
+const maxDepth = 1024
+
 type ObjectDependency struct {
 	*dsc.ObjectDependency
 }
@@ -55,6 +57,10 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 
 func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path []string, deps []*ObjectDependency) ([]*ObjectDependency, error) {
 	depth++
+
+	if depth > maxDepth {
+		return []*ObjectDependency{}, derr.ErrMaxDepthExceeded
+	}
 
 	subFilter := anchorID + "|"
 	_, values, err := sc.Store.ReadScan(RelationsSubPath(), subFilter, sc.Opts)

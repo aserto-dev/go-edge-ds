@@ -15,23 +15,25 @@ type CheckResult struct {
 }
 
 func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResult, error) {
+	resp := &CheckResult{Check: false, Trace: []string{}}
+
 	if req == nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
 	if err != nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
 	if err != nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	relType, err := sc.GetRelationType(&RelationTypeIdentifier{req.Relation})
 	if err != nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	r, err := sc.check(subject, object, []*RelationType{relType}, req.Trace)
@@ -40,22 +42,33 @@ func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResu
 }
 
 func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*CheckResult, error) {
+	resp := &CheckResult{Check: false, Trace: []string{}}
+
 	if req == nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
 	if err != nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
 	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
 	if err != nil {
-		return nil, derr.ErrInvalidArgument
+		return resp, derr.ErrInvalidArgument
 	}
 
-	// resolve permission to covering relations
-	relations := []*RelationType{}
+	permission, err := sc.GetPermission(&PermissionIdentifier{req.Permission})
+	if err != nil {
+		return resp, derr.ErrInvalidArgument
+	}
+
+	// resolve permission to covering relations for associated object type
+	relations := sc.expandPermission(object, permission)
+	if len(relations) == 0 {
+		return resp, derr.ErrInvalidPermission
+	}
+
 	r, err := sc.check(subject, object, relations, req.Trace)
 
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
@@ -133,6 +146,26 @@ func (sc *StoreContext) expandUnions(relations []*RelationType) []*RelationType 
 
 	for _, v := range relTypeMap {
 		result = append(result, v)
+	}
+
+	return result
+}
+
+func (sc *StoreContext) expandPermission(object *Object, permission *Permission) []*RelationType {
+	result := []*RelationType{}
+
+	objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &object.Type}}, &PaginationRequest{&dsc.PaginationRequest{}})
+	if err != nil {
+		return result
+	}
+
+	for _, objRelType := range objRelTypes {
+		for _, p := range objRelType.Permissions {
+			if p == permission.Name {
+				result = append(result, objRelType)
+				continue
+			}
+		}
 	}
 
 	return result
