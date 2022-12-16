@@ -4,8 +4,8 @@ go 1.19
 
 require (
 	github.com/aserto-dev/certs v0.0.2
-	github.com/aserto-dev/go-aserto v0.20.0
-	github.com/aserto-dev/go-directory v0.20.3
+	github.com/aserto-dev/go-aserto v0.20.2
+	github.com/aserto-dev/go-directory v0.20.4
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/magefile/mage v1.14.0
