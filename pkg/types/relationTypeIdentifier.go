@@ -21,7 +21,7 @@ func (i *RelationTypeIdentifier) Msg() *dsc.RelationTypeIdentifier {
 }
 
 func (i *RelationTypeIdentifier) Validate() (bool, error) {
-	if i == nil {
+	if i.RelationTypeIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 	}
 

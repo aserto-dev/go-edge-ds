@@ -21,7 +21,7 @@ func (i *PermissionIdentifier) Msg() *dsc.PermissionIdentifier {
 }
 
 func (i *PermissionIdentifier) Validate() (bool, error) {
-	if i == nil {
+	if i.PermissionIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("permission_identifier")
 	}
 
