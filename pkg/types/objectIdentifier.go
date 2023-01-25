@@ -21,7 +21,7 @@ func (i *ObjectIdentifier) Msg() *dsc.ObjectIdentifier {
 }
 
 func (i *ObjectIdentifier) Validate() (bool, error) {
-	if i == nil {
+	if i.ObjectIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_identifier")
 	}
 	if ID.IsValid(i.GetId()) {

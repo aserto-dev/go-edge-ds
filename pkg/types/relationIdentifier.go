@@ -25,7 +25,7 @@ func (i *RelationIdentifier) Msg() *dsc.RelationIdentifier {
 }
 
 func (i *RelationIdentifier) Validate() (bool, error) {
-	if i == nil {
+	if i.RelationIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
 	}
 
