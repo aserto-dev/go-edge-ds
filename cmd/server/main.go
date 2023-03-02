@@ -25,20 +25,18 @@ func main() {
 	flag.BoolVar(&seed, "seed", false, "seed metadata objects")
 	flag.Parse()
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("failed to get current working directory: %v", err)
-	}
-
 	config := ds.Config{
-		DBPath:         path.Join(cwd, dbPath),
+		DBPath:         path.Join(dbPath),
 		RequestTimeout: time.Second * 2,
 		Seed:           seed,
 	}
 
 	logger := zerolog.New(os.Stdout)
 
-	edge := server.NewEdgeServer(config, nil, "localhost", port, &logger)
+	edge, err := server.NewEdgeServer(config, nil, "localhost", port, &logger)
+	if err != nil {
+		log.Fatalf("failed to create edge server: %v", err)
+	}
 
 	defer func() { _ = edge.Stop(context.Background()) }()
 
