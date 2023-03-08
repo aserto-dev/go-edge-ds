@@ -14,6 +14,7 @@ import (
 	eds "github.com/aserto-dev/go-edge-ds"
 	edgeDirectory "github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
+	"github.com/pkg/errors"
 
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
@@ -30,13 +31,13 @@ type edgeServer struct {
 	logger   *zerolog.Logger
 }
 
-func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host string, grpcPort int, logger *zerolog.Logger) *edgeServer {
+func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host string, grpcPort int, logger *zerolog.Logger) (*edgeServer, error) {
 
 	edgeDSLogger := logger.With().Str("component", "api.edge-directory").Logger()
 
 	edgeDirServer, err := eds.New(&cfg, &edgeDSLogger)
 	if err != nil {
-		logger.Error().Err(err).Msg("failed to start edge directory server")
+		return nil, errors.Wrapf(err, "failed to create edge directory server")
 	}
 
 	sessionMiddleware := session.HeaderMiddleware{DisableValidation: false}
@@ -48,7 +49,7 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 	if certCfg != nil {
 		tlsCreds, err := certs.GRPCServerTLSCreds(*certCfg)
 		if err != nil {
-			logger.Error().Err(err).Msg("failed to get tls")
+			return nil, errors.Wrapf(err, "failed to get TLS credentials")
 		}
 		tlsAuth := grpc.Creds(tlsCreds)
 		opts = append(opts, tlsAuth)
@@ -62,10 +63,11 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 
 	reflection.Register(s)
 	return &edgeServer{server: s,
-		edgeDir:  edgeDirServer,
-		host:     host,
-		grpcPort: grpcPort,
-		logger:   &edgeDSLogger}
+			edgeDir:  edgeDirServer,
+			host:     host,
+			grpcPort: grpcPort,
+			logger:   &edgeDSLogger},
+		nil
 }
 
 func (s *edgeServer) Start(ctx context.Context) error {
