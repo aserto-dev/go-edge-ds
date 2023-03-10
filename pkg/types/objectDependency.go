@@ -36,10 +36,14 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 	}
 
 	deps := []*ObjectDependency{}
-	if deps, err = sc.getObjectDependencies(anchor.Id, 0, []string{}, deps); err != nil {
+
+	rels := []*Relation{}
+	if rels, err = sc.getObjectDependencies2(anchor.Id, rels); err != nil {
 		return []*ObjectDependency{}, err
 	}
+	rels = rewriteParentRelations(rels)
 
+	deps = convertRelationsToDependencies(rels)
 	deps = filterObjectDependencies(req, deps)
 
 	sort.Slice(deps, func(i, j int) bool {
@@ -52,53 +56,6 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 		return false
 	})
 
-	return deps, nil
-}
-
-func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path []string, deps []*ObjectDependency) ([]*ObjectDependency, error) {
-	depth++
-
-	if depth > maxDepth {
-		return []*ObjectDependency{}, derr.ErrMaxDepthExceeded
-	}
-
-	subFilter := anchorID + "|"
-	_, values, err := sc.Store.ReadScan(RelationsSubPath(), subFilter, sc.Opts)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < len(values); i++ {
-		var rel dsc.Relation
-		if err := pb.BufToProto(bytes.NewReader(values[i]), &rel); err != nil {
-			return nil, err
-		}
-
-		p := make([]string, len(path))
-		copy(p, path)
-		p = append(p, *rel.Subject.Type+"|"+*rel.Subject.Id+"|"+rel.Relation+"|"+*rel.Object.Type+"|"+*rel.Object.Id)
-
-		dep := ObjectDependency{
-			ObjectDependency: &dsc.ObjectDependency{
-				ObjectType:  *rel.Object.Type,
-				ObjectId:    *rel.Object.Id,
-				ObjectKey:   "",
-				Relation:    rel.Relation,
-				SubjectType: *rel.Subject.Type,
-				SubjectId:   *rel.Subject.Id,
-				SubjectKey:  "",
-				Depth:       depth,
-				IsCycle:     false,
-				Path:        p,
-			},
-		}
-
-		deps = append(deps, &dep)
-
-		if deps, err = sc.getObjectDependencies(*rel.Object.Id, depth, p, deps); err != nil {
-			return nil, err
-		}
-	}
 	return deps, nil
 }
 
@@ -152,4 +109,71 @@ func includeObjectDependency(dep *ObjectDependency, filters []filter) bool {
 		}
 	}
 	return true
+}
+
+func (sc *StoreContext) getObjectDependencies2(anchorID string, deps []*Relation) ([]*Relation, error) {
+
+	if len(deps)+1 > maxDepth {
+		return []*Relation{}, derr.ErrMaxDepthExceeded
+	}
+
+	subFilter := anchorID + "|"
+	_, values, err := sc.Store.ReadScan(RelationsSubPath(), subFilter, sc.Opts)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := 0; i < len(values); i++ {
+		var rel dsc.Relation
+		if err := pb.BufToProto(bytes.NewReader(values[i]), &rel); err != nil {
+			return nil, err
+		}
+
+		deps = append(deps, &Relation{&rel})
+
+		if deps, err = sc.getObjectDependencies2(*rel.Object.Id, deps); err != nil {
+			return nil, err
+		}
+	}
+	return deps, nil
+}
+
+const parentRelation string = "parent"
+
+func rewriteParentRelations(rels []*Relation) []*Relation {
+	var lastRelation string
+	for i := 0; i < len(rels); i++ {
+		if rels[i].GetRelation() == parentRelation {
+			rels[i].Relation.Relation = lastRelation
+			continue
+		}
+		lastRelation = rels[i].Relation.GetRelation()
+	}
+	return rels
+}
+
+func convertRelationsToDependencies(rels []*Relation) ObjectDependencies {
+	results := []*ObjectDependency{}
+	path := []string{}
+
+	for i := 0; i < len(rels); i++ {
+		path = append(path, rels[i].GetSubject().GetType()+"|"+rels[i].GetSubject().GetKey()+"|"+rels[i].GetRelation()+"|"+rels[i].GetObject().GetType()+"|"+rels[i].GetObject().GetKey())
+
+		results = append(results, &ObjectDependency{
+			&dsc.ObjectDependency{
+				SubjectId:   rels[i].GetSubject().GetId(),
+				SubjectType: rels[i].GetSubject().GetType(),
+				SubjectKey:  rels[i].GetSubject().GetKey(),
+				Relation:    rels[i].GetRelation(),
+				ObjectId:    rels[i].GetObject().GetId(),
+				ObjectType:  rels[i].GetObject().GetType(),
+				ObjectKey:   rels[i].GetObject().GetKey(),
+				Depth:       int32(i + 1),
+				IsCycle:     false,
+				Path:        path,
+			},
+		})
+	}
+
+	return results
 }
