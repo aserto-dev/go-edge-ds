@@ -52,9 +52,6 @@ func (i *Object) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
-	if !ID.IsValidIfSet(i.GetId()) {
-		return false, derr.ErrInvalidID.Msg("object_id")
-	}
 	return true, nil
 }
 
@@ -94,9 +91,6 @@ func (i *Object) GetHash() (string, error) {
 		_ = hash
 	}
 
-	if _, err := h.Write([]byte(i.GetId())); err != nil {
-		return DefaultHash, err
-	}
 	if _, err := h.Write([]byte(i.GetType())); err != nil {
 		return DefaultHash, err
 	}
@@ -135,9 +129,10 @@ func (sc *StoreContext) GetObject(objIdentifier *ObjectIdentifier) (*Object, err
 }
 
 func (sc *StoreContext) GetObjectID(objIdentifier *ObjectIdentifier) (string, error) {
-	if ID.IsValid(objIdentifier.GetId()) {
-		return objIdentifier.GetId(), nil
-	}
+	// TODO: validate
+	// if ID.IsValid(objIdentifier.GetId()) {
+	// 	return objIdentifier.GetId(), nil
+	// }
 
 	if objIdentifier.GetKey() != "" && objIdentifier.GetType() != "" {
 		idBuf, err := sc.Store.Read(ObjectsKeyPath(), objIdentifier.Key(), sc.Opts)
@@ -200,11 +195,6 @@ func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
 	})
 	if err == nil {
 		curHash = current.Object.Hash
-		if obj.Id == "" {
-			obj.Id = current.Id
-		}
-	} else if obj.Id == "" {
-		obj.Id = ID.New()
 	}
 
 	if ok, err := obj.Validate(); !ok {
@@ -246,12 +236,8 @@ func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
 		return &Object{}, err
 	}
 
-	if err := sc.Store.Write(ObjectsPath(), obj.GetId(), buf.Bytes(), sc.Opts); err != nil {
-		return &Object{}, err
-	}
-
 	key := obj.String()
-	if err := sc.Store.Write(ObjectsKeyPath(), key, []byte(obj.GetId()), sc.Opts); err != nil {
+	if err := sc.Store.Write(ObjectsPath(), key, buf.Bytes(), sc.Opts); err != nil {
 		return &Object{}, err
 	}
 
@@ -272,11 +258,7 @@ func (sc *StoreContext) DeleteObject(objIdentifier *ObjectIdentifier) error {
 	}
 
 	key := current.String()
-	if err := sc.Store.DeleteKey(ObjectsKeyPath(), key, sc.Opts); err != nil {
-		return err
-	}
-
-	if err := sc.Store.DeleteKey(ObjectsPath(), current.Id, sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(ObjectsPath(), key, sc.Opts); err != nil {
 		return err
 	}
 

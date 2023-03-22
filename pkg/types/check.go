@@ -79,8 +79,8 @@ func (sc *StoreContext) check(subject, object *Object, relations []*RelationType
 	relations = sc.expandUnions(relations)
 
 	deps, err := sc.GetGraph(&dsr.GetGraphRequest{
-		Anchor: &dsc.ObjectIdentifier{Id: &subject.Id, Type: &subject.Type, Key: &subject.Key},
-		Object: &dsc.ObjectIdentifier{Id: &object.Id, Type: &object.Type, Key: &object.Key},
+		Anchor: &dsc.ObjectIdentifier{Type: &subject.Type, Key: &subject.Key},
+		Object: &dsc.ObjectIdentifier{Type: &object.Type, Key: &object.Key},
 	})
 	if err != nil {
 		return &CheckResult{}, err
@@ -96,7 +96,7 @@ func (sc *StoreContext) check(subject, object *Object, relations []*RelationType
 		}
 
 		// object_id check
-		if object.GetId() == dep.ObjectId {
+		if object.GetType() == dep.ObjectType && object.GetKey() == dep.ObjectKey {
 
 			// check if relation in relation set which contain the requested permission
 			relationInSet := false

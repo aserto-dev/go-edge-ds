@@ -75,32 +75,22 @@ func (i *Relation) GetHash() (string, error) {
 
 	if i != nil && i.Relation != nil {
 		if i.Relation.Subject != nil {
-			if i.Relation.Subject.Id != nil {
-				if _, err := h.Write([]byte(i.Relation.Subject.GetId())); err != nil {
-					return DefaultHash, err
-				}
-				if _, err := h.Write([]byte(i.Relation.Subject.GetKey())); err != nil {
-					return DefaultHash, err
-				}
-				if _, err := h.Write([]byte(i.Relation.Subject.GetType())); err != nil {
-					return DefaultHash, err
-				}
+			if _, err := h.Write([]byte(i.Relation.Subject.GetKey())); err != nil {
+				return DefaultHash, err
+			}
+			if _, err := h.Write([]byte(i.Relation.Subject.GetType())); err != nil {
+				return DefaultHash, err
 			}
 		}
 		if _, err := h.Write([]byte(i.Relation.Relation)); err != nil {
 			return DefaultHash, err
 		}
 		if i.Relation.Object != nil {
-			if i.Relation.Object.Id != nil {
-				if _, err := h.Write([]byte(i.Relation.Object.GetId())); err != nil {
-					return DefaultHash, err
-				}
-				if _, err := h.Write([]byte(i.Relation.Object.GetKey())); err != nil {
-					return DefaultHash, err
-				}
-				if _, err := h.Write([]byte(i.Relation.Object.GetType())); err != nil {
-					return DefaultHash, err
-				}
+			if _, err := h.Write([]byte(i.Relation.Object.GetKey())); err != nil {
+				return DefaultHash, err
+			}
+			if _, err := h.Write([]byte(i.Relation.Object.GetType())); err != nil {
+				return DefaultHash, err
 			}
 		}
 	}
@@ -112,12 +102,14 @@ func (i *Relation) Key() string {
 	return i.Object.GetType() + ":" + i.GetRelation()
 }
 
+// TODO: validate, check if SubjectKey is correct
 func (i *Relation) SubjectKey() string {
-	return i.Subject.GetId() + "|" + i.Key() + "|" + i.Object.GetId()
+	return i.Subject.GetKey() + "|" + i.Key() + "|" + i.Object.GetKey()
 }
 
+// TODO: validate, check if ObjectKey is correct
 func (i *Relation) ObjectKey() string {
-	return i.Object.GetId() + "|" + i.Key() + "|" + i.Subject.GetId()
+	return i.Object.GetKey() + "|" + i.Key() + "|" + i.Subject.GetKey()
 }
 
 func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Relation, error) {
@@ -144,11 +136,10 @@ func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*
 	var subID, objID, objType, relName, filter string
 	var path []string
 
+	// TODO: validate this has to be refactored
 	subIdentifier := &ObjectIdentifier{relationIdentifier.Subject}
 	if ok, _ := subIdentifier.Validate(); ok {
-		if subIdentifier.Id != nil {
-			subID = subIdentifier.GetId()
-		} else if subIdentifier.GetKey() != "" && subIdentifier.GetType() != "" {
+		if subIdentifier.GetKey() != "" && subIdentifier.GetType() != "" {
 			buf, err := sc.Store.Read(ObjectsKeyPath(), subIdentifier.Key(), sc.Opts)
 			if err != nil {
 				return nil, err
@@ -159,9 +150,7 @@ func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*
 
 	objIdentifier := &ObjectIdentifier{relationIdentifier.Object}
 	if ok, _ := objIdentifier.Validate(); ok {
-		if objIdentifier.Id != nil {
-			objID = objIdentifier.GetId()
-		} else if objIdentifier.GetType() != "" && objIdentifier.GetKey() != "" {
+		if objIdentifier.GetType() != "" && objIdentifier.GetKey() != "" {
 			buf, err := sc.Store.Read(ObjectsKeyPath(), objIdentifier.Key(), sc.Opts)
 			if err != nil {
 				return nil, err
@@ -259,7 +248,6 @@ func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
 		Object:    obj.Msg(),
 		CreatedAt: rel.CreatedAt,
 		UpdatedAt: rel.UpdatedAt,
-		DeletedAt: rel.DeletedAt,
 		Hash:      rel.Hash,
 	}}
 

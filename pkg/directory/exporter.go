@@ -249,12 +249,18 @@ func exportRelationsWithKeys(sc *types.StoreContext, stream dse.Exporter_ExportS
 		}
 
 		for _, rel := range relations {
-			sub, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Subject.Id}})
+			sub, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{
+				Type: rel.Relation.Subject.Type,
+				Key:  rel.Relation.Subject.Key,
+			}})
 			if err != nil {
 				return err
 			}
 
-			obj, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Object.Id}})
+			obj, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{
+				Type: rel.Relation.Object.Type,
+				Key:  rel.Relation.Object.Key,
+			}})
 			if err != nil {
 				return err
 			}

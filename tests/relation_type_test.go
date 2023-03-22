@@ -27,7 +27,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 		Name: "create test-rel_type-1",
 		Req: &dsw.SetRelationTypeRequest{
 			RelationType: &dsc.RelationType{
-				Id:          int32(10),
 				Name:        "test-rel_type-1",
 				DisplayName: "test rel type 1",
 				ObjectType:  "user",
@@ -47,7 +46,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
 				assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
@@ -65,7 +63,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 		Name: "get test-rel_type-1",
 		Req: &dsr.GetRelationTypeRequest{
 			Param: &dsc.RelationTypeIdentifier{
-				Id: proto.Int32(10),
+				Name: proto.String("test-rel_type-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -77,7 +75,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
 				assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
@@ -95,7 +92,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 		Name: "update test-rel_type-1",
 		Req: &dsw.SetRelationTypeRequest{
 			RelationType: &dsc.RelationType{
-				Id:          int32(10),
 				Name:        "test-rel_type-1",
 				DisplayName: "test rel type 11",
 				ObjectType:  "user",
@@ -115,7 +111,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
 				assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
@@ -146,7 +141,6 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
 				assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
@@ -196,7 +190,8 @@ var relationTypeTestCasesWithID = []*TestCase{
 		Name: "delete deleted test-rel_type-1 by id",
 		Req: &dsw.DeleteRelationTypeRequest{
 			Param: &dsc.RelationTypeIdentifier{
-				Id: proto.Int32(10),
+				Name:       proto.String("test-rel_type-1"),
+				ObjectType: proto.String("user"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -235,7 +230,6 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%d", resp.Result.Id)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
 				assert.Equal(t, "test rel type", resp.Result.DisplayName)
@@ -281,7 +275,6 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%d", resp.Result.Id)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
 				assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)
@@ -312,7 +305,6 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%d", resp.Result.Id)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
 				assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)

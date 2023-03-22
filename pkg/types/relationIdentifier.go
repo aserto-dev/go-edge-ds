@@ -51,14 +51,14 @@ func (i *RelationIdentifier) ObjKey() string {
 	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
 		i.Relation.ObjectType = i.Object.Type
 	}
-	return i.Object.GetId() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Subject.GetId()
+	return i.Object.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Subject.GetKey()
 }
 
 func (i *RelationIdentifier) SubKey() string {
 	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
 		i.Relation.ObjectType = i.Object.Type
 	}
-	return i.Subject.GetId() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetId()
+	return i.Subject.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetKey()
 }
 
 func (i *RelationIdentifier) Resolve(sc *StoreContext) (*RelationIdentifier, error) {

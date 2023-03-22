@@ -25,9 +25,6 @@ func (i *PermissionIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("permission_identifier")
 	}
 
-	if i.Id != nil && ID.IsValid(*i.Id) {
-		return true, nil
-	}
 	if i.Name != nil && *i.Name != "" {
 		return true, nil
 	}
@@ -43,7 +40,6 @@ func (i *PermissionIdentifier) Resolve(sc *StoreContext) (*PermissionIdentifier,
 
 	return &PermissionIdentifier{
 		&dsc.PermissionIdentifier{
-			Id:   &perm.Id,
 			Name: &perm.Name,
 		},
 	}, nil

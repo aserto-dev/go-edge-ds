@@ -32,9 +32,6 @@ func (i *ObjectType) PreValidate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidObjectType
 	}
-	if !(i.Id >= 0) {
-		return false, derr.ErrInvalidArgument.Msg("object type id must be larger than zero")
-	}
 	if strings.TrimSpace(i.Name) == "" {
 		return false, derr.ErrInvalidArgument.Msg("name not set")
 	}
@@ -50,9 +47,6 @@ func (i *ObjectType) PreValidate() (bool, error) {
 func (i *ObjectType) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
-	}
-	if !(i.Id > 0) {
-		return false, derr.ErrInvalidArgument.Msg("object type id must be larger than zero")
 	}
 	return true, nil
 }
@@ -73,9 +67,6 @@ func (i *ObjectType) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
-	if _, err := h.Write(Int32ToByte(i.GetId())); err != nil {
-		return DefaultHash, err
-	}
 	if _, err := h.Write([]byte(i.GetName())); err != nil {
 		return DefaultHash, err
 	}
@@ -96,21 +87,11 @@ func (i *ObjectType) GetHash() (string, error) {
 }
 
 func (sc *StoreContext) GetObjectType(objTypeIdentifier *ObjectTypeIdentifier) (*ObjectType, error) {
-	var objTypeID int32
-
-	if objTypeIdentifier.GetId() > 0 {
-		objTypeID = objTypeIdentifier.GetId()
-	} else if objTypeIdentifier.GetName() != "" {
-		var err error
-		objTypeID, err = sc.GetObjectTypeID(objTypeIdentifier)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, derr.ErrInvalidArgument
+	if objTypeIdentifier.GetName() == "" {
+		return nil, derr.ErrInvalidArgument.Msg("object type name not set")
 	}
 
-	buf, err := sc.Store.Read(ObjectTypesPath(), Int32ToStr(objTypeID), sc.Opts)
+	buf, err := sc.Store.Read(ObjectTypesPath(), objTypeIdentifier.GetName(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -121,38 +102,6 @@ func (sc *StoreContext) GetObjectType(objTypeIdentifier *ObjectTypeIdentifier) (
 	}
 
 	return &ObjectType{&objType}, nil
-}
-
-func (sc *StoreContext) GetObjectTypeID(objTypeIdentifier *ObjectTypeIdentifier) (int32, error) {
-	if objTypeIdentifier.GetId() > 0 {
-		return objTypeIdentifier.GetId(), nil
-	}
-
-	idBuf, err := sc.Store.Read(ObjectTypesNamePath(), objTypeIdentifier.GetName(), sc.Opts)
-	if err != nil {
-		return 0, err
-	}
-	objTypeID := StrToInt32(string(idBuf))
-
-	return objTypeID, nil
-}
-
-func (sc *StoreContext) GetObjectTypeName(objTypeIdentifier *ObjectTypeIdentifier) (string, error) {
-	if objTypeIdentifier.GetName() != "" {
-		return objTypeIdentifier.GetName(), nil
-	}
-
-	buf, err := sc.Store.Read(ObjectTypesPath(), Int32ToStr(objTypeIdentifier.GetId()), sc.Opts)
-	if err != nil {
-		return "", err
-	}
-
-	var objType dsc.ObjectType
-	if err := pb.BufToProto(bytes.NewReader(buf), &objType); err != nil {
-		return "", err
-	}
-
-	return objType.GetName(), nil
 }
 
 func (sc *StoreContext) GetObjectTypes(page *PaginationRequest) ([]*ObjectType, *PaginationResponse, error) {
@@ -188,13 +137,6 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 	current, err := sc.GetObjectType(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &objType.Name}})
 	if err == nil {
 		curHash = current.Hash
-		if objType.Id == 0 {
-			objType.Id = current.Id
-		}
-	} else if objType.Id == 0 {
-		if id, err := sc.Store.NextSeq(ObjectTypesPath(), sc.Opts); err == nil {
-			objType.Id = int32(id)
-		}
 	}
 
 	if ok, err := objType.Validate(); !ok {
@@ -236,10 +178,7 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 		return &ObjectType{}, err
 	}
 
-	if err := sc.Store.Write(ObjectTypesPath(), Int32ToStr(objType.Id), buf.Bytes(), sc.Opts); err != nil {
-		return &ObjectType{}, err
-	}
-	if err := sc.Store.Write(ObjectTypesNamePath(), objType.Name, []byte(Int32ToStr(objType.Id)), sc.Opts); err != nil {
+	if err := sc.Store.Write(ObjectTypesPath(), objType.Name, buf.Bytes(), sc.Opts); err != nil {
 		return &ObjectType{}, err
 	}
 
@@ -259,11 +198,7 @@ func (sc *StoreContext) DeleteObjectType(objTypeIdentifier *ObjectTypeIdentifier
 		return err
 	}
 
-	if err := sc.Store.DeleteKey(ObjectTypesNamePath(), current.Name, sc.Opts); err != nil {
-		return err
-	}
-
-	if err := sc.Store.DeleteKey(ObjectTypesPath(), Int32ToStr(current.Id), sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(ObjectTypesPath(), current.Name, sc.Opts); err != nil {
 		return err
 	}
 

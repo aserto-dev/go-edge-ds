@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package tests_test
 
 import (
@@ -60,7 +60,7 @@ func TestGetObjectTypes(t *testing.T) {
 	resp, err := client.Reader.GetObjectTypes(context.Background(), &dsr.GetObjectTypesRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%d %s", v.Id, v.Name)
+		t.Logf("object_type: %s", v.Name)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestGetRelationTypes(t *testing.T) {
 	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%d %s %s", v.Id, v.Name, v.ObjectType)
+		t.Logf("relation_type: %s:%s", v.ObjectType, v.Name)
 	}
 }
 
@@ -82,7 +82,7 @@ func TestGetPermissions(t *testing.T) {
 	resp, err := client.Reader.GetPermissions(context.Background(), &dsr.GetPermissionsRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%s %s", v.Id, v.Name)
+		t.Logf("permission: %s", v.Name)
 	}
 }
 

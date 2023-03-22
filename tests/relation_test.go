@@ -29,7 +29,6 @@ var relationTestCasesWithID = []*TestCase{
 		Name: "create test-user-1",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "ad20c049-ea32-42b3-9ced-c4037a330261",
 				Type:        "user",
 				Key:         "test-user-1@acmecorp.com",
 				DisplayName: "test user 1",
@@ -52,7 +51,6 @@ var relationTestCasesWithID = []*TestCase{
 		Name: "create test-user-2",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "bd20c049-ea32-42b3-9ced-c4037a330262",
 				Type:        "user",
 				Key:         "test-user-2@acmecorp.com",
 				DisplayName: "test user 2",
@@ -77,12 +75,12 @@ var relationTestCasesWithID = []*TestCase{
 			Relation: &dsc.Relation{
 				Subject: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("bd20c049-ea32-42b3-9ced-c4037a330262"),
+					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: "manager",
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("ad20c049-ea32-42b3-9ced-c4037a330261"),
+					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
 			},
 		},
@@ -97,10 +95,13 @@ var relationTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "user", resp.Result.Object.GetType())
-				assert.Equal(t, "ad20c049-ea32-42b3-9ced-c4037a330261", resp.Result.Object.GetId())
+				assert.Equal(t, "test-user-1@acmecorp.com", resp.Result.Object.GetKey())
+
 				assert.Equal(t, "manager", resp.Result.Relation)
+
 				assert.Equal(t, "user", resp.Result.Subject.GetType())
-				assert.Equal(t, "bd20c049-ea32-42b3-9ced-c4037a330262", resp.Result.Subject.GetId())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Subject.GetKey())
+
 				assert.NotEmpty(t, resp.Result.Hash)
 				assert.Equal(t, "14268186579071905229", resp.Result.Hash)
 			}
@@ -113,7 +114,7 @@ var relationTestCasesWithID = []*TestCase{
 			Param: &dsc.RelationIdentifier{
 				Subject: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("bd20c049-ea32-42b3-9ced-c4037a330262"),
+					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
 					Name:       proto.String("manager"),
@@ -121,7 +122,7 @@ var relationTestCasesWithID = []*TestCase{
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("ad20c049-ea32-42b3-9ced-c4037a330261"),
+					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
 			},
 		},
@@ -138,10 +139,12 @@ var relationTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Results[0].Hash)
 
 				assert.Equal(t, "user", resp.Results[0].Object.GetType())
-				assert.Equal(t, "ad20c049-ea32-42b3-9ced-c4037a330261", resp.Results[0].Object.GetId())
+				assert.Equal(t, "test-user-1@acmecorp.com", resp.Results[0].Object.GetKey())
+
 				assert.Equal(t, "manager", resp.Results[0].Relation)
+
 				assert.Equal(t, "user", resp.Results[0].Subject.GetType())
-				assert.Equal(t, "bd20c049-ea32-42b3-9ced-c4037a330262", resp.Results[0].Subject.GetId())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Results[0].Subject.GetKey())
 
 				assert.NotEmpty(t, resp.Results[0].Hash)
 				assert.Equal(t, "14268186579071905229", resp.Results[0].Hash)
@@ -155,7 +158,7 @@ var relationTestCasesWithID = []*TestCase{
 			Param: &dsc.RelationIdentifier{
 				Subject: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("bd20c049-ea32-42b3-9ced-c4037a330262"),
+					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
 					Name:       proto.String("manager"),
@@ -163,7 +166,7 @@ var relationTestCasesWithID = []*TestCase{
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("ad20c049-ea32-42b3-9ced-c4037a330261"),
+					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
 			},
 		},
@@ -183,7 +186,7 @@ var relationTestCasesWithID = []*TestCase{
 			Param: &dsc.RelationIdentifier{
 				Subject: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("bd20c049-ea32-42b3-9ced-c4037a330262"),
+					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
 					Name:       proto.String("manager"),
@@ -191,7 +194,7 @@ var relationTestCasesWithID = []*TestCase{
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("ad20c049-ea32-42b3-9ced-c4037a330261"),
+					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
 			},
 		},
@@ -212,7 +215,7 @@ var relationTestCasesWithID = []*TestCase{
 			Param: &dsc.RelationIdentifier{
 				Subject: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("bd20c049-ea32-42b3-9ced-c4037a330262"),
+					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
 					Name:       proto.String("manager"),
@@ -220,7 +223,7 @@ var relationTestCasesWithID = []*TestCase{
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
-					Id:   proto.String("ad20c049-ea32-42b3-9ced-c4037a330261"),
+					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
 			},
 		},

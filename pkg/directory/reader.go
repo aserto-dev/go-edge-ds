@@ -252,8 +252,9 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 				return &dsr.GetRelationResponse{}, err
 			}
 
-			objects[sub.GetId()] = sub.Msg()
-			objects[obj.GetId()] = obj.Msg()
+			// TODO: validate
+			objects[sub.String()] = sub.Msg()
+			objects[obj.String()] = obj.Msg()
 		}
 	}
 

@@ -7,7 +7,6 @@ import (
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-directory/pkg/pb"
-	"github.com/aserto-dev/go-edge-ds/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,6 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "create test-obj-1",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Type:        "user",
 				Key:         "test-user@acmecorp.com",
 				DisplayName: "test obj 1",
@@ -46,7 +44,6 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
@@ -62,7 +59,8 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "get test-obj-1",
 		Req: &dsr.GetObjectRequest{
 			Param: &dsc.ObjectIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Type: proto.String("user"),
+				Key:  proto.String("test-user@acmecorp.com"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -74,7 +72,6 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
@@ -90,7 +87,6 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "update test-obj-1",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Type:        "user",
 				Key:         "test-user-11@acmecorp.com",
 				DisplayName: "test obj 11",
@@ -106,7 +102,6 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
@@ -135,7 +130,6 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
@@ -184,7 +178,8 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "delete deleted test-obj-11 by id",
 		Req: &dsw.DeleteObjectRequest{
 			Param: &dsc.ObjectIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Type: proto.String("user"),
+				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -221,9 +216,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
@@ -260,9 +253,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
@@ -300,9 +291,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
@@ -330,9 +319,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)

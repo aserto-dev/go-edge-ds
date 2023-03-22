@@ -24,12 +24,11 @@ func (i *ObjectIdentifier) Validate() (bool, error) {
 	if i.ObjectIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_identifier")
 	}
-	if ID.IsValid(i.GetId()) {
-		return true, nil
-	}
+	// TODO: validate type existence against TypeSystem model
 	if i.GetKey() != "" && i.GetType() != "" {
 		return true, nil
 	}
+	// TODO: validate type only usage should be covered by ObjectSelector
 	if i.GetType() != "" {
 		return true, nil
 	}
@@ -48,7 +47,6 @@ func (i *ObjectIdentifier) Resolve(sc *StoreContext) (*ObjectIdentifier, error) 
 
 	return &ObjectIdentifier{
 		&dsc.ObjectIdentifier{
-			Id:   &obj.Id,
 			Type: &obj.Type,
 			Key:  &obj.Key,
 		},

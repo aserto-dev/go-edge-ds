@@ -25,12 +25,8 @@ func (i *RelationTypeIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 	}
 
-	if i.Id != nil && *i.Id > 0 {
-		return true, nil
-	}
-
 	if i.Name != nil && i.ObjectType != nil &&
-		*i.Name != "" && *i.ObjectType != "" {
+		i.GetName() != "" && i.GetObjectType() != "" {
 		return true, nil
 	}
 
@@ -49,7 +45,6 @@ func (i *RelationTypeIdentifier) Resolve(sc *StoreContext) (*RelationTypeIdentif
 
 	return &RelationTypeIdentifier{
 		&dsc.RelationTypeIdentifier{
-			Id:         &relType.Id,
 			Name:       &relType.Name,
 			ObjectType: &relType.ObjectType,
 		},

@@ -29,14 +29,15 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 		return []*ObjectDependency{}, err
 	}
 
-	// resolve anchor object
-	anchor, err := sc.GetObject(anchorIdentifier)
+	// TODO: validate this will change when supporting non-concrete object instances
+	// resolve anchor object, validate object existence
+	_, err := sc.GetObject(anchorIdentifier)
 	if err != nil {
 		return []*ObjectDependency{}, err
 	}
 
 	deps := []*ObjectDependency{}
-	if deps, err = sc.getObjectDependencies(anchor.Id, 0, []string{}, deps); err != nil {
+	if deps, err = sc.getObjectDependencies(anchorIdentifier, 0, []string{}, deps); err != nil {
 		return []*ObjectDependency{}, err
 	}
 
@@ -55,14 +56,16 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 	return deps, nil
 }
 
-func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path []string, deps []*ObjectDependency) ([]*ObjectDependency, error) {
+// TODO: validate - replace anchorID with *ObjectIdentifier instance
+func (sc *StoreContext) getObjectDependencies(anchor *ObjectIdentifier, depth int32, path []string, deps []*ObjectDependency) ([]*ObjectDependency, error) {
 	depth++
 
 	if depth > maxDepth {
 		return []*ObjectDependency{}, derr.ErrMaxDepthExceeded
 	}
 
-	subFilter := anchorID + "|"
+	// TODO: breaking subFilter must reflect new on-disk structure
+	subFilter := anchor.String() // WAS anchorID + "|"
 	_, values, err := sc.Store.ReadScan(RelationsSubPath(), subFilter, sc.Opts)
 	if err != nil {
 		return nil, err
@@ -76,17 +79,15 @@ func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path
 
 		p := make([]string, len(path))
 		copy(p, path)
-		p = append(p, *rel.Subject.Type+"|"+*rel.Subject.Id+"|"+rel.Relation+"|"+*rel.Object.Type+"|"+*rel.Object.Id)
+		p = append(p, rel.GetSubject().GetType()+"|"+rel.GetSubject().GetKey()+"|"+rel.GetRelation()+"|"+rel.GetObject().GetType()+"|"+rel.GetObject().GetKey())
 
 		dep := ObjectDependency{
 			ObjectDependency: &dsc.ObjectDependency{
-				ObjectType:  *rel.Object.Type,
-				ObjectId:    *rel.Object.Id,
-				ObjectKey:   "",
+				ObjectType:  rel.GetObject().GetType(),
+				ObjectKey:   rel.GetObject().GetKey(),
 				Relation:    rel.Relation,
-				SubjectType: *rel.Subject.Type,
-				SubjectId:   *rel.Subject.Id,
-				SubjectKey:  "",
+				SubjectType: rel.GetSubject().GetType(),
+				SubjectKey:  rel.GetObject().GetKey(),
 				Depth:       depth,
 				IsCycle:     false,
 				Path:        p,
@@ -95,7 +96,7 @@ func (sc *StoreContext) getObjectDependencies(anchorID string, depth int32, path
 
 		deps = append(deps, &dep)
 
-		if deps, err = sc.getObjectDependencies(*rel.Object.Id, depth, p, deps); err != nil {
+		if deps, err = sc.getObjectDependencies(&ObjectIdentifier{rel.GetObject()}, depth, p, deps); err != nil {
 			return nil, err
 		}
 	}
@@ -107,31 +108,31 @@ type filter func(*ObjectDependency) bool
 func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies) ObjectDependencies {
 	filters := []filter{}
 
-	if req.Object != nil && req.Object.Id != nil && ID.IsValidIfSet(req.Object.GetId()) {
-		filters = append(filters, func(od *ObjectDependency) bool {
-			return od.ObjectId == req.Object.GetId()
-		})
-	}
 	if req.Object != nil && req.Object.Type != nil && *req.Object.Type != "" {
 		filters = append(filters, func(od *ObjectDependency) bool {
 			return strings.EqualFold(od.ObjectType, req.Object.GetType())
 		})
 	}
-
-	if req.Subject != nil && req.Subject.Id != nil && ID.IsValidIfSet(req.Subject.GetId()) {
+	if req.Object != nil && req.Object.Key != nil && ID.IsValidIfSet(req.Object.GetKey()) {
 		filters = append(filters, func(od *ObjectDependency) bool {
-			return od.SubjectId == req.Subject.GetId()
-		})
-	}
-	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
-		filters = append(filters, func(od *ObjectDependency) bool {
-			return strings.EqualFold(od.SubjectType, req.Subject.GetType())
+			return od.ObjectKey == req.Object.GetKey()
 		})
 	}
 
 	if req.Relation != nil && req.Relation.Name != nil && *req.Relation.Name != "" {
 		filters = append(filters, func(od *ObjectDependency) bool {
 			return strings.EqualFold(od.Relation, req.Relation.GetName())
+		})
+	}
+
+	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
+		filters = append(filters, func(od *ObjectDependency) bool {
+			return strings.EqualFold(od.SubjectType, req.Subject.GetType())
+		})
+	}
+	if req.Subject != nil && req.Subject.Key != nil && ID.IsValidIfSet(req.Subject.GetKey()) {
+		filters = append(filters, func(od *ObjectDependency) bool {
+			return od.SubjectKey == req.Subject.GetKey()
 		})
 	}
 

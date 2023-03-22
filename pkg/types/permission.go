@@ -42,17 +42,11 @@ func (i *Permission) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
-	if strings.TrimSpace(i.Permission.GetId()) == "" {
-		return false, derr.ErrInvalidArgument.Msg("permission id not set")
-	}
-	if !ID.IsValid(i.Permission.GetId()) {
-		return false, derr.ErrInvalidPermissionID
-	}
 	return true, nil
 }
 
 func (i *Permission) Normalize() error {
-	i.Id = strings.ToLower(i.GetId())
+	// TODO: is permission name case-insensitive?
 	return nil
 }
 
@@ -67,9 +61,6 @@ func (i *Permission) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
-	if _, err := h.Write([]byte(i.GetId())); err != nil {
-		return DefaultHash, err
-	}
 	if _, err := h.Write([]byte(i.GetName())); err != nil {
 		return DefaultHash, err
 	}
@@ -81,21 +72,8 @@ func (i *Permission) GetHash() (string, error) {
 }
 
 func (sc *StoreContext) GetPermission(permissionIdentifier *PermissionIdentifier) (*Permission, error) {
-	var permID string
 
-	if permissionIdentifier.GetId() != "" {
-		permID = permissionIdentifier.GetId()
-	} else if permissionIdentifier.GetName() != "" {
-		var err error
-		permID, err = sc.GetPermissionID(permissionIdentifier)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, derr.ErrInvalidArgument
-	}
-
-	buf, err := sc.Store.Read(PermissionsPath(), permID, sc.Opts)
+	buf, err := sc.Store.Read(PermissionsPath(), permissionIdentifier.GetName(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -108,37 +86,6 @@ func (sc *StoreContext) GetPermission(permissionIdentifier *PermissionIdentifier
 	return &Permission{
 		Permission: &perm,
 	}, nil
-}
-
-func (sc *StoreContext) GetPermissionID(permissionIdentifier *PermissionIdentifier) (string, error) {
-	if permissionIdentifier.GetId() != "" {
-		return permissionIdentifier.GetId(), nil
-	}
-
-	idBuf, err := sc.Store.Read(PermissionsNamePath(), permissionIdentifier.GetName(), sc.Opts)
-	if err != nil {
-		return "", err
-	}
-
-	return string(idBuf), nil
-}
-
-func (sc *StoreContext) GetPermissionName(permissionIdentifier *PermissionIdentifier) (string, error) {
-	if permissionIdentifier.GetName() != "" {
-		return permissionIdentifier.GetName(), nil
-	}
-
-	buf, err := sc.Store.Read(PermissionsPath(), permissionIdentifier.GetId(), sc.Opts)
-	if err != nil {
-		return "", err
-	}
-
-	var permission dsc.Permission
-	if err := pb.BufToProto(bytes.NewReader(buf), &permission); err != nil {
-		return "", err
-	}
-
-	return permission.GetName(), nil
 }
 
 func (sc *StoreContext) GetPermissions(page *PaginationRequest) ([]*Permission, *PaginationResponse, error) {
@@ -174,11 +121,6 @@ func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, erro
 	current, err := sc.GetPermission(&PermissionIdentifier{&dsc.PermissionIdentifier{Name: &permission.Name}})
 	if err == nil {
 		curHash = current.Permission.Hash
-		if permission.Id == "" {
-			permission.Id = current.Id
-		}
-	} else if permission.Id == "" {
-		permission.Id = ID.New()
 	}
 
 	if ok, err := permission.Validate(); !ok {
@@ -220,10 +162,7 @@ func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, erro
 		return permission, err
 	}
 
-	if err := sc.Store.Write(PermissionsPath(), permission.GetId(), buf.Bytes(), sc.Opts); err != nil {
-		return &Permission{}, err
-	}
-	if err := sc.Store.Write(PermissionsNamePath(), permission.GetName(), []byte(permission.GetId()), sc.Opts); err != nil {
+	if err := sc.Store.Write(PermissionsPath(), permission.GetName(), buf.Bytes(), sc.Opts); err != nil {
 		return &Permission{}, err
 	}
 
@@ -243,11 +182,7 @@ func (sc *StoreContext) DeletePermission(permissionIdentifier *PermissionIdentif
 		return err
 	}
 
-	if err := sc.Store.DeleteKey(PermissionsNamePath(), current.GetName(), sc.Opts); err != nil {
-		return err
-	}
-
-	if err := sc.Store.DeleteKey(PermissionsPath(), current.GetId(), sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(PermissionsPath(), current.GetName(), sc.Opts); err != nil {
 		return err
 	}
 

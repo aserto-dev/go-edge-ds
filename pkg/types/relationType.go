@@ -51,9 +51,6 @@ func (i *RelationType) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
-	if !(i.GetId() > 0) {
-		return false, derr.ErrInvalidRelationTypeID
-	}
 	return true, nil
 }
 
@@ -74,9 +71,6 @@ func (i *RelationType) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
-	if _, err := h.Write(Int32ToByte(i.GetId())); err != nil {
-		return DefaultHash, err
-	}
 	if _, err := h.Write([]byte(i.GetObjectType())); err != nil {
 		return DefaultHash, err
 	}
@@ -113,21 +107,8 @@ func (i *RelationType) Key() string {
 }
 
 func (sc *StoreContext) GetRelationType(relTypeIdentifier *RelationTypeIdentifier) (*RelationType, error) {
-	var relTypeID int32
 
-	if relTypeIdentifier.GetId() > 0 {
-		relTypeID = relTypeIdentifier.GetId()
-	} else if relTypeIdentifier.GetName() != "" && relTypeIdentifier.GetObjectType() != "" {
-		var err error
-		relTypeID, err = sc.GetRelationTypeID(relTypeIdentifier)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, derr.ErrInvalidArgument
-	}
-
-	buf, err := sc.Store.Read(RelationTypesPath(), Int32ToStr(relTypeID), sc.Opts)
+	buf, err := sc.Store.Read(RelationTypesPath(), relTypeIdentifier.Key(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -140,35 +121,11 @@ func (sc *StoreContext) GetRelationType(relTypeIdentifier *RelationTypeIdentifie
 	return &RelationType{&relType}, nil
 }
 
-func (sc *StoreContext) GetRelationTypeID(relTypeIdentifier *RelationTypeIdentifier) (int32, error) {
-	if relTypeIdentifier.GetId() > 0 {
-		return relTypeIdentifier.GetId(), nil
-	}
-
-	idBuf, err := sc.Store.Read(RelationTypesNamePath(), relTypeIdentifier.Key(), sc.Opts)
-	if err != nil {
-		return 0, err
-	}
-	objTypeID := StrToInt32(string(idBuf))
-
-	return objTypeID, nil
-}
-
 func (sc *StoreContext) GetRelationTypeName(relTypeIdentifier *RelationTypeIdentifier) (string, error) {
-	if relTypeIdentifier.GetName() != "" && relTypeIdentifier.GetObjectType() != "" {
-		return relTypeIdentifier.Key(), nil
-	}
-
-	buf, err := sc.Store.Read(RelationTypesPath(), Int32ToStr(relTypeIdentifier.GetId()), sc.Opts)
+	relType, err := sc.GetRelationType(relTypeIdentifier)
 	if err != nil {
 		return "", err
 	}
-
-	relType := RelationType{}
-	if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
-		return "", err
-	}
-
 	return relType.Key(), nil
 }
 
@@ -218,13 +175,6 @@ func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, e
 	})
 	if err == nil {
 		curHash = current.Hash
-		if relType.Id == 0 {
-			relType.Id = current.Id
-		}
-	} else if relType.Id == 0 {
-		if id, err := sc.Store.NextSeq(RelationTypesPath(), sc.Opts); err == nil {
-			relType.Id = int32(id)
-		}
 	}
 
 	if ok, err := relType.Validate(); !ok {
@@ -266,11 +216,7 @@ func (sc *StoreContext) SetRelationType(relType *RelationType) (*RelationType, e
 		return &RelationType{}, err
 	}
 
-	if err := sc.Store.Write(RelationTypesPath(), Int32ToStr(relType.GetId()), buf.Bytes(), sc.Opts); err != nil {
-		return &RelationType{}, err
-	}
-
-	if err := sc.Store.Write(RelationTypesNamePath(), relType.Key(), []byte(Int32ToStr(relType.GetId())), sc.Opts); err != nil {
+	if err := sc.Store.Write(RelationTypesPath(), relType.Key(), buf.Bytes(), sc.Opts); err != nil {
 		return &RelationType{}, err
 	}
 
@@ -290,11 +236,7 @@ func (sc *StoreContext) DeleteRelationType(relTypeIdentifier *RelationTypeIdenti
 		return err
 	}
 
-	if err := sc.Store.DeleteKey(RelationTypesNamePath(), current.Key(), sc.Opts); err != nil {
-		return err
-	}
-
-	if err := sc.Store.DeleteKey(RelationTypesPath(), Int32ToStr(current.Id), sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(RelationTypesPath(), current.Key(), sc.Opts); err != nil {
 		return err
 	}
 

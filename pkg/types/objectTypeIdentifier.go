@@ -25,9 +25,6 @@ func (i *ObjectTypeIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 	}
 
-	if i.Id != nil && *i.Id > 0 {
-		return true, nil
-	}
 	if i.Name != nil && *i.Name != "" {
 		return true, nil
 	}
@@ -43,7 +40,6 @@ func (i *ObjectTypeIdentifier) Resolve(sc *StoreContext) (*ObjectTypeIdentifier,
 
 	return &ObjectTypeIdentifier{
 		&dsc.ObjectTypeIdentifier{
-			Id:   &objType.Id,
 			Name: &objType.Name,
 		},
 	}, nil

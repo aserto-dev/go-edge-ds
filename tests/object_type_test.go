@@ -29,7 +29,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 		Name: "create test-obj_type-1",
 		Req: &dsw.SetObjectTypeRequest{
 			ObjectType: &dsc.ObjectType{
-				Id:          int32(10),
 				Name:        "test-obj_type-1",
 				DisplayName: "test obj type 1",
 				IsSubject:   false,
@@ -48,7 +47,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-obj_type-1", resp.Result.Name)
 				assert.Equal(t, "test obj type 1", resp.Result.DisplayName)
 				assert.Equal(t, false, resp.Result.IsSubject)
@@ -64,7 +62,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 		Name: "get test-obj_type-1",
 		Req: &dsr.GetObjectTypeRequest{
 			Param: &dsc.ObjectTypeIdentifier{
-				Id: proto.Int32(10),
+				Name: proto.String("test-obj_type-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -76,7 +74,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-obj_type-1", resp.Result.Name)
 				assert.Equal(t, "test obj type 1", resp.Result.DisplayName)
 				assert.Equal(t, false, resp.Result.IsSubject)
@@ -92,7 +89,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 		Name: "update test-obj_type-1",
 		Req: &dsw.SetObjectTypeRequest{
 			ObjectType: &dsc.ObjectType{
-				Id:          int32(10),
 				Name:        "test-obj_type-1",
 				DisplayName: "test obj type 11",
 				IsSubject:   false,
@@ -111,7 +107,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-obj_type-1", resp.Result.Name)
 				assert.Equal(t, "test obj type 11", resp.Result.DisplayName)
 				assert.Equal(t, false, resp.Result.IsSubject)
@@ -139,7 +134,6 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, int32(10), resp.Result.Id)
 				assert.Equal(t, "test-obj_type-1", resp.Result.Name)
 				assert.Equal(t, "test obj type 11", resp.Result.DisplayName)
 				assert.Equal(t, false, resp.Result.IsSubject)
@@ -186,7 +180,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 		Name: "delete deleted test-obj_type-1 by id",
 		Req: &dsw.DeleteObjectTypeRequest{
 			Param: &dsc.ObjectTypeIdentifier{
-				Id: proto.Int32(10),
+				Name: proto.String("test-obj_type-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -224,7 +218,6 @@ var objectTypeTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%d", resp.Result.Id)
 
 				assert.Equal(t, "test-obj_type", resp.Result.Name)
 				assert.Equal(t, "test obj type", resp.Result.DisplayName)
@@ -267,9 +260,7 @@ var objectTypeTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%d", resp.Result.Id)
 
-				assert.True(t, resp.Result.Id >= 0)
 				assert.Equal(t, "test-obj_type", resp.Result.Name)
 				assert.Equal(t, "test obj type updated", resp.Result.DisplayName)
 				assert.Equal(t, false, resp.Result.IsSubject)

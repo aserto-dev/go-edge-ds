@@ -18,9 +18,9 @@ type relationFilter func(*Relation) bool
 func filterRelations(req *RelationIdentifier, relations []*Relation) []*Relation {
 	filters := []relationFilter{}
 
-	if req.Subject != nil && req.Subject.Id != nil && ID.IsValidIfSet(req.Subject.GetId()) {
+	if req.Subject != nil && req.Subject.Key != nil && ID.IsValidIfSet(req.Subject.GetKey()) {
 		filters = append(filters, func(r *Relation) bool {
-			return r.Subject.GetId() == req.Subject.GetId()
+			return r.Subject.GetKey() == req.Subject.GetKey()
 		})
 	}
 	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
@@ -35,9 +35,9 @@ func filterRelations(req *RelationIdentifier, relations []*Relation) []*Relation
 		})
 	}
 
-	if req.Object != nil && req.Object.Id != nil && ID.IsValidIfSet(req.Object.GetId()) {
+	if req.Object != nil && req.Object.Key != nil && ID.IsValidIfSet(req.Object.GetKey()) {
 		filters = append(filters, func(r *Relation) bool {
-			return r.Object.GetId() == req.Object.GetId()
+			return r.Object.GetKey() == req.Object.GetKey()
 		})
 	}
 	if req.Object != nil && req.Object.Type != nil && *req.Object.Type != "" {
