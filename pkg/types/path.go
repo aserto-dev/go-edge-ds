@@ -1,5 +1,9 @@
 package types
 
+func SystemPath() []string {
+	return []string{"_system"}
+}
+
 func ObjectTypesPath() []string {
 	return []string{"object_types"}
 }

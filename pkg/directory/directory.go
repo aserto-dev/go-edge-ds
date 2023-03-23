@@ -7,11 +7,16 @@ import (
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory/metadata"
+	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/aserto-dev/go-edge-ds/pkg/types"
 	"github.com/google/uuid"
 
 	"github.com/rs/zerolog"
+)
+
+const (
+	schemaVersion string = "0.0.2" // required minimum schema version, when the current version is lower, migration will be invoked to update to the minimum schema version required.
 )
 
 type Config struct {
@@ -52,6 +57,10 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
+	if err := ds.Migrate(schemaVersion); err != nil {
+		return nil, err
+	}
+
 	if err := ds.Seed(); err != nil {
 		return nil, err
 	}
@@ -68,6 +77,7 @@ func (s *Directory) Close() {
 
 func (s *Directory) Init() error {
 	paths := []func() []string{
+		types.SystemPath,
 		types.ObjectTypesPath,
 		types.ObjectTypesNamePath,
 		types.PermissionsPath,
@@ -91,8 +101,16 @@ func (s *Directory) Init() error {
 		}
 	}()
 
+	opts := []boltdb.Opts{txOpt}
+
 	for _, path := range paths {
-		if err := s.store.CreateBucket(path(), []boltdb.Opts{txOpt}); err != nil {
+		if err := s.store.CreateBucket(path(), opts); err != nil {
+			return err
+		}
+	}
+
+	if !s.store.KeyExists(types.SystemPath(), "version", opts) {
+		if err := s.store.Write(types.SystemPath(), "version", []byte("0.0.1"), opts); err != nil {
 			return err
 		}
 	}
@@ -122,4 +140,8 @@ func (s *Directory) Seed() error {
 	}
 
 	return nil
+}
+
+func (s *Directory) Migrate(version string) error {
+	return migrate.Store(s.store, version)
 }

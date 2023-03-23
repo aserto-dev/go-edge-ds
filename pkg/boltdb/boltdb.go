@@ -768,3 +768,7 @@ func (s *BoltDB) NextSeq(path []string, opts []Opts) (uint64, error) {
 
 	return id, err
 }
+
+func (s *BoltDB) DB() *bolt.DB {
+	return s.db
+}
