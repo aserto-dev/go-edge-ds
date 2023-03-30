@@ -5,22 +5,15 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type ObjectTypeIdentifier struct {
+type objectTypeIdentifier struct {
 	*dsc.ObjectTypeIdentifier
 }
 
-func NewObjectTypeIdentifier(i *dsc.ObjectTypeIdentifier) *ObjectTypeIdentifier {
-	if i == nil {
-		return &ObjectTypeIdentifier{ObjectTypeIdentifier: &dsc.ObjectTypeIdentifier{}}
-	}
-	return &ObjectTypeIdentifier{ObjectTypeIdentifier: i}
+func ObjectTypeIdentifier(i *dsc.ObjectTypeIdentifier) *objectTypeIdentifier {
+	return &objectTypeIdentifier{i}
 }
 
-func (i *ObjectTypeIdentifier) Msg() *dsc.ObjectTypeIdentifier {
-	return i.ObjectTypeIdentifier
-}
-
-func (i *ObjectTypeIdentifier) Validate() (bool, error) {
+func (i *objectTypeIdentifier) Validate() (bool, error) {
 	if i.ObjectTypeIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 	}
@@ -32,15 +25,13 @@ func (i *ObjectTypeIdentifier) Validate() (bool, error) {
 	return false, derr.ErrInvalidArgument.Msg("object_type_identifier")
 }
 
-func (i *ObjectTypeIdentifier) Resolve(sc *StoreContext) (*ObjectTypeIdentifier, error) {
-	objType, err := sc.GetObjectType(i)
+func (i *objectTypeIdentifier) Resolve(sc *StoreContext) (*dsc.ObjectTypeIdentifier, error) {
+	objType, err := sc.GetObjectType(i.ObjectTypeIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ObjectTypeIdentifier{
-		&dsc.ObjectTypeIdentifier{
-			Name: &objType.Name,
-		},
+	return &dsc.ObjectTypeIdentifier{
+		Name: &objType.Name,
 	}, nil
 }

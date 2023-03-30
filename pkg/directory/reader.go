@@ -6,6 +6,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/types"
 )
 
@@ -23,8 +24,8 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	objType, err := sc.GetObjectType(types.NewObjectTypeIdentifier(req.Param))
-	return &dsr.GetObjectTypeResponse{Result: objType.Msg()}, err
+	objType, err := sc.GetObjectType(req.Param)
+	return &dsr.GetObjectTypeResponse{Result: objType}, err
 }
 
 // Get all objects types (metadata) (paginated).
@@ -41,16 +42,11 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	objTypes, page, err := sc.GetObjectTypes(types.NewPaginationRequest(req.Page))
-
-	results := make([]*dsc.ObjectType, len(objTypes))
-	for i := 0; i < len(objTypes); i++ {
-		results[i] = objTypes[i].ObjectType
-	}
+	objTypes, page, err := sc.GetObjectTypes(req.Page)
 
 	return &dsr.GetObjectTypesResponse{
-		Results: results,
-		Page:    page.PaginationResponse,
+		Results: objTypes,
+		Page:    page,
 	}, err
 }
 
@@ -68,8 +64,8 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	relType, err := sc.GetRelationType(types.NewRelationTypeIdentifier(req.Param))
-	return &dsr.GetRelationTypeResponse{Result: relType.Msg()}, err
+	relType, err := sc.GetRelationType(req.Param)
+	return &dsr.GetRelationTypeResponse{Result: relType}, err
 }
 
 // Get all relation types, optionally filtered by object type (metadata) (paginated).
@@ -86,16 +82,11 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	relTypes, page, err := sc.GetRelationTypes(types.NewObjectTypeIdentifier(req.Param), types.NewPaginationRequest(req.Page))
-
-	results := make([]*dsc.RelationType, len(relTypes))
-	for i := 0; i < len(relTypes); i++ {
-		results[i] = relTypes[i].RelationType
-	}
+	relTypes, page, err := sc.GetRelationTypes(req.Param, req.Page)
 
 	return &dsr.GetRelationTypesResponse{
-		Results: results,
-		Page:    page.PaginationResponse,
+		Results: relTypes,
+		Page:    page,
 	}, err
 }
 
@@ -113,8 +104,8 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	perm, err := sc.GetPermission(types.NewPermissionIdentifier(req.Param))
-	return &dsr.GetPermissionResponse{Result: perm.Msg()}, err
+	perm, err := sc.GetPermission(req.Param)
+	return &dsr.GetPermissionResponse{Result: perm}, err
 }
 
 // Get all permissions (metadata) (paginated).
@@ -131,16 +122,11 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	permissions, page, err := sc.GetPermissions(types.NewPaginationRequest(req.Page))
-
-	results := make([]*dsc.Permission, len(permissions))
-	for i := 0; i < len(permissions); i++ {
-		results[i] = permissions[i].Permission
-	}
+	permissions, page, err := sc.GetPermissions(req.Page)
 
 	return &dsr.GetPermissionsResponse{
-		Results: results,
-		Page:    page.PaginationResponse,
+		Results: permissions,
+		Page:    page,
 	}, err
 }
 
@@ -158,8 +144,8 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (r
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	obj, err := sc.GetObject(types.NewObjectIdentifier(req.Param))
-	return &dsr.GetObjectResponse{Result: obj.Msg()}, err
+	obj, err := sc.GetObject(req.Param)
+	return &dsr.GetObjectResponse{Result: obj}, err
 }
 
 // Get multiple object instances by id or type+key, in a single request.
@@ -176,20 +162,14 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	objIdentifiers := []*types.ObjectIdentifier{}
-	for i := 0; i < len(req.Param); i++ {
-		objIdentifiers = append(objIdentifiers, &types.ObjectIdentifier{ObjectIdentifier: req.Param[i]})
-	}
-	objects, err := sc.GetObjectMany(objIdentifiers)
+	objects, err := sc.GetObjectMany(req.Param)
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*dsc.Object, len(objects))
-	for i := 0; i < len(objects); i++ {
-		results[i] = objects[i].Object
-	}
-	return &dsr.GetObjectManyResponse{Results: results}, err
+	return &dsr.GetObjectManyResponse{
+		Results: objects,
+	}, err
 }
 
 // Get all object instances, optionally filtered by object type. (paginated).
@@ -206,21 +186,20 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	objects, page, err := sc.GetObjects(types.NewObjectTypeIdentifier(req.Param), types.NewPaginationRequest(req.Page))
-
-	results := make([]*dsc.Object, len(objects))
-	for i := 0; i < len(objects); i++ {
-		results[i] = objects[i].Object
-	}
+	objects, page, err := sc.GetObjects(req.Param, req.Page)
 
 	return &dsr.GetObjectsResponse{
-		Results: results,
-		Page:    page.PaginationResponse,
+		Results: objects,
+		Page:    page,
 	}, err
 }
 
 // Get relation instances based on subject, relation, object filter.
 func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (resp *dsr.GetRelationResponse, err error) {
+	if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {
+		return &dsr.GetRelationResponse{}, err
+	}
+
 	txOpt, cleanup, err := s.store.ReadTxOpts()
 	if err != nil {
 		return nil, err
@@ -233,33 +212,29 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	relations, err := sc.GetRelation(types.NewRelationIdentifier(req.Param))
+	relations, err := sc.GetRelation(req.Param)
 
-	results := make([]*dsc.Relation, len(relations))
 	objects := map[string]*dsc.Object{}
 
-	for i := 0; i < len(relations); i++ {
-		results[i] = relations[i].Relation
-
-		if req.GetWithObjects() {
-			sub, err := sc.GetObject(types.NewObjectIdentifier(results[i].Subject))
+	if req.GetWithObjects() {
+		for i := 0; i < len(relations); i++ {
+			sub, err := sc.GetObject(relations[i].Subject)
 			if err != nil {
 				return &dsr.GetRelationResponse{}, err
 			}
 
-			obj, err := sc.GetObject(types.NewObjectIdentifier(results[i].Object))
+			obj, err := sc.GetObject(relations[i].Object)
 			if err != nil {
 				return &dsr.GetRelationResponse{}, err
 			}
 
-			// TODO: validate
-			objects[sub.String()] = sub.Msg()
-			objects[obj.String()] = obj.Msg()
+			objects[sub.String()] = sub
+			objects[obj.String()] = obj
 		}
 	}
 
 	return &dsr.GetRelationResponse{
-		Results: results,
+		Results: relations,
 		Objects: objects,
 	}, nil
 }
@@ -278,16 +253,11 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 	}()
 
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
-	relations, page, err := sc.GetRelations(types.NewRelationIdentifier(req.Param), types.NewPaginationRequest(req.Page))
-
-	results := make([]*dsc.Relation, len(relations))
-	for i := 0; i < len(relations); i++ {
-		results[i] = relations[i].Relation
-	}
+	relations, page, err := sc.GetRelations(req.Param, req.Page)
 
 	return &dsr.GetRelationsResponse{
-		Results: results,
-		Page:    page.PaginationResponse,
+		Results: relations,
+		Page:    page,
 	}, err
 }
 
@@ -354,12 +324,7 @@ func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (res
 	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
 	dependencies, err := sc.GetGraph(req)
 
-	results := make([]*dsc.ObjectDependency, len(dependencies))
-	for i := 0; i < len(dependencies); i++ {
-		results[i] = dependencies[i].ObjectDependency
-	}
-
 	return &dsr.GetGraphResponse{
-		Results: results,
+		Results: dependencies,
 	}, nil
 }

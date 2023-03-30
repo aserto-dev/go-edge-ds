@@ -50,7 +50,7 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8123438213397438108", resp.Result.Hash)
+				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -78,7 +78,7 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8123438213397438108", resp.Result.Hash)
+				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},
@@ -90,7 +90,7 @@ var objectTestCasesWithID = []*TestCase{
 				Type:        "user",
 				Key:         "test-user-11@acmecorp.com",
 				DisplayName: "test obj 11",
-				Hash:        "8123438213397438108",
+				Hash:        "3016620182482667549",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -108,7 +108,7 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "1525294859288182108", resp.Result.Hash)
+				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},
@@ -136,7 +136,7 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "1525294859288182108", resp.Result.Hash)
+				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},

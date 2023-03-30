@@ -82,7 +82,7 @@ func (s *Directory) objectTypeHandler(sc *types.StoreContext, req *dsc.ObjectTyp
 		return derr.ErrInvalidObjectType.Msg("nil")
 	}
 
-	_, err := sc.SetObjectType(&types.ObjectType{ObjectType: req})
+	_, err := sc.SetObjectType(req)
 	if err != nil {
 		return derr.ErrInvalidObjectType.Msg("set")
 	}
@@ -97,7 +97,7 @@ func (s *Directory) permissionHandler(sc *types.StoreContext, req *dsc.Permissio
 		return derr.ErrInvalidPermission.Msg("nil")
 	}
 
-	if _, err := sc.SetPermission(&types.Permission{Permission: req}); err != nil {
+	if _, err := sc.SetPermission(req); err != nil {
 		return derr.ErrInvalidPermission.Msg("set")
 	}
 
@@ -111,7 +111,7 @@ func (s *Directory) relationTypeHandler(sc *types.StoreContext, req *dsc.Relatio
 		return derr.ErrInvalidRelationType.Msg("nil")
 	}
 
-	if _, err := sc.SetRelationType(&types.RelationType{RelationType: req}); err != nil {
+	if _, err := sc.SetRelationType(req); err != nil {
 		return derr.ErrInvalidRelationType.Msg("set")
 	}
 
@@ -125,7 +125,7 @@ func (s *Directory) objectHandler(sc *types.StoreContext, req *dsc.Object) error
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if _, err := sc.SetObject(&types.Object{Object: req}); err != nil {
+	if _, err := sc.SetObject(req); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -139,7 +139,7 @@ func (s *Directory) relationHandler(sc *types.StoreContext, req *dsc.Relation) e
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if _, err := sc.SetRelation(&types.Relation{Relation: req}); err != nil {
+	if _, err := sc.SetRelation(req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

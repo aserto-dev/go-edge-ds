@@ -10,6 +10,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 
@@ -17,59 +18,40 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Relation struct {
+type relation struct {
 	*dsc.Relation
 }
 
-func NewRelation(i *dsc.Relation) *Relation {
-	if i == nil {
-		return &Relation{Relation: &dsc.Relation{}}
-	}
-	return &Relation{Relation: i}
-}
+func Relation(i *dsc.Relation) *relation { return &relation{i} }
 
-func (i *Relation) Validate() (bool, error) {
+func (i *relation) Validate() (bool, error) {
 	if i.Relation == nil {
 		return false, derr.ErrInvalidRelation
 	}
 
-	if i.Subject == nil {
-		return false, derr.ErrInvalidArgument.Msg("subject not set")
-	}
-	subject := ObjectIdentifier{ObjectIdentifier: i.Subject}
-	if ok, err := subject.Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Subject).Validate(); !ok {
 		return false, err
 	}
 
-	if i.Object == nil {
-		return false, derr.ErrInvalidArgument.Msg("object not set")
-	}
-	object := ObjectIdentifier{ObjectIdentifier: i.Object}
-	if ok, err := object.Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Object).Validate(); !ok {
 		return false, err
 	}
 
 	if strings.TrimSpace(i.GetRelation()) == "" {
 		return false, derr.ErrInvalidArgument.Msg("relation not set")
 	}
+
 	return true, nil
 }
 
-func (i *Relation) Normalize() error {
+func (i *relation) Normalize() error {
 	i.Relation.Relation = strings.ToLower(i.Relation.GetRelation())
 	*i.Relation.Subject.Type = strings.ToLower(i.Relation.Subject.GetType())
 	*i.Relation.Object.Type = strings.ToLower(i.Relation.Object.GetType())
 	return nil
 }
 
-func (i *Relation) Msg() *dsc.Relation {
-	if i == nil || i.Relation == nil {
-		return &dsc.Relation{}
-	}
-	return i.Relation
-}
-
-func (i *Relation) GetHash() (string, error) {
+func (i *relation) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -98,27 +80,27 @@ func (i *Relation) GetHash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
-func (i *Relation) Key() string {
+func (i *relation) Key() string {
 	return i.Object.GetType() + ":" + i.GetRelation()
 }
 
-// TODO: validate, check if SubjectKey is correct
-func (i *Relation) SubjectKey() string {
+// TODO: validate, check if SubjectKey is correct.
+func (i *relation) SubjectKey() string {
 	return i.Subject.GetKey() + "|" + i.Key() + "|" + i.Object.GetKey()
 }
 
-// TODO: validate, check if ObjectKey is correct
-func (i *Relation) ObjectKey() string {
+// TODO: validate, check if ObjectKey is correct.
+func (i *relation) ObjectKey() string {
 	return i.Object.GetKey() + "|" + i.Key() + "|" + i.Subject.GetKey()
 }
 
-func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Relation, error) {
-	ri, err := relationIdentifier.Resolve(sc)
+func (sc *StoreContext) getRelation(relationIdentifier *dsc.RelationIdentifier) (*dsc.Relation, error) {
+	ri, err := RelationIdentifier(relationIdentifier).Resolve(sc)
 	if err != nil {
-		return &Relation{}, err
+		return &dsc.Relation{}, err
 	}
 
-	buf, err := sc.Store.Read(RelationsObjPath(), ri.ObjKey(), sc.Opts)
+	buf, err := sc.Store.Read(RelationsObjPath(), RelationIdentifier(ri).ObjKey(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -128,60 +110,28 @@ func (sc *StoreContext) getRelation(relationIdentifier *RelationIdentifier) (*Re
 		return nil, err
 	}
 
-	return &Relation{&rel}, nil
+	return &rel, nil
 }
 
 // nolint: gocyclo
-func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*Relation, error) {
-	var subID, objID, objType, relName, filter string
-	var path []string
+func (sc *StoreContext) GetRelation(relationIdentifier *dsc.RelationIdentifier) ([]*dsc.Relation, error) {
+	resp := []*dsc.Relation{}
 
-	// TODO: validate this has to be refactored
-	subIdentifier := &ObjectIdentifier{relationIdentifier.Subject}
-	if ok, _ := subIdentifier.Validate(); ok {
-		if subIdentifier.GetKey() != "" && subIdentifier.GetType() != "" {
-			buf, err := sc.Store.Read(ObjectsKeyPath(), subIdentifier.Key(), sc.Opts)
-			if err != nil {
-				return nil, err
-			}
-			subID = string(buf)
-		}
-	}
+	// TODO: if object type is concrete, check existence
+	// obj, err := ds.ObjectIdentifier(relationIdentifier.Object).Resolve(sc.Store)
+	// if err != nil {
+	// 	return resp, err
+	// }
 
-	objIdentifier := &ObjectIdentifier{relationIdentifier.Object}
-	if ok, _ := objIdentifier.Validate(); ok {
-		if objIdentifier.GetType() != "" && objIdentifier.GetKey() != "" {
-			buf, err := sc.Store.Read(ObjectsKeyPath(), objIdentifier.Key(), sc.Opts)
-			if err != nil {
-				return nil, err
-			}
-			objID = string(buf)
-		} else if objIdentifier.Type != nil {
-			objType = objIdentifier.GetType()
-		}
-	}
+	// TODO: if object type is concrete, check existence
+	// subj, err := ds.ObjectIdentifier(relationIdentifier.Subject).Resolve(sc.Store)
+	// if err != nil {
+	// 	return resp, err
+	// }
 
-	relIdentifier := &RelationTypeIdentifier{relationIdentifier.Relation}
-	if relIdentifier.GetObjectType() == "" && objType != "" {
-		relIdentifier.ObjectType = &objType
-	}
-	if ok, _ := relIdentifier.Validate(); ok {
-		relTypeName, err := sc.GetRelationTypeName(relIdentifier)
-		if err != nil {
-			return nil, err
-		}
-		relName = relTypeName
-	}
-
-	switch {
-	case ID.IsValid(objID):
-		path = RelationsObjPath()
-		filter = makeFilter(objID, "|", relName, "|", subID)
-	case ID.IsValid(subID):
-		path = RelationsSubPath()
-		filter = makeFilter(subID, "|", relName, "|", objID)
-	default:
-		return []*Relation{}, derr.ErrInvalidArgument.Msg("no anchor: subject or object id")
+	path, filter, err := ds.RelationIdentifier(relationIdentifier).PathAndFilter()
+	if err != nil {
+		return resp, err
 	}
 
 	_, values, err := sc.Store.ReadScan(path, filter, sc.Opts)
@@ -189,82 +139,82 @@ func (sc *StoreContext) GetRelation(relationIdentifier *RelationIdentifier) ([]*
 		return nil, err
 	}
 
-	relations := []*Relation{}
+	relations := []*dsc.Relation{}
 	for i := 0; i < len(values); i++ {
 		var rel dsc.Relation
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &rel); err != nil {
 			return nil, err
 		}
-		relations = append(relations, &Relation{&rel})
+		relations = append(relations, &rel)
 	}
 
 	return relations, nil
 }
 
-func (sc *StoreContext) GetRelations(param *RelationIdentifier, page *PaginationRequest) ([]*Relation, *PaginationResponse, error) {
+func (sc *StoreContext) GetRelations(param *dsc.RelationIdentifier, page *dsc.PaginationRequest) ([]*dsc.Relation, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := sc.Store.List(RelationsSubPath(), page.Token, page.Size, sc.Opts)
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	relations := []*Relation{}
+	relations := []*dsc.Relation{}
 	for i := 0; i < len(values); i++ {
 		var relation dsc.Relation
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &relation); err != nil {
 			return nil, nil, err
 		}
-		relations = append(relations, &Relation{&relation})
+		relations = append(relations, &relation)
 	}
 
 	relations = filterRelations(param, relations)
 
-	return relations, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}}, nil
+	return relations, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(relations))}, nil
 }
 
-func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
+func (sc *StoreContext) SetRelation(rel *dsc.Relation) (*dsc.Relation, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	sub, err := NewObjectIdentifier(rel.Subject).Resolve(sc)
+	sub, err := ObjectIdentifier(rel.Subject).Resolve(sc)
 	if err != nil {
-		return &Relation{}, err
+		return &dsc.Relation{}, err
 	}
 
-	obj, err := NewObjectIdentifier(rel.Object).Resolve(sc)
+	obj, err := ObjectIdentifier(rel.Object).Resolve(sc)
 	if err != nil {
-		return &Relation{}, err
+		return &dsc.Relation{}, err
 	}
 
-	r, err := NewRelationTypeIdentifier(&dsc.RelationTypeIdentifier{
-		Name:       &rel.Relation.Relation,
+	r, err := RelationTypeIdentifier(&dsc.RelationTypeIdentifier{
+		Name:       &rel.Relation,
 		ObjectType: obj.Type,
 	}).Resolve(sc)
 	if err != nil {
-		return &Relation{}, err
+		return &dsc.Relation{}, err
 	}
 
-	relation := &Relation{&dsc.Relation{
-		Subject:   sub.Msg(),
+	relation := &dsc.Relation{
+		Subject:   sub,
 		Relation:  r.GetName(),
-		Object:    obj.Msg(),
+		Object:    obj,
 		CreatedAt: rel.CreatedAt,
 		UpdatedAt: rel.UpdatedAt,
 		Hash:      rel.Hash,
-	}}
-
-	if ok, err := relation.Validate(); !ok {
-		return &Relation{}, err
 	}
 
-	if err := relation.Normalize(); err != nil {
-		return &Relation{}, err
+	if ok, err := Relation(relation).Validate(); !ok {
+		return &dsc.Relation{}, err
+	}
+
+	if err := Relation(relation).Normalize(); err != nil {
+		return &dsc.Relation{}, err
 	}
 
 	curHash := ""
-	current, curErr := sc.getRelation(NewRelationIdentifier(&dsc.RelationIdentifier{
-		Subject:  sub.Msg(),
-		Relation: r.Msg(),
-		Object:   obj.Msg(),
-	}))
+	current, curErr := sc.getRelation(&dsc.RelationIdentifier{
+		Subject:  sub,
+		Relation: r,
+		Object:   obj,
+	})
 
 	if curErr == nil {
 		curHash = current.Hash
@@ -276,7 +226,7 @@ func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
 	}
 
 	if curHash != relation.Hash {
-		return &Relation{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", relation.Hash)
+		return &dsc.Relation{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", relation.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
@@ -285,7 +235,7 @@ func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
 	}
 	relation.UpdatedAt = ts
 
-	newHash, _ := relation.GetHash()
+	newHash, _ := Relation(relation).GetHash()
 	relation.Hash = newHash
 
 	// when equal, no changes, skip write
@@ -297,22 +247,22 @@ func (sc *StoreContext) SetRelation(rel *Relation) (*Relation, error) {
 
 	buf := new(bytes.Buffer)
 	if err := pb.ProtoToBuf(buf, relation); err != nil {
-		return &Relation{}, err
+		return &dsc.Relation{}, err
 	}
 
-	if err := sc.Store.Write(RelationsSubPath(), relation.SubjectKey(), buf.Bytes(), sc.Opts); err != nil {
-		return &Relation{}, err
+	if err := sc.Store.Write(RelationsSubPath(), Relation(relation).SubjectKey(), buf.Bytes(), sc.Opts); err != nil {
+		return &dsc.Relation{}, err
 	}
 
-	if err := sc.Store.Write(RelationsObjPath(), relation.ObjectKey(), buf.Bytes(), sc.Opts); err != nil {
-		return &Relation{}, err
+	if err := sc.Store.Write(RelationsObjPath(), Relation(relation).ObjectKey(), buf.Bytes(), sc.Opts); err != nil {
+		return &dsc.Relation{}, err
 	}
 
 	return relation, nil
 }
 
-func (sc *StoreContext) DeleteRelation(relIdentifier *RelationIdentifier) error {
-	if ok, err := relIdentifier.Validate(); !ok {
+func (sc *StoreContext) DeleteRelation(relIdentifier *dsc.RelationIdentifier) error {
+	if ok, err := RelationIdentifier(relIdentifier).Validate(); !ok {
 		return err
 	}
 
@@ -324,11 +274,11 @@ func (sc *StoreContext) DeleteRelation(relIdentifier *RelationIdentifier) error 
 		return err
 	}
 
-	if err := sc.Store.DeleteKey(RelationsSubPath(), current.SubjectKey(), sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(RelationsSubPath(), Relation(current).SubjectKey(), sc.Opts); err != nil {
 		return err
 	}
 
-	if err := sc.Store.DeleteKey(RelationsObjPath(), current.ObjectKey(), sc.Opts); err != nil {
+	if err := sc.Store.DeleteKey(RelationsObjPath(), Relation(current).ObjectKey(), sc.Opts); err != nil {
 		return err
 	}
 

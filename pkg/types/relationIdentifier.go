@@ -5,83 +5,65 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type RelationIdentifier struct {
+type relationIdentifier struct {
 	*dsc.RelationIdentifier
 }
 
-func NewRelationIdentifier(i *dsc.RelationIdentifier) *RelationIdentifier {
-	if i == nil {
-		return &RelationIdentifier{RelationIdentifier: &dsc.RelationIdentifier{
-			Subject:  &dsc.ObjectIdentifier{},
-			Relation: &dsc.RelationTypeIdentifier{},
-			Object:   &dsc.ObjectIdentifier{},
-		}}
-	}
-	return &RelationIdentifier{RelationIdentifier: i}
-}
+func RelationIdentifier(i *dsc.RelationIdentifier) *relationIdentifier { return &relationIdentifier{i} }
 
-func (i *RelationIdentifier) Msg() *dsc.RelationIdentifier {
-	return i.RelationIdentifier
-}
-
-func (i *RelationIdentifier) Validate() (bool, error) {
+func (i *relationIdentifier) Validate() (bool, error) {
 	if i.RelationIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
 	}
 
-	subject := ObjectIdentifier{ObjectIdentifier: i.Subject}
-	if ok, err := subject.Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Subject).Validate(); !ok {
 		return false, err
 	}
 
-	relation := RelationTypeIdentifier{RelationTypeIdentifier: i.Relation}
-	if ok, err := relation.Validate(); !ok {
+	if ok, err := RelationTypeIdentifier(i.Relation).Validate(); !ok {
 		return false, err
 	}
 
-	object := ObjectIdentifier{ObjectIdentifier: i.Object}
-	if ok, err := object.Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Object).Validate(); !ok {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (i *RelationIdentifier) ObjKey() string {
+func (i *relationIdentifier) ObjKey() string {
 	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
 		i.Relation.ObjectType = i.Object.Type
 	}
 	return i.Object.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Subject.GetKey()
 }
 
-func (i *RelationIdentifier) SubKey() string {
+func (i *relationIdentifier) SubKey() string {
 	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
 		i.Relation.ObjectType = i.Object.Type
 	}
 	return i.Subject.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetKey()
 }
 
-func (i *RelationIdentifier) Resolve(sc *StoreContext) (*RelationIdentifier, error) {
-	s, err := NewObjectIdentifier(i.Subject).Resolve(sc)
+func (i *relationIdentifier) Resolve(sc *StoreContext) (*dsc.RelationIdentifier, error) {
+	s, err := ObjectIdentifier(i.Subject).Resolve(sc)
 	if err != nil {
 		return nil, err
 	}
 
-	r, err := NewRelationTypeIdentifier(i.Relation).Resolve(sc)
+	r, err := RelationTypeIdentifier(i.Relation).Resolve(sc)
 	if err != nil {
 		return nil, err
 	}
 
-	o, err := NewObjectIdentifier(i.Object).Resolve(sc)
+	o, err := ObjectIdentifier(i.Object).Resolve(sc)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RelationIdentifier{
-		&dsc.RelationIdentifier{
-			Subject:  s.Msg(),
-			Relation: r.Msg(),
-			Object:   o.Msg(),
-		},
+	return &dsc.RelationIdentifier{
+		Subject:  s,
+		Relation: r,
+		Object:   o,
 	}, nil
 }

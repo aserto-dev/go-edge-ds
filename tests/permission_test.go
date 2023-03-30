@@ -43,7 +43,7 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 1", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "17366720711330694741", resp.Result.Hash)
+				assert.Equal(t, "7685029755427542192", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -68,7 +68,7 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 1", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "17366720711330694741", resp.Result.Hash)
+				assert.Equal(t, "7685029755427542192", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -79,7 +79,7 @@ var permissionTestCasesWithID = []*TestCase{
 			Permission: &dsc.Permission{
 				Name:        "permission-1",
 				DisplayName: "Permission 11",
-				Hash:        "17366720711330694741",
+				Hash:        "7685029755427542192",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -95,7 +95,7 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 11", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "15067186447437388780", resp.Result.Hash)
+				assert.Equal(t, "14563374343076255539", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -120,7 +120,7 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 11", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "15067186447437388780", resp.Result.Hash)
+				assert.Equal(t, "14563374343076255539", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},

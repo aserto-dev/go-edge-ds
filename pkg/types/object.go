@@ -18,24 +18,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Object struct {
+type object struct {
 	*dsc.Object
 }
 
-func NewObject(i *dsc.Object) *Object {
-	if i == nil {
-		return &Object{Object: &dsc.Object{}}
-	}
-	return &Object{Object: i}
-}
+func Object(i *dsc.Object) *object { return &object{i} }
 
-type Objects []*Object
-
-func (o *Objects) Msg() []*dsc.Object {
-	return []*dsc.Object{}
-}
-
-func (i *Object) PreValidate() (bool, error) {
+func (i *object) PreValidate() (bool, error) {
 	if i.Object == nil {
 		return false, derr.ErrInvalidObject
 	}
@@ -48,14 +37,14 @@ func (i *Object) PreValidate() (bool, error) {
 	return true, nil
 }
 
-func (i *Object) Validate() (bool, error) {
+func (i *object) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
 	return true, nil
 }
 
-func (i *Object) Normalize() error {
+func (i *object) Normalize() error {
 	i.Type = strings.ToLower(i.GetType())
 
 	if i.Properties == nil {
@@ -65,14 +54,7 @@ func (i *Object) Normalize() error {
 	return nil
 }
 
-func (i *Object) Msg() *dsc.Object {
-	if i == nil || i.Object == nil {
-		return &dsc.Object{}
-	}
-	return i.Object
-}
-
-func (i *Object) GetHash() (string, error) {
+func (i *object) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -105,17 +87,16 @@ func (i *Object) GetHash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
-func (i *Object) String() string {
-	return i.GetType() + "|" + i.GetKey()
+func (i *object) String() string {
+	return i.GetType() + ":" + i.GetKey()
 }
 
-func (sc *StoreContext) GetObject(objIdentifier *ObjectIdentifier) (*Object, error) {
-	objID, err := sc.GetObjectID(objIdentifier)
-	if err != nil {
+func (sc *StoreContext) GetObject(i *dsc.ObjectIdentifier) (*dsc.Object, error) {
+	if ok, err := ObjectIdentifier(i).Validate(); !ok {
 		return nil, err
 	}
 
-	buf, err := sc.Store.Read(ObjectsPath(), objID, sc.Opts)
+	buf, err := sc.Store.Read(ObjectsPath(), ObjectIdentifier(i).Key(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -125,84 +106,67 @@ func (sc *StoreContext) GetObject(objIdentifier *ObjectIdentifier) (*Object, err
 		return nil, err
 	}
 
-	return &Object{Object: &obj}, nil
+	return &obj, nil
 }
 
-func (sc *StoreContext) GetObjectID(objIdentifier *ObjectIdentifier) (string, error) {
-	// TODO: validate
-	// if ID.IsValid(objIdentifier.GetId()) {
-	// 	return objIdentifier.GetId(), nil
-	// }
-
-	if objIdentifier.GetKey() != "" && objIdentifier.GetType() != "" {
-		idBuf, err := sc.Store.Read(ObjectsKeyPath(), objIdentifier.Key(), sc.Opts)
-		if err != nil {
-			return "", boltdb.ErrKeyNotFound
-		}
-		return string(idBuf), nil
-	}
-
-	return "", derr.ErrInvalidArgument
-}
-
-func (sc *StoreContext) GetObjectMany(objIdentifiers []*ObjectIdentifier) (Objects, error) {
-	objects := []*Object{}
+func (sc *StoreContext) GetObjectMany(objIdentifiers []*dsc.ObjectIdentifier) ([]*dsc.Object, error) {
+	objects := []*dsc.Object{}
 
 	for i := 0; i < len(objIdentifiers); i++ {
 		obj, err := sc.GetObject(objIdentifiers[i])
 		if err != nil {
-			return []*Object{}, err
+			return []*dsc.Object{}, err
 		}
 		objects = append(objects, obj)
 	}
 	return objects, nil
 }
 
-func (sc *StoreContext) GetObjects(param *ObjectTypeIdentifier, page *PaginationRequest) (Objects, *PaginationResponse, error) {
+func (sc *StoreContext) GetObjects(param *dsc.ObjectTypeIdentifier, page *dsc.PaginationRequest) ([]*dsc.Object, *dsc.PaginationResponse, error) {
+	// TODO: object type name filter is not implemented
 	_, values, nextToken, _, err := sc.Store.List(ObjectsPath(), page.Token, page.Size, sc.Opts)
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	objects := []*Object{}
+	objects := []*dsc.Object{}
 	for i := 0; i < len(values); i++ {
 		var object dsc.Object
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &object); err != nil {
 			return nil, nil, err
 		}
-		objects = append(objects, &Object{&object})
+		objects = append(objects, &object)
 	}
 
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return objects, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objects))}}, nil
+	return objects, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objects))}, nil
 }
 
-func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
+func (sc *StoreContext) SetObject(obj *dsc.Object) (*dsc.Object, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := obj.PreValidate(); !ok {
-		return &Object{}, err
+	if ok, err := Object(obj).PreValidate(); !ok {
+		return &dsc.Object{}, err
 	}
 
 	curHash := ""
-	current, err := sc.GetObject(&ObjectIdentifier{
-		&dsc.ObjectIdentifier{
-			Key: &obj.Key, Type: &obj.Type,
-		},
+	current, err := sc.GetObject(&dsc.ObjectIdentifier{
+		Type: &obj.Type,
+		Key:  &obj.Key,
 	})
 	if err == nil {
-		curHash = current.Object.Hash
+		curHash = current.Hash
 	}
 
-	if ok, err := obj.Validate(); !ok {
-		return &Object{}, err
+	if ok, err := Object(obj).Validate(); !ok {
+		return &dsc.Object{}, err
 	}
 
-	if err := obj.Normalize(); err != nil {
-		return &Object{}, err
+	if err := Object(obj).Normalize(); err != nil {
+		return &dsc.Object{}, err
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
@@ -211,7 +175,7 @@ func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
 	}
 
 	if curHash != "" && curHash != obj.Hash {
-		return &Object{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", obj.Hash)
+		return &dsc.Object{}, derr.ErrHashMismatch.Msgf("cur: %s new: %s", curHash, obj.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
@@ -220,7 +184,7 @@ func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
 	}
 	obj.UpdatedAt = ts
 
-	newHash, _ := obj.GetHash()
+	newHash, _ := Object(obj).GetHash()
 	obj.Hash = newHash
 
 	// when equal, no changes, skip write
@@ -233,23 +197,23 @@ func (sc *StoreContext) SetObject(obj *Object) (*Object, error) {
 	buf := new(bytes.Buffer)
 
 	if err := pb.ProtoToBuf(buf, obj); err != nil {
-		return &Object{}, err
+		return &dsc.Object{}, err
 	}
 
 	key := obj.String()
 	if err := sc.Store.Write(ObjectsPath(), key, buf.Bytes(), sc.Opts); err != nil {
-		return &Object{}, err
+		return &dsc.Object{}, err
 	}
 
 	return obj, nil
 }
 
-func (sc *StoreContext) DeleteObject(objIdentifier *ObjectIdentifier) error {
-	if ok, err := objIdentifier.Validate(); !ok {
+func (sc *StoreContext) DeleteObject(i *dsc.ObjectIdentifier) error {
+	if ok, err := ObjectIdentifier(i).Validate(); !ok {
 		return err
 	}
 
-	current, err := sc.GetObject(objIdentifier)
+	current, err := sc.GetObject(i)
 	switch {
 	case errors.Is(err, boltdb.ErrKeyNotFound):
 		return nil

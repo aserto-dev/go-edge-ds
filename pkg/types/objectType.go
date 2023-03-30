@@ -17,18 +17,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type ObjectType struct {
+type objectType struct {
 	*dsc.ObjectType
 }
 
-func NewObjectType(i *dsc.ObjectType) *ObjectType {
-	if i == nil {
-		return &ObjectType{ObjectType: &dsc.ObjectType{}}
-	}
-	return &ObjectType{ObjectType: i}
-}
+func ObjectType(i *dsc.ObjectType) *objectType { return &objectType{i} }
 
-func (i *ObjectType) PreValidate() (bool, error) {
+func (i *objectType) PreValidate() (bool, error) {
 	if i == nil {
 		return false, derr.ErrInvalidObjectType
 	}
@@ -44,26 +39,19 @@ func (i *ObjectType) PreValidate() (bool, error) {
 	return true, nil
 }
 
-func (i *ObjectType) Validate() (bool, error) {
+func (i *objectType) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
 	return true, nil
 }
 
-func (i *ObjectType) Normalize() error {
+func (i *objectType) Normalize() error {
 	i.Name = strings.ToLower(i.Name)
 	return nil
 }
 
-func (i *ObjectType) Msg() *dsc.ObjectType {
-	if i == nil {
-		return &dsc.ObjectType{}
-	}
-	return i.ObjectType
-}
-
-func (i *ObjectType) GetHash() (string, error) {
+func (i *objectType) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -86,7 +74,7 @@ func (i *ObjectType) GetHash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
-func (sc *StoreContext) GetObjectType(objTypeIdentifier *ObjectTypeIdentifier) (*ObjectType, error) {
+func (sc *StoreContext) GetObjectType(objTypeIdentifier *dsc.ObjectTypeIdentifier) (*dsc.ObjectType, error) {
 	if objTypeIdentifier.GetName() == "" {
 		return nil, derr.ErrInvalidArgument.Msg("object type name not set")
 	}
@@ -101,50 +89,50 @@ func (sc *StoreContext) GetObjectType(objTypeIdentifier *ObjectTypeIdentifier) (
 		return nil, err
 	}
 
-	return &ObjectType{&objType}, nil
+	return &objType, nil
 }
 
-func (sc *StoreContext) GetObjectTypes(page *PaginationRequest) ([]*ObjectType, *PaginationResponse, error) {
+func (sc *StoreContext) GetObjectTypes(page *dsc.PaginationRequest) ([]*dsc.ObjectType, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := sc.Store.List(ObjectTypesPath(), page.Token, page.Size, sc.Opts)
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	objTypes := []*ObjectType{}
+	objTypes := []*dsc.ObjectType{}
 	for i := 0; i < len(values); i++ {
 		var objType dsc.ObjectType
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &objType); err != nil {
 			return nil, nil, err
 		}
-		objTypes = append(objTypes, &ObjectType{&objType})
+		objTypes = append(objTypes, &objType)
 	}
 
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return objTypes, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}}, nil
+	return objTypes, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(objTypes))}, nil
 }
 
-func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) {
+func (sc *StoreContext) SetObjectType(objType *dsc.ObjectType) (*dsc.ObjectType, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := objType.PreValidate(); !ok {
-		return &ObjectType{}, err
+	if ok, err := ObjectType(objType).PreValidate(); !ok {
+		return &dsc.ObjectType{}, err
 	}
 
 	curHash := ""
-	current, err := sc.GetObjectType(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &objType.Name}})
+	current, err := sc.GetObjectType(&dsc.ObjectTypeIdentifier{Name: &objType.Name})
 	if err == nil {
 		curHash = current.Hash
 	}
 
-	if ok, err := objType.Validate(); !ok {
-		return &ObjectType{}, err
+	if ok, err := ObjectType(objType).Validate(); !ok {
+		return &dsc.ObjectType{}, err
 	}
 
-	if err := objType.Normalize(); err != nil {
-		return &ObjectType{}, err
+	if err := ObjectType(objType).Normalize(); err != nil {
+		return &dsc.ObjectType{}, err
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
@@ -153,7 +141,7 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 	}
 
 	if curHash != "" && curHash != objType.Hash {
-		return &ObjectType{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", objType.Hash)
+		return &dsc.ObjectType{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", objType.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
@@ -162,7 +150,7 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 	}
 	objType.UpdatedAt = ts
 
-	newHash, _ := objType.GetHash()
+	newHash, _ := ObjectType(objType).GetHash()
 	objType.Hash = newHash
 
 	// when equal, no changes, skip write
@@ -175,18 +163,18 @@ func (sc *StoreContext) SetObjectType(objType *ObjectType) (*ObjectType, error) 
 	buf := new(bytes.Buffer)
 
 	if err := pb.ProtoToBuf(buf, objType); err != nil {
-		return &ObjectType{}, err
+		return &dsc.ObjectType{}, err
 	}
 
 	if err := sc.Store.Write(ObjectTypesPath(), objType.Name, buf.Bytes(), sc.Opts); err != nil {
-		return &ObjectType{}, err
+		return &dsc.ObjectType{}, err
 	}
 
 	return objType, nil
 }
 
-func (sc *StoreContext) DeleteObjectType(objTypeIdentifier *ObjectTypeIdentifier) error {
-	if ok, err := objTypeIdentifier.Validate(); !ok {
+func (sc *StoreContext) DeleteObjectType(objTypeIdentifier *dsc.ObjectTypeIdentifier) error {
+	if ok, err := ObjectTypeIdentifier(objTypeIdentifier).Validate(); !ok {
 		return err
 	}
 

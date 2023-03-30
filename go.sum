@@ -8,8 +8,6 @@ github.com/aserto-dev/errors v0.0.4 h1:3gtBJcNnOGIp7SFbLvBawQIlB7shV3A9B2Kqm1S3H
 github.com/aserto-dev/errors v0.0.4/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-aserto v0.20.3 h1:yUhMIENFIdKA6TxE36E+99N3baEIuzfj7Y+onsOuLyg=
 github.com/aserto-dev/go-aserto v0.20.3/go.mod h1:6e5FdSQNvVvaRVIVrAqlQk9uh5k3jtIcDIXciQtN+GQ=
-github.com/aserto-dev/go-directory v0.20.7-0.20230322205428-bc342f5866eb h1:IS9MnPLUtik8RFR4aezY2Me3XeZlfnbWyVJYRcyoU0Y=
-github.com/aserto-dev/go-directory v0.20.7-0.20230322205428-bc342f5866eb/go.mod h1:gjg6wZezLGXJj1LBEXaJUS9kpOnaDWeFUYhDG1TAkTY=
 github.com/aserto-dev/go-directory v0.20.7-0.20230322222720-bd21a6431aad h1:Ay40WBmZW8AR3U1JVj6un4szszu3XIxgwhH5Ew6OYkE=
 github.com/aserto-dev/go-directory v0.20.7-0.20230322222720-bd21a6431aad/go.mod h1:gjg6wZezLGXJj1LBEXaJUS9kpOnaDWeFUYhDG1TAkTY=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=

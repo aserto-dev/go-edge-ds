@@ -9,6 +9,7 @@
         "Hasher",
         "hashstructure",
         "mitchellh",
+        "Msgf",
         "nolint",
         "protobuf",
         "stretchr",

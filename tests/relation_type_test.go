@@ -54,7 +54,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "10726312073185763121", resp.Result.Hash)
+				assert.Equal(t, "6601616304534273683", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -63,7 +63,8 @@ var relationTypeTestCasesWithID = []*TestCase{
 		Name: "get test-rel_type-1",
 		Req: &dsr.GetRelationTypeRequest{
 			Param: &dsc.RelationTypeIdentifier{
-				Name: proto.String("test-rel_type-1"),
+				Name:       proto.String("test-rel_type-1"),
+				ObjectType: proto.String("user"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -83,7 +84,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "10726312073185763121", resp.Result.Hash)
+				assert.Equal(t, "6601616304534273683", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -99,7 +100,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 				Status:      uint32(dsc.Flag_FLAG_UNKNOWN),
 				Unions:      []string{},
 				Permissions: []string{},
-				Hash:        "10726312073185763121",
+				Hash:        "6601616304534273683",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -119,7 +120,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "7481049377055955558", resp.Result.Hash)
+				assert.Equal(t, "4737119394575755564", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -149,7 +150,7 @@ var relationTypeTestCasesWithID = []*TestCase{
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "7481049377055955558", resp.Result.Hash)
+				assert.Equal(t, "4737119394575755564", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},

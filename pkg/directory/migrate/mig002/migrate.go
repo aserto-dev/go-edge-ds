@@ -259,18 +259,22 @@ func updateRelations[T relationType](path []string, v T, d direction) func(*bolt
 
 func relKey[T relationType](v T, d direction) string {
 	switch d {
-	// obj_type : obj_id # relation @ sub_type : sub_id
+	// obj_type : obj_id | relation | sub_type : sub_id
+	// when subject_relation is added this will become
+	// obj_type : obj_id | relation | sub_type : sub_id (# sub_rel)
 	case ObjectToSubject:
-		return fmt.Sprintf("%s:%s#%s@%s:%s",
+		return fmt.Sprintf("%s:%s|%s|%s:%s",
 			v.GetObject().GetType(),
 			v.GetObject().GetKey(),
 			v.GetRelation(),
 			v.GetSubject().GetType(),
 			v.GetSubject().GetKey(),
 		)
-	// sub_type : sub_id @ relation # obj_type : obj_id
+	// sub_type : sub_id | relation | obj_type : obj_id
+	// when subject_relation is added this will become
+	// sub_type : sub_id (# sub_rel) | relation | obj_type : obj_id
 	case SubjectToObject:
-		return fmt.Sprintf("%s:%s@%s#%s:%s",
+		return fmt.Sprintf("%s:%s|%s|%s:%s",
 			v.GetSubject().GetType(),
 			v.GetSubject().GetKey(),
 			v.GetRelation(),

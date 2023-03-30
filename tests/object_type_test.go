@@ -53,7 +53,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.Equal(t, int32(0), resp.Result.Ordinal)
 				assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "2445254762944799642", resp.Result.Hash)
+				assert.Equal(t, "15190328005927951280", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -80,7 +80,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.Equal(t, int32(0), resp.Result.Ordinal)
 				assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "2445254762944799642", resp.Result.Hash)
+				assert.Equal(t, "15190328005927951280", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -95,7 +95,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 				Ordinal:     123,
 				Status:      uint32(dsc.Flag_FLAG_SYSTEM | dsc.Flag_FLAG_READONLY),
 				Schema:      pb.NewStruct(),
-				Hash:        "2445254762944799642",
+				Hash:        "15190328005927951280",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -113,7 +113,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.Equal(t, int32(123), resp.Result.Ordinal)
 				assert.Equal(t, uint32(6), resp.Result.Status)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8646926669383729786", resp.Result.Hash)
+				assert.Equal(t, "5821969820026102548", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -140,7 +140,7 @@ var objectTypeTestCasesWithID = []*TestCase{
 				assert.Equal(t, int32(123), resp.Result.Ordinal)
 				assert.Equal(t, uint32(6), resp.Result.Status)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8646926669383729786", resp.Result.Hash)
+				assert.Equal(t, "5821969820026102548", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},

@@ -5,22 +5,15 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type RelationTypeIdentifier struct {
+type relationTypeIdentifier struct {
 	*dsc.RelationTypeIdentifier
 }
 
-func NewRelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *RelationTypeIdentifier {
-	if i == nil {
-		return &RelationTypeIdentifier{RelationTypeIdentifier: &dsc.RelationTypeIdentifier{}}
-	}
-	return &RelationTypeIdentifier{RelationTypeIdentifier: i}
+func RelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *relationTypeIdentifier {
+	return &relationTypeIdentifier{i}
 }
 
-func (i *RelationTypeIdentifier) Msg() *dsc.RelationTypeIdentifier {
-	return i.RelationTypeIdentifier
-}
-
-func (i *RelationTypeIdentifier) Validate() (bool, error) {
+func (i *relationTypeIdentifier) Validate() (bool, error) {
 	if i.RelationTypeIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 	}
@@ -33,20 +26,18 @@ func (i *RelationTypeIdentifier) Validate() (bool, error) {
 	return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 }
 
-func (i *RelationTypeIdentifier) Key() string {
+func (i *relationTypeIdentifier) Key() string {
 	return i.GetObjectType() + ":" + i.GetName()
 }
 
-func (i *RelationTypeIdentifier) Resolve(sc *StoreContext) (*RelationTypeIdentifier, error) {
-	relType, err := sc.GetRelationType(i)
+func (i *relationTypeIdentifier) Resolve(sc *StoreContext) (*dsc.RelationTypeIdentifier, error) {
+	relType, err := sc.GetRelationType(i.RelationTypeIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RelationTypeIdentifier{
-		&dsc.RelationTypeIdentifier{
-			Name:       &relType.Name,
-			ObjectType: &relType.ObjectType,
-		},
+	return &dsc.RelationTypeIdentifier{
+		Name:       &relType.Name,
+		ObjectType: &relType.ObjectType,
 	}, nil
 }

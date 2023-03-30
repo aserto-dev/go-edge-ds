@@ -17,18 +17,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Permission struct {
+type permission struct {
 	*dsc.Permission
 }
 
-func NewPermission(i *dsc.Permission) *Permission {
-	if i == nil {
-		return &Permission{Permission: &dsc.Permission{}}
-	}
-	return &Permission{Permission: i}
-}
+func Permission(i *dsc.Permission) *permission { return &permission{i} }
 
-func (i *Permission) PreValidate() (bool, error) {
+func (i *permission) PreValidate() (bool, error) {
 	if i.Permission == nil {
 		return false, derr.ErrInvalidPermission
 	}
@@ -38,26 +33,19 @@ func (i *Permission) PreValidate() (bool, error) {
 	return true, nil
 }
 
-func (i *Permission) Validate() (bool, error) {
+func (i *permission) Validate() (bool, error) {
 	if ok, err := i.PreValidate(); !ok {
 		return ok, err
 	}
 	return true, nil
 }
 
-func (i *Permission) Normalize() error {
+func (i *permission) Normalize() error {
 	// TODO: is permission name case-insensitive?
 	return nil
 }
 
-func (i *Permission) Msg() *dsc.Permission {
-	if i == nil || i.Permission == nil {
-		return &dsc.Permission{}
-	}
-	return i.Permission
-}
-
-func (i *Permission) GetHash() (string, error) {
+func (i *permission) GetHash() (string, error) {
 	h := fnv.New64a()
 	h.Reset()
 
@@ -71,9 +59,9 @@ func (i *Permission) GetHash() (string, error) {
 	return strconv.FormatUint(h.Sum64(), 10), nil
 }
 
-func (sc *StoreContext) GetPermission(permissionIdentifier *PermissionIdentifier) (*Permission, error) {
+func (sc *StoreContext) GetPermission(pi *dsc.PermissionIdentifier) (*dsc.Permission, error) {
 
-	buf, err := sc.Store.Read(PermissionsPath(), permissionIdentifier.GetName(), sc.Opts)
+	buf, err := sc.Store.Read(PermissionsPath(), pi.GetName(), sc.Opts)
 	if err != nil {
 		return nil, err
 	}
@@ -83,98 +71,96 @@ func (sc *StoreContext) GetPermission(permissionIdentifier *PermissionIdentifier
 		return nil, err
 	}
 
-	return &Permission{
-		Permission: &perm,
-	}, nil
+	return &perm, nil
 }
 
-func (sc *StoreContext) GetPermissions(page *PaginationRequest) ([]*Permission, *PaginationResponse, error) {
+func (sc *StoreContext) GetPermissions(page *dsc.PaginationRequest) ([]*dsc.Permission, *dsc.PaginationResponse, error) {
 	_, values, nextToken, _, err := sc.Store.List(PermissionsPath(), page.Token, page.Size, sc.Opts)
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	permissions := []*Permission{}
+	permissions := []*dsc.Permission{}
 	for i := 0; i < len(values); i++ {
 		var permission dsc.Permission
 		if err := pb.BufToProto(bytes.NewReader(values[i]), &permission); err != nil {
 			return nil, nil, err
 		}
-		permissions = append(permissions, &Permission{&permission})
+		permissions = append(permissions, &permission)
 	}
 
 	if err != nil {
-		return nil, &PaginationResponse{}, err
+		return nil, &dsc.PaginationResponse{}, err
 	}
 
-	return permissions, &PaginationResponse{&dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}}, nil
+	return permissions, &dsc.PaginationResponse{NextToken: nextToken, ResultSize: int32(len(permissions))}, nil
 }
 
-func (sc *StoreContext) SetPermission(permission *Permission) (*Permission, error) {
+func (sc *StoreContext) SetPermission(p *dsc.Permission) (*dsc.Permission, error) {
 	sessionID := session.ExtractSessionID(sc.Context)
 
-	if ok, err := permission.PreValidate(); !ok {
-		return &Permission{}, err
+	if ok, err := Permission(p).PreValidate(); !ok {
+		return &dsc.Permission{}, err
 	}
 
 	curHash := ""
-	current, err := sc.GetPermission(&PermissionIdentifier{&dsc.PermissionIdentifier{Name: &permission.Name}})
+	current, err := sc.GetPermission(&dsc.PermissionIdentifier{Name: &p.Name})
 	if err == nil {
-		curHash = current.Permission.Hash
+		curHash = current.Hash
 	}
 
-	if ok, err := permission.Validate(); !ok {
-		return &Permission{}, err
+	if ok, err := Permission(p).Validate(); !ok {
+		return &dsc.Permission{}, err
 	}
 
-	if err := permission.Normalize(); err != nil {
-		return &Permission{}, err
+	if err := Permission(p).Normalize(); err != nil {
+		return &dsc.Permission{}, err
 	}
 
 	// if in streaming mode, adopt current object hash, if not provided
 	if sessionID != "" {
-		permission.Hash = curHash
+		p.Hash = curHash
 	}
 
-	if curHash != "" && curHash != permission.Hash {
-		return &Permission{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", permission.Hash)
+	if curHash != "" && curHash != p.Hash {
+		return &dsc.Permission{}, derr.ErrHashMismatch.Str("current", curHash).Str("incoming", p.Hash)
 	}
 
 	ts := timestamppb.New(time.Now().UTC())
 	if curHash == "" {
-		permission.CreatedAt = ts
+		p.CreatedAt = ts
 	}
-	permission.UpdatedAt = ts
+	p.UpdatedAt = ts
 
-	newHash, _ := permission.GetHash()
-	permission.Hash = newHash
+	newHash, _ := Permission(p).GetHash()
+	p.Hash = newHash
 
 	// when equal, no changes, skip write
 	if curHash == newHash {
-		permission.CreatedAt = current.CreatedAt
-		permission.UpdatedAt = current.UpdatedAt
-		return permission, nil
+		p.CreatedAt = current.CreatedAt
+		p.UpdatedAt = current.UpdatedAt
+		return p, nil
 	}
 
 	buf := new(bytes.Buffer)
 
-	if err := pb.ProtoToBuf(buf, permission); err != nil {
-		return permission, err
+	if err := pb.ProtoToBuf(buf, p); err != nil {
+		return p, err
 	}
 
-	if err := sc.Store.Write(PermissionsPath(), permission.GetName(), buf.Bytes(), sc.Opts); err != nil {
-		return &Permission{}, err
+	if err := sc.Store.Write(PermissionsPath(), p.GetName(), buf.Bytes(), sc.Opts); err != nil {
+		return &dsc.Permission{}, err
 	}
 
-	return permission, nil
+	return p, nil
 }
 
-func (sc *StoreContext) DeletePermission(permissionIdentifier *PermissionIdentifier) error {
-	if ok, err := permissionIdentifier.Validate(); !ok {
+func (sc *StoreContext) DeletePermission(pi *dsc.PermissionIdentifier) error {
+	if ok, err := PermissionIdentifier(pi).Validate(); !ok {
 		return err
 	}
 
-	current, err := sc.GetPermission(permissionIdentifier)
+	current, err := sc.GetPermission(pi)
 	switch {
 	case errors.Is(err, boltdb.ErrKeyNotFound):
 		return nil

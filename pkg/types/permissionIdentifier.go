@@ -5,22 +5,15 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
 
-type PermissionIdentifier struct {
+type permissionIdentifier struct {
 	*dsc.PermissionIdentifier
 }
 
-func NewPermissionIdentifier(i *dsc.PermissionIdentifier) *PermissionIdentifier {
-	if i == nil {
-		return &PermissionIdentifier{PermissionIdentifier: &dsc.PermissionIdentifier{}}
-	}
-	return &PermissionIdentifier{PermissionIdentifier: i}
+func PermissionIdentifier(i *dsc.PermissionIdentifier) *permissionIdentifier {
+	return &permissionIdentifier{i}
 }
 
-func (i *PermissionIdentifier) Msg() *dsc.PermissionIdentifier {
-	return i.PermissionIdentifier
-}
-
-func (i *PermissionIdentifier) Validate() (bool, error) {
+func (i *permissionIdentifier) Validate() (bool, error) {
 	if i.PermissionIdentifier == nil {
 		return false, derr.ErrInvalidArgument.Msg("permission_identifier")
 	}
@@ -32,15 +25,13 @@ func (i *PermissionIdentifier) Validate() (bool, error) {
 	return false, derr.ErrInvalidArgument.Msg("permission_identifier")
 }
 
-func (i *PermissionIdentifier) Resolve(sc *StoreContext) (*PermissionIdentifier, error) {
-	perm, err := sc.GetPermission(i)
+func (i *permissionIdentifier) Resolve(sc *StoreContext) (*dsc.PermissionIdentifier, error) {
+	perm, err := sc.GetPermission(i.PermissionIdentifier)
 	if err != nil {
 		return nil, err
 	}
 
-	return &PermissionIdentifier{
-		&dsc.PermissionIdentifier{
-			Name: &perm.Name,
-		},
+	return &dsc.PermissionIdentifier{
+		Name: &perm.Name,
 	}, nil
 }

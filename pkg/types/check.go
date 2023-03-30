@@ -21,22 +21,22 @@ func (sc *StoreContext) CheckRelation(req *dsr.CheckRelationRequest) (*CheckResu
 		return resp, derr.ErrInvalidArgument
 	}
 
-	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
+	subject, err := sc.GetObject(req.Subject)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
 
-	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
+	object, err := sc.GetObject(req.Object)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
 
-	relType, err := sc.GetRelationType(&RelationTypeIdentifier{req.Relation})
+	relType, err := sc.GetRelationType(req.Relation)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
 
-	r, err := sc.check(subject, object, []*RelationType{relType}, req.Trace)
+	r, err := sc.check(subject, object, []*dsc.RelationType{relType}, req.Trace)
 
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
 }
@@ -48,17 +48,17 @@ func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*Check
 		return resp, derr.ErrInvalidArgument
 	}
 
-	subject, err := sc.GetObject(&ObjectIdentifier{req.Subject})
+	subject, err := sc.GetObject(req.Subject)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
 
-	object, err := sc.GetObject(&ObjectIdentifier{req.Object})
+	object, err := sc.GetObject(req.Object)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
 
-	permission, err := sc.GetPermission(&PermissionIdentifier{req.Permission})
+	permission, err := sc.GetPermission(req.Permission)
 	if err != nil {
 		return resp, derr.ErrInvalidArgument
 	}
@@ -74,7 +74,7 @@ func (sc *StoreContext) CheckPermission(req *dsr.CheckPermissionRequest) (*Check
 	return &CheckResult{Check: r.Check, Trace: r.Trace}, err
 }
 
-func (sc *StoreContext) check(subject, object *Object, relations []*RelationType, trace bool) (*CheckResult, error) {
+func (sc *StoreContext) check(subject, object *dsc.Object, relations []*dsc.RelationType, trace bool) (*CheckResult, error) {
 	// expand relation union
 	relations = sc.expandUnions(relations)
 
@@ -122,15 +122,15 @@ func (sc *StoreContext) check(subject, object *Object, relations []*RelationType
 	return &result, nil
 }
 
-func (sc *StoreContext) expandUnions(relations []*RelationType) []*RelationType {
-	relTypeMap := map[string]*RelationType{}
+func (sc *StoreContext) expandUnions(relations []*dsc.RelationType) []*dsc.RelationType {
+	relTypeMap := map[string]*dsc.RelationType{}
 
-	result := []*RelationType{}
+	result := []*dsc.RelationType{}
 	for _, relation := range relations {
 		result = append(result, relation)
 
 		// get all relation types for given object type of relType, to find the ones that union the relType
-		objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &relation.ObjectType}}, &PaginationRequest{&dsc.PaginationRequest{}})
+		objRelTypes, _, err := sc.GetRelationTypes(&dsc.ObjectTypeIdentifier{Name: &relation.ObjectType}, &dsc.PaginationRequest{})
 		if err != nil {
 			continue
 		}
@@ -151,10 +151,10 @@ func (sc *StoreContext) expandUnions(relations []*RelationType) []*RelationType 
 	return result
 }
 
-func (sc *StoreContext) expandPermission(object *Object, permission *Permission) []*RelationType {
-	result := []*RelationType{}
+func (sc *StoreContext) expandPermission(object *dsc.Object, permission *dsc.Permission) []*dsc.RelationType {
+	result := []*dsc.RelationType{}
 
-	objRelTypes, _, err := sc.GetRelationTypes(&ObjectTypeIdentifier{&dsc.ObjectTypeIdentifier{Name: &object.Type}}, &PaginationRequest{&dsc.PaginationRequest{}})
+	objRelTypes, _, err := sc.GetRelationTypes(&dsc.ObjectTypeIdentifier{Name: &object.Type}, &dsc.PaginationRequest{})
 	if err != nil {
 		return result
 	}

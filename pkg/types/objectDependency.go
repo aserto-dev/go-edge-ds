@@ -13,32 +13,31 @@ import (
 
 const maxDepth = 1024
 
-type ObjectDependency struct {
+type objectDependency struct {
 	*dsc.ObjectDependency
 }
 
-type ObjectDependencies []*ObjectDependency
+func ObjectDependency(i *dsc.ObjectDependency) *objectDependency { return &objectDependency{i} }
 
-func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, error) {
+func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) ([]*dsc.ObjectDependency, error) {
 	if req == nil {
 		return nil, derr.ErrInvalidArgument
 	}
 
-	anchorIdentifier := &ObjectIdentifier{req.Anchor}
-	if ok, err := anchorIdentifier.Validate(); !ok {
-		return []*ObjectDependency{}, err
+	if ok, err := ObjectIdentifier(req.Anchor).Validate(); !ok {
+		return []*dsc.ObjectDependency{}, err
 	}
 
 	// TODO: validate this will change when supporting non-concrete object instances
 	// resolve anchor object, validate object existence
-	_, err := sc.GetObject(anchorIdentifier)
+	_, err := sc.GetObject(req.Anchor)
 	if err != nil {
-		return []*ObjectDependency{}, err
+		return []*dsc.ObjectDependency{}, err
 	}
 
-	deps := []*ObjectDependency{}
-	if deps, err = sc.getObjectDependencies(anchorIdentifier, 0, []string{}, deps); err != nil {
-		return []*ObjectDependency{}, err
+	deps := []*dsc.ObjectDependency{}
+	if deps, err = sc.getObjectDependencies(req.Anchor, 0, []string{}, deps); err != nil {
+		return []*dsc.ObjectDependency{}, err
 	}
 
 	deps = filterObjectDependencies(req, deps)
@@ -56,15 +55,15 @@ func (sc *StoreContext) GetGraph(req *dsr.GetGraphRequest) (ObjectDependencies, 
 	return deps, nil
 }
 
-// TODO: validate - replace anchorID with *ObjectIdentifier instance
-func (sc *StoreContext) getObjectDependencies(anchor *ObjectIdentifier, depth int32, path []string, deps []*ObjectDependency) ([]*ObjectDependency, error) {
+// TODO: validate - replace anchorID with *ObjectIdentifier instance.
+func (sc *StoreContext) getObjectDependencies(anchor *dsc.ObjectIdentifier, depth int32, path []string, deps []*dsc.ObjectDependency) ([]*dsc.ObjectDependency, error) {
 	depth++
 
 	if depth > maxDepth {
-		return []*ObjectDependency{}, derr.ErrMaxDepthExceeded
+		return []*dsc.ObjectDependency{}, derr.ErrMaxDepthExceeded
 	}
 
-	// TODO: breaking subFilter must reflect new on-disk structure
+	// TODO: breaking subFilter must reflect new on-disk structure.
 	subFilter := anchor.String() // WAS anchorID + "|"
 	_, values, err := sc.Store.ReadScan(RelationsSubPath(), subFilter, sc.Opts)
 	if err != nil {
@@ -79,64 +78,62 @@ func (sc *StoreContext) getObjectDependencies(anchor *ObjectIdentifier, depth in
 
 		p := make([]string, len(path))
 		copy(p, path)
-		p = append(p, rel.GetSubject().GetType()+"|"+rel.GetSubject().GetKey()+"|"+rel.GetRelation()+"|"+rel.GetObject().GetType()+"|"+rel.GetObject().GetKey())
+		p = append(p, rel.GetSubject().GetType()+":"+rel.GetSubject().GetKey()+"|"+rel.GetRelation()+"|"+rel.GetObject().GetType()+":"+rel.GetObject().GetKey())
 
-		dep := ObjectDependency{
-			ObjectDependency: &dsc.ObjectDependency{
-				ObjectType:  rel.GetObject().GetType(),
-				ObjectKey:   rel.GetObject().GetKey(),
-				Relation:    rel.Relation,
-				SubjectType: rel.GetSubject().GetType(),
-				SubjectKey:  rel.GetObject().GetKey(),
-				Depth:       depth,
-				IsCycle:     false,
-				Path:        p,
-			},
+		dep := dsc.ObjectDependency{
+			ObjectType:  rel.GetObject().GetType(),
+			ObjectKey:   rel.GetObject().GetKey(),
+			Relation:    rel.Relation,
+			SubjectType: rel.GetSubject().GetType(),
+			SubjectKey:  rel.GetObject().GetKey(),
+			Depth:       depth,
+			IsCycle:     false,
+			Path:        p,
 		}
 
 		deps = append(deps, &dep)
 
-		if deps, err = sc.getObjectDependencies(&ObjectIdentifier{rel.GetObject()}, depth, p, deps); err != nil {
+		if deps, err = sc.getObjectDependencies(rel.GetObject(), depth, p, deps); err != nil {
 			return nil, err
 		}
 	}
 	return deps, nil
 }
 
-type filter func(*ObjectDependency) bool
+type filter func(*dsc.ObjectDependency) bool
 
-func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies) ObjectDependencies {
+func filterObjectDependencies(req *dsr.GetGraphRequest, deps []*dsc.ObjectDependency) []*dsc.ObjectDependency {
 	filters := []filter{}
 
 	if req.Object != nil && req.Object.Type != nil && *req.Object.Type != "" {
-		filters = append(filters, func(od *ObjectDependency) bool {
+		filters = append(filters, func(od *dsc.ObjectDependency) bool {
 			return strings.EqualFold(od.ObjectType, req.Object.GetType())
 		})
 	}
-	if req.Object != nil && req.Object.Key != nil && ID.IsValidIfSet(req.Object.GetKey()) {
-		filters = append(filters, func(od *ObjectDependency) bool {
+	if req.Object != nil && req.Object.Key != nil {
+		filters = append(filters, func(od *dsc.ObjectDependency) bool {
 			return od.ObjectKey == req.Object.GetKey()
 		})
 	}
 
 	if req.Relation != nil && req.Relation.Name != nil && *req.Relation.Name != "" {
-		filters = append(filters, func(od *ObjectDependency) bool {
+		filters = append(filters, func(od *dsc.ObjectDependency) bool {
 			return strings.EqualFold(od.Relation, req.Relation.GetName())
 		})
 	}
 
 	if req.Subject != nil && req.Subject.Type != nil && *req.Subject.Type != "" {
-		filters = append(filters, func(od *ObjectDependency) bool {
+		filters = append(filters, func(od *dsc.ObjectDependency) bool {
 			return strings.EqualFold(od.SubjectType, req.Subject.GetType())
 		})
 	}
-	if req.Subject != nil && req.Subject.Key != nil && ID.IsValidIfSet(req.Subject.GetKey()) {
-		filters = append(filters, func(od *ObjectDependency) bool {
+	if req.Subject != nil && req.Subject.Key != nil {
+		filters = append(filters, func(od *dsc.ObjectDependency) bool {
 			return od.SubjectKey == req.Subject.GetKey()
 		})
 	}
 
-	results := []*ObjectDependency{}
+	results := []*dsc.ObjectDependency{}
 	for i := 0; i < len(deps); i++ {
 		if includeObjectDependency(deps[i], filters) {
 			results = append(results, deps[i])
@@ -146,7 +143,7 @@ func filterObjectDependencies(req *dsr.GetGraphRequest, deps ObjectDependencies)
 	return results
 }
 
-func includeObjectDependency(dep *ObjectDependency, filters []filter) bool {
+func includeObjectDependency(dep *dsc.ObjectDependency, filters []filter) bool {
 	for _, fn := range filters {
 		if !fn(dep) {
 			return false
