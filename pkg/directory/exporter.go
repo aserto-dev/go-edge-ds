@@ -235,12 +235,12 @@ func exportRelationsWithKeys(tx *bolt.Tx, stream dse.Exporter_ExportServer) erro
 		}
 
 		for _, rel := range relations {
-			sub, err := ds.Get(stream.Context(), tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key(), &dsc.Object{})
+			sub, err := ds.Get[dsc.Object](stream.Context(), tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 			if err != nil {
 				return err
 			}
 
-			obj, err := ds.Get(stream.Context(), tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key(), &dsc.Object{})
+			obj, err := ds.Get[dsc.Object](stream.Context(), tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
 			if err != nil {
 				return err
 			}

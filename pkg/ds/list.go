@@ -3,8 +3,6 @@ package ds
 import (
 	"bytes"
 	"context"
-	"fmt"
-	"reflect"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
@@ -12,6 +10,11 @@ import (
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 )
+
+type Message[T any] interface {
+	proto.Message
+	*T
+}
 
 type DirectoryType interface {
 	*dsc.Object | *dsc.Relation | *dsc.ObjectType | *dsc.RelationType | *dsc.Permission
@@ -58,20 +61,16 @@ func List[T DirectoryType](ctx context.Context, tx *bolt.Tx, path []string, t T,
 	return results, pageResp, nil
 }
 
-func Get[T DirectoryType](ctx context.Context, tx *bolt.Tx, path []string, key string, t T) (T, error) {
+func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string) (M, error) {
 	buf, err := boltdb.GetKey(tx, path, key)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := pb.BufToProto(bytes.NewReader(buf), any(t).(proto.Message)); err != nil {
-		return nil, err
-	}
-
-	return t, nil
+	return Unmarshal[T, M](buf)
 }
 
-func Set[T DirectoryType](ctx context.Context, tx *bolt.Tx, path []string, key string, t T) (T, error) {
+func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string, t M) (M, error) {
 	buf, err := Marshal(t)
 	if err != nil {
 		return nil, err
@@ -88,8 +87,7 @@ func Delete(ctx context.Context, tx *bolt.Tx, path []string, key string) error {
 	return boltdb.DeleteKey(tx, path, key)
 }
 
-// Marshal msg to buffer.
-func Marshal[T DirectoryType](t T) ([]byte, error) {
+func Marshal[T any, M Message[T]](t M) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := pb.ProtoToBuf(buf, any(t).(proto.Message)); err != nil {
 		return nil, err
@@ -97,42 +95,10 @@ func Marshal[T DirectoryType](t T) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Unmarshal, buffer to msg.
-func Unmarshal[T DirectoryType](b []byte, t T) (T, error) {
-	err := pb.BufToProto(bytes.NewReader(b), any(t).(proto.Message))
-	if err != nil {
+func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
+	var t T
+	if err := pb.BufToProto(bytes.NewReader(b), any(&t).(proto.Message)); err != nil {
 		return nil, err
 	}
-	return t, nil
-}
-
-func SetFieldProperty[T any](target *T, fieldName string, value interface{}) error {
-	// Get the reflect.Value of the target object
-	targetValue := reflect.ValueOf(target).Elem()
-
-	// Get the reflect.Value of the field we want to set
-	field := targetValue.FieldByName(fieldName)
-
-	// Check if the field exists
-	if !field.IsValid() {
-		return fmt.Errorf("field %s does not exist", fieldName)
-	}
-
-	// Check if the field is settable
-	if !field.CanSet() {
-		return fmt.Errorf("field %s is not settable", fieldName)
-	}
-
-	// Get the reflect.Value of the value we want to set
-	valueToSet := reflect.ValueOf(value)
-
-	// Check if the type of the value we want to set is assignable to the type of the field
-	if !valueToSet.Type().AssignableTo(field.Type()) {
-		return fmt.Errorf("cannot assign value of type %s to field of type %s", valueToSet.Type(), field.Type())
-	}
-
-	// Set the value of the field
-	field.Set(valueToSet)
-
-	return nil
+	return &t, nil
 }

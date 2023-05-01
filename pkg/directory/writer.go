@@ -190,7 +190,7 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 
 	ts := timestamppb.New(time.Now().UTC())
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		cur, err := ds.Get(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), &dsc.Relation{})
+		cur, err := ds.Get[dsc.Relation](ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey())
 		switch {
 		case errors.Is(err, boltdb.ErrKeyNotFound):
 			req.Relation.CreatedAt = ts

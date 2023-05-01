@@ -18,7 +18,7 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := ds.Get(ctx, tx, ds.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key(), &dsc.ObjectType{})
+		objType, err := ds.Get[dsc.ObjectType](ctx, tx, ds.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		relType, err := ds.Get(ctx, tx, ds.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key(), &dsc.RelationType{})
+		relType, err := ds.Get[dsc.RelationType](ctx, tx, ds.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := ds.Get(ctx, tx, ds.PermissionsPath, ds.PermissionIdentifier(req.Param).Key(), &dsc.Permission{})
+		objType, err := ds.Get[dsc.Permission](ctx, tx, ds.PermissionsPath, ds.PermissionIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -158,7 +158,7 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		obj, err := ds.Get(ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(req.Param).Key(), &dsc.Object{})
+		obj, err := ds.Get[dsc.Object](ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		for _, i := range req.Param {
-			obj, err := ds.Get(ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(i).Key(), &dsc.Object{})
+			obj, err := ds.Get[dsc.Object](ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(i).Key())
 			if err != nil {
 				return err
 			}
@@ -235,7 +235,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		rel, err := ds.Get(ctx, tx, ds.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey(), &dsc.Relation{})
+		rel, err := ds.Get[dsc.Relation](ctx, tx, ds.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
 		}
@@ -245,13 +245,13 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		if req.GetWithObjects() {
 			objects := map[string]*dsc.Object{}
 			for i := 0; i < len(resp.Results); i++ {
-				sub, err := ds.Get(ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key(), &dsc.Object{})
+				sub, err := ds.Get[dsc.Object](ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 				if err != nil {
 					return err
 				}
 				objects[ds.ObjectIdentifier(rel.Subject).Key()] = sub
 
-				obj, err := ds.Get(ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key(), &dsc.Object{})
+				obj, err := ds.Get[dsc.Object](ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
 				if err != nil {
 					return err
 				}
