@@ -60,10 +60,7 @@ func (s *Directory) Export(req *dse.ExportRequest, stream dse.Exporter_ExportSer
 }
 
 func exportObjectTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		objTypes, pageResp, err := ds.List(stream.Context(), tx, ds.ObjectTypesPath, &dsc.ObjectType{}, page)
@@ -92,10 +89,7 @@ func exportObjectTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 }
 
 func exportPermissions(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		permissions, pageResp, err := ds.List(stream.Context(), tx, ds.PermissionsPath, &dsc.Permission{}, page)
@@ -124,10 +118,7 @@ func exportPermissions(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 }
 
 func exportRelationTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		relTypes, pageResp, err := ds.List(stream.Context(), tx, ds.RelationTypesPath, &dsc.RelationType{}, page)
@@ -157,10 +148,7 @@ func exportRelationTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 }
 
 func exportObjects(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		objects, pageResp, err := ds.List(stream.Context(), tx, ds.ObjectsPath, &dsc.Object{}, page)
@@ -189,10 +177,7 @@ func exportObjects(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 }
 
 func exportRelations(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		relations, pageResp, err := ds.List(stream.Context(), tx, ds.RelationsSubPath, &dsc.Relation{}, page)
@@ -222,10 +207,7 @@ func exportRelations(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 
 // TODO this should be the main and only code path without IDs.
 func exportRelationsWithKeys(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
-	page := &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
 		relations, pageResp, err := ds.List(stream.Context(), tx, ds.RelationsSubPath, &dsc.Relation{}, page)
