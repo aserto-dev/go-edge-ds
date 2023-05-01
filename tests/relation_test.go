@@ -94,16 +94,16 @@ var relationTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "user", resp.Result.Object.GetType())
-				assert.Equal(t, "test-user-1@acmecorp.com", resp.Result.Object.GetKey())
+				assert.Equal(t, "user", resp.Result.Subject.GetType())
+				assert.Equal(t, "test-user-1@acmecorp.com", resp.Result.Subject.GetKey())
 
 				assert.Equal(t, "manager", resp.Result.Relation)
 
-				assert.Equal(t, "user", resp.Result.Subject.GetType())
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Subject.GetKey())
+				assert.Equal(t, "user", resp.Result.Object.GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Object.GetKey())
 
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "14268186579071905229", resp.Result.Hash)
+				assert.Equal(t, "8138580768329688687", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -117,8 +117,7 @@ var relationTestCasesWithID = []*TestCase{
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
-					Name:       proto.String("manager"),
-					ObjectType: proto.String("user"),
+					Name: proto.String("manager"),
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
@@ -138,16 +137,16 @@ var relationTestCasesWithID = []*TestCase{
 
 				t.Logf("resp hash:%s", resp.Results[0].Hash)
 
-				assert.Equal(t, "user", resp.Results[0].Object.GetType())
-				assert.Equal(t, "test-user-1@acmecorp.com", resp.Results[0].Object.GetKey())
+				assert.Equal(t, "user", resp.Results[0].Subject.GetType())
+				assert.Equal(t, "test-user-1@acmecorp.com", resp.Results[0].Subject.GetKey())
 
 				assert.Equal(t, "manager", resp.Results[0].Relation)
 
-				assert.Equal(t, "user", resp.Results[0].Subject.GetType())
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Results[0].Subject.GetKey())
+				assert.Equal(t, "user", resp.Results[0].Object.GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Results[0].Object.GetKey())
 
 				assert.NotEmpty(t, resp.Results[0].Hash)
-				assert.Equal(t, "14268186579071905229", resp.Results[0].Hash)
+				assert.Equal(t, "8138580768329688687", resp.Results[0].Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -161,8 +160,7 @@ var relationTestCasesWithID = []*TestCase{
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
-					Name:       proto.String("manager"),
-					ObjectType: proto.String("user"),
+					Name: proto.String("manager"),
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
@@ -189,8 +187,7 @@ var relationTestCasesWithID = []*TestCase{
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
-					Name:       proto.String("manager"),
-					ObjectType: proto.String("user"),
+					Name: proto.String("manager"),
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),
@@ -199,14 +196,10 @@ var relationTestCasesWithID = []*TestCase{
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
-			require.NotNil(t, msg)
-			switch resp := msg.(type) {
-			case *dsr.GetRelationResponse:
-				assert.NoError(t, tErr)
-				assert.NotNil(t, resp)
-				assert.Nil(t, resp.Results)
-			}
-			return func(proto.Message) {}
+			assert.Error(t, tErr)
+			assert.Contains(t, tErr.Error(), "key not found")
+			assert.Nil(t, msg)
+			return func(req proto.Message) {}
 		},
 	},
 	{
@@ -218,8 +211,7 @@ var relationTestCasesWithID = []*TestCase{
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: &dsc.RelationTypeIdentifier{
-					Name:       proto.String("manager"),
-					ObjectType: proto.String("user"),
+					Name: proto.String("manager"),
 				},
 				Object: &dsc.ObjectIdentifier{
 					Type: proto.String("user"),

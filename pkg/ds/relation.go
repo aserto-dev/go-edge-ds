@@ -3,11 +3,57 @@ package ds
 // model contains relation related items.
 
 import (
+	"hash/fnv"
+	"strconv"
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
+
+// Relation.
+type relation struct {
+	*dsc.Relation
+}
+
+func Relation(i *dsc.Relation) *relation { return &relation{i} }
+
+func (i *relation) Key() string {
+	return i.ObjKey()
+}
+
+func (i *relation) ObjKey() string {
+	return i.Object.GetType() + ":" + i.Object.GetKey() + "|" + i.GetRelation() + "|" + i.Subject.GetType() + ":" + i.Subject.GetKey()
+}
+
+func (i *relation) SubKey() string {
+	return i.Subject.GetType() + ":" + i.Subject.GetKey() + "|" + i.GetRelation() + "|" + i.Object.GetType() + ":" + i.Object.GetKey()
+}
+
+func (i *relation) Validate() (bool, error) {
+
+	if i == nil {
+		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
+	}
+
+	if i.Relation == nil {
+		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
+	}
+
+	if IsNotSet(i.GetRelation()) {
+		return false, ErrInvalidArgumentRelation.Msg("relation")
+	}
+
+	if ok, err := ObjectIdentifier(i.Relation.Object).Validate(); !ok {
+		return ok, err
+	}
+
+	if ok, err := ObjectIdentifier(i.Relation.Subject).Validate(); !ok {
+		return ok, err
+	}
+
+	return true, nil
+}
 
 // RelationIdentifier.
 type relationIdentifier struct {
@@ -15,6 +61,18 @@ type relationIdentifier struct {
 }
 
 func RelationIdentifier(i *dsc.RelationIdentifier) *relationIdentifier { return &relationIdentifier{i} }
+
+func (i *relationIdentifier) Key() string {
+	return i.ObjKey()
+}
+
+func (i *relationIdentifier) ObjKey() string {
+	return i.Object.GetType() + ":" + i.Object.GetKey() + "|" + i.Relation.GetName() + "|" + i.Subject.GetType() + ":" + i.Subject.GetKey()
+}
+
+func (i *relationIdentifier) SubKey() string {
+	return i.Subject.GetType() + ":" + i.Subject.GetKey() + "|" + i.Relation.GetName() + "|" + i.Object.GetType() + ":" + i.Object.GetKey()
+}
 
 func (i *relationIdentifier) Validate() (bool, error) {
 
@@ -26,19 +84,52 @@ func (i *relationIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
 	}
 
-	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.RelationIdentifier.Object).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := RelationTypeSelector(i.RelationIdentifier.Relation).Validate(); !ok {
+	if i.RelationIdentifier.Relation != nil && (i.RelationIdentifier.Relation.ObjectType == nil || i.RelationIdentifier.Relation.GetObjectType() == "") {
+		i.Relation.ObjectType = i.Object.Type
+	}
+
+	if ok, err := RelationTypeIdentifier(i.RelationIdentifier.Relation).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.RelationIdentifier.Subject).Validate(); !ok {
 		return ok, err
 	}
 
 	return true, nil
+}
+
+func (i *relation) Hash() string {
+	h := fnv.New64a()
+	h.Reset()
+
+	if i != nil && i.Relation != nil {
+		if i.Relation.Subject != nil {
+			if _, err := h.Write([]byte(i.Relation.Subject.GetKey())); err != nil {
+				return DefaultHash
+			}
+			if _, err := h.Write([]byte(i.Relation.Subject.GetType())); err != nil {
+				return DefaultHash
+			}
+		}
+		if _, err := h.Write([]byte(i.Relation.Relation)); err != nil {
+			return DefaultHash
+		}
+		if i.Relation.Object != nil {
+			if _, err := h.Write([]byte(i.Relation.Object.GetKey())); err != nil {
+				return DefaultHash
+			}
+			if _, err := h.Write([]byte(i.Relation.Object.GetType())); err != nil {
+				return DefaultHash
+			}
+		}
+	}
+
+	return strconv.FormatUint(h.Sum64(), 10)
 }
 
 func (i *relationIdentifier) PathAndFilter() ([]string, string, error) {
@@ -120,43 +211,49 @@ func (i *relationIdentifier) SubFilter() string {
 	return filter.String()
 }
 
-// RelationTypeIdentifier.
-type relationTypeIdentifier struct {
-	*dsc.RelationTypeIdentifier
+// RelationSelector.
+type relationSelector struct {
+	*dsc.RelationIdentifier
 }
 
-func RelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *relationTypeIdentifier {
-	return &relationTypeIdentifier{i}
-}
+func RelationSelector(i *dsc.RelationIdentifier) *relationSelector { return &relationSelector{i} }
 
-func (i *relationTypeIdentifier) Validate() (bool, error) {
-	// TODO : validate that object type exists in type system.
-	if i.RelationTypeIdentifier == nil {
-		return false, ErrInvalidArgumentRelationTypeIdentifier.Msg("not set (nil)")
+func (i *relationSelector) Validate() (bool, error) {
+	if i == nil {
+		return false, derr.ErrInvalidRelationIdentifier.Msg("nil")
 	}
 
-	if IsNotSet(i.GetName()) {
-		return false, ErrInvalidArgumentRelationTypeIdentifier.Msg("name")
+	if i.RelationIdentifier == nil {
+		i.RelationIdentifier = &dsc.RelationIdentifier{
+			Subject:  &dsc.ObjectIdentifier{},
+			Relation: &dsc.RelationTypeIdentifier{},
+			Object:   &dsc.ObjectIdentifier{},
+		}
 	}
 
-	return true, nil
-}
-
-// RelationTypeSelector.
-type relationTypeSelector struct {
-	*dsc.RelationTypeIdentifier
-}
-
-func RelationTypeSelector(i *dsc.RelationTypeIdentifier) *relationTypeSelector {
-	return &relationTypeSelector{i}
-}
-
-func (i *relationTypeSelector) Validate() (bool, error) {
-	if i.RelationTypeIdentifier == nil {
-		return false, ErrInvalidArgumentRelationTypeIdentifier.Msg("not set(nil)")
+	if i.RelationIdentifier.Subject == nil {
+		i.RelationIdentifier.Subject = &dsc.ObjectIdentifier{}
 	}
 
-	// TODO : validate that if Name is set, the object type exists in type system.
+	if i.RelationIdentifier.Relation == nil {
+		i.RelationIdentifier.Relation = &dsc.RelationTypeIdentifier{}
+	}
+
+	if i.RelationIdentifier.Object == nil {
+		i.RelationIdentifier.Object = &dsc.ObjectIdentifier{}
+	}
+
+	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
+		return ok, err
+	}
+
+	if ok, err := RelationTypeSelector(i.RelationIdentifier.Relation).Validate(); !ok {
+		return ok, err
+	}
+
+	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
+		return ok, err
+	}
 
 	return true, nil
 }

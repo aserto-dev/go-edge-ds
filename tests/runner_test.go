@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
@@ -68,7 +69,10 @@ func TestGetRelationTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{})
+	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{
+		Param: &dsc.ObjectTypeIdentifier{},
+		Page:  &dsc.PaginationRequest{},
+	})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("relation_type: %s:%s", v.ObjectType, v.Name)

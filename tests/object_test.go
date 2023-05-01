@@ -170,6 +170,7 @@ var objectTestCasesWithID = []*TestCase{
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
+			assert.Contains(t, tErr.Error(), "key not found")
 			assert.Nil(t, msg)
 			return func(req proto.Message) {}
 		},
@@ -360,6 +361,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
+			assert.Contains(t, tErr.Error(), "key not found")
 			assert.Nil(t, msg)
 			return func(req proto.Message) {}
 		},

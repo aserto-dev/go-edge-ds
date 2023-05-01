@@ -156,8 +156,8 @@ func (sc *StoreContext) SetRelationType(relType *dsc.RelationType) (*dsc.Relatio
 
 	curHash := ""
 	current, err := sc.GetRelationType(&dsc.RelationTypeIdentifier{
-		Name:       &relType.Name,
-		ObjectType: &relType.ObjectType,
+		Name: &relType.Name,
+		// ObjectType: &relType.ObjectType,
 	})
 	if err == nil {
 		curHash = current.Hash

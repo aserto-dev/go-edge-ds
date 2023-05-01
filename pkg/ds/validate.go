@@ -1,6 +1,8 @@
 package ds
 
-import "strings"
+import (
+	"strings"
+)
 
 func IsSet(s string) bool {
 	return strings.TrimSpace(s) != ""

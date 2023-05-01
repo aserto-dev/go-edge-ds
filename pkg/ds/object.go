@@ -2,11 +2,16 @@ package ds
 
 import (
 	"bytes"
+	"context"
+	"hash/fnv"
+	"strconv"
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/mitchellh/hashstructure/v2"
+	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -16,6 +21,71 @@ const (
 	objectIdentifierKey  string = "key"
 	objectIdentifierType string = "type"
 )
+
+type object struct {
+	*dsc.Object
+}
+
+func Object(i *dsc.Object) *object { return &object{i} }
+
+func (i *object) Key() string {
+	return i.GetType() + ":" + i.GetKey()
+}
+
+func (i *object) Validate() (bool, error) {
+	if i.Object == nil {
+		return false, ErrInvalidArgumentObject.Msg("")
+	}
+
+	// #1 check is type field is set.
+	if IsNotSet(i.GetType()) {
+		return false, ErrInvalidArgumentObject.Msg("type")
+	}
+
+	// #2 check if key field is set.
+	if IsNotSet(i.GetKey()) {
+		return false, ErrInvalidArgumentObjectIdentifier.Msg("key")
+	}
+
+	if i.Properties == nil {
+		i.Properties = pb.NewStruct()
+	}
+
+	return true, nil
+}
+
+func (i *object) Hash() string {
+	h := fnv.New64a()
+	h.Reset()
+
+	if i.Properties != nil {
+		v := i.Properties.AsMap()
+		hash, err := hashstructure.Hash(
+			v,
+			hashstructure.FormatV2,
+			&hashstructure.HashOptions{
+				Hasher: h,
+			},
+		)
+		if err != nil {
+			return DefaultHash
+		}
+		_ = hash
+	}
+
+	if _, err := h.Write([]byte(i.GetType())); err != nil {
+		return DefaultHash
+	}
+	if _, err := h.Write([]byte(i.GetKey())); err != nil {
+		return DefaultHash
+	}
+
+	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
+		return DefaultHash
+	}
+
+	return strconv.FormatUint(h.Sum64(), 10)
+}
 
 type objectIdentifier struct {
 	*dsc.ObjectIdentifier
@@ -49,12 +119,12 @@ func (i *objectIdentifier) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *objectIdentifier) Get(store *boltdb.BoltDB, opts []boltdb.Opts) (*dsc.Object, error) {
+func (i *objectIdentifier) Get(ctx context.Context, db *bolt.DB, tx *bolt.Tx) (*dsc.Object, error) {
 	if ok, err := i.Validate(); !ok {
 		return nil, err
 	}
 
-	buf, err := store.Read(ObjectsPath, i.Key(), opts)
+	buf, err := boltdb.GetKey(tx, ObjectsPath, i.Key())
 	if err != nil {
 		return nil, err
 	}

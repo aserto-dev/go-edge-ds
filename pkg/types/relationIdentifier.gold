@@ -32,16 +32,16 @@ func (i *relationIdentifier) Validate() (bool, error) {
 }
 
 func (i *relationIdentifier) ObjKey() string {
-	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
-		i.Relation.ObjectType = i.Object.Type
-	}
+	// if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
+	// 	i.Relation.ObjectType = i.Object.Type
+	// }
 	return i.Object.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Subject.GetKey()
 }
 
 func (i *relationIdentifier) SubKey() string {
-	if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
-		i.Relation.ObjectType = i.Object.Type
-	}
+	// if i.Relation.GetObjectType() == "" && i.Object.GetType() != "" {
+	// 	i.Relation.ObjectType = i.Object.Type
+	// }
 	return i.Subject.GetKey() + "|" + i.Object.GetType() + ":" + i.Relation.GetName() + "|" + i.Object.GetKey()
 }
 

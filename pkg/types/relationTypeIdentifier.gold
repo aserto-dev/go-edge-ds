@@ -18,14 +18,17 @@ func (i *relationTypeIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 	}
 
-	if i.Name != nil && i.ObjectType != nil &&
-		i.GetName() != "" && i.GetObjectType() != "" {
+	if i.Name != nil &&
+		i.GetName() != "" &&
+		i.ObjectType != nil &&
+		i.GetObjectType() != "" {
 		return true, nil
 	}
 
 	return false, derr.ErrInvalidArgument.Msg("relation_type_identifier")
 }
 
+// TODO: verify.
 func (i *relationTypeIdentifier) Key() string {
 	return i.GetObjectType() + ":" + i.GetName()
 }

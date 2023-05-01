@@ -10,6 +10,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/mitchellh/hashstructure/v2"
@@ -200,8 +201,7 @@ func (sc *StoreContext) SetObject(obj *dsc.Object) (*dsc.Object, error) {
 		return &dsc.Object{}, err
 	}
 
-	key := obj.String()
-	if err := sc.Store.Write(ObjectsPath(), key, buf.Bytes(), sc.Opts); err != nil {
+	if err := sc.Store.Write(ObjectsPath(), ds.Object(obj).Key(), buf.Bytes(), sc.Opts); err != nil {
 		return &dsc.Object{}, err
 	}
 

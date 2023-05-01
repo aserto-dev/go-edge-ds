@@ -185,8 +185,8 @@ func (sc *StoreContext) SetRelation(rel *dsc.Relation) (*dsc.Relation, error) {
 	}
 
 	r, err := RelationTypeIdentifier(&dsc.RelationTypeIdentifier{
-		Name:       &rel.Relation,
-		ObjectType: obj.Type,
+		Name: &rel.Relation,
+		// ObjectType: obj.Type,
 	}).Resolve(sc)
 	if err != nil {
 		return &dsc.Relation{}, err
