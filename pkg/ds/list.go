@@ -9,11 +9,15 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Message[T any] interface {
 	proto.Message
 	*T
+	GetCreatedAt() *timestamppb.Timestamp
+	GetUpdatedAt() *timestamppb.Timestamp
+	GetHash() string
 }
 
 type DirectoryType interface {

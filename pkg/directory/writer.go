@@ -2,16 +2,11 @@ package directory
 
 import (
 	"context"
-	"errors"
-	"time"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/emptypb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // object type metadata methods.
@@ -25,7 +20,12 @@ func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReq
 	req.ObjectType.Hash = ds.ObjectType(req.ObjectType).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objType, err := ds.Set(ctx, tx, ds.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), req.ObjectType)
+		updReq, err := ds.UpdateMetadata(ctx, tx, ds.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), req.ObjectType)
+		if err != nil {
+			return err
+		}
+
+		objType, err := ds.Set(ctx, tx, ds.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,12 @@ func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTyp
 	req.RelationType.Hash = ds.RelationType(req.RelationType).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		relType, err := ds.Set(ctx, tx, ds.RelationTypesPath, ds.RelationType(req.RelationType).Key(), req.RelationType)
+		updReq, err := ds.UpdateMetadata(ctx, tx, ds.RelationTypesPath, ds.RelationType(req.RelationType).Key(), req.RelationType)
+		if err != nil {
+			return err
+		}
+
+		relType, err := ds.Set(ctx, tx, ds.RelationTypesPath, ds.RelationType(req.RelationType).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -107,7 +112,12 @@ func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionReq
 	req.Permission.Hash = ds.Permission(req.Permission).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objType, err := ds.Set(ctx, tx, ds.PermissionsPath, ds.Permission(req.Permission).Key(), req.Permission)
+		updReq, err := ds.UpdateMetadata(ctx, tx, ds.PermissionsPath, ds.Permission(req.Permission).Key(), req.Permission)
+		if err != nil {
+			return err
+		}
+
+		objType, err := ds.Set(ctx, tx, ds.PermissionsPath, ds.Permission(req.Permission).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -148,7 +158,12 @@ func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*
 	req.Object.Hash = ds.Object(req.Object).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objType, err := ds.Set(ctx, tx, ds.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
+		updReq, err := ds.UpdateMetadata(ctx, tx, ds.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
+		if err != nil {
+			return err
+		}
+
+		objType, err := ds.Set(ctx, tx, ds.ObjectsPath, ds.Object(req.Object).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -188,25 +203,13 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 
 	req.Relation.Hash = ds.Relation(req.Relation).Hash()
 
-	ts := timestamppb.New(time.Now().UTC())
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		cur, err := ds.Get[dsc.Relation](ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey())
-		switch {
-		case errors.Is(err, boltdb.ErrKeyNotFound):
-			req.Relation.CreatedAt = ts
-		case err != nil:
-			s.logger.Debug().Err(err)
-		default:
-			if req.Relation.Hash == cur.Hash {
-				resp.Result = cur
-				return nil
-			}
-			req.Relation.CreatedAt = cur.CreatedAt
+		updReq, err := ds.UpdateMetadata(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
+		if err != nil {
+			return err
 		}
 
-		req.Relation.UpdatedAt = ts
-
-		objRel, err := ds.Set(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
+		objRel, err := ds.Set(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
 		if err != nil {
 			return err
 		}
