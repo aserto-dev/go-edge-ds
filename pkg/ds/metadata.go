@@ -50,12 +50,12 @@ func SetFieldProperty[T any](target *T, fieldName string, value interface{}) err
 
 	// Check if the field exists
 	if !field.IsValid() {
-		return fmt.Errorf("field %s does not exist", fieldName)
+		return fmt.Errorf("field %s does not exist", fieldName) //nolint: goerr113
 	}
 
 	// Check if the field is settable
 	if !field.CanSet() {
-		return fmt.Errorf("field %s is not settable", fieldName)
+		return fmt.Errorf("field %s is not settable", fieldName) //nolint: goerr113
 	}
 
 	// Get the reflect.Value of the value we want to set
@@ -63,7 +63,7 @@ func SetFieldProperty[T any](target *T, fieldName string, value interface{}) err
 
 	// Check if the type of the value we want to set is assignable to the type of the field
 	if !valueToSet.Type().AssignableTo(field.Type()) {
-		return fmt.Errorf("cannot assign value of type %s to field of type %s", valueToSet.Type(), field.Type())
+		return fmt.Errorf("cannot assign value of type %s to field of type %s", valueToSet.Type(), field.Type()) //nolint: goerr113
 	}
 
 	// Set the value of the field
