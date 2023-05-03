@@ -3,15 +3,10 @@ package ds
 // model contains relation type related items.
 
 import (
-	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
-	bolt "go.etcd.io/bbolt"
 )
 
 // RelationType.
@@ -22,7 +17,7 @@ type relationType struct {
 func RelationType(i *dsc.RelationType) *relationType { return &relationType{i} }
 
 func (i *relationType) Key() string {
-	return i.ObjectType + ":" + i.Name
+	return i.ObjectType + TypeIDSeparator + i.Name
 }
 
 func (i *relationType) Validate() (bool, error) {
@@ -86,7 +81,7 @@ func RelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *relationTypeIdentifi
 }
 
 func (i *relationTypeIdentifier) Key() string {
-	return i.GetObjectType() + ":" + i.GetName()
+	return i.GetObjectType() + TypeIDSeparator + i.GetName()
 }
 
 func (i *relationTypeIdentifier) Validate() (bool, error) {
@@ -122,22 +117,4 @@ func (i *relationTypeSelector) Validate() (bool, error) {
 	// TODO : validate that if Name is set, the object type exists in type system.
 
 	return true, nil
-}
-
-func (i *relationTypeIdentifier) Get(ctx context.Context, db *bolt.DB, tx *bolt.Tx) (*dsc.RelationType, error) {
-	if ok, err := i.Validate(); !ok {
-		return nil, err
-	}
-
-	buf, err := boltdb.GetKey(tx, RelationTypesPath, i.Key())
-	if err != nil {
-		return nil, err
-	}
-
-	var relType dsc.RelationType
-	if err := pb.BufToProto(bytes.NewReader(buf), &relType); err != nil {
-		return nil, err
-	}
-
-	return &relType, nil
 }

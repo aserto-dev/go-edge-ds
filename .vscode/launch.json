@@ -12,8 +12,7 @@
             "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/cmd/server",
             "args": [
-                "--db_path", ".db/eds-groups.db",
-                "--seed"
+                "--db_path", ".db/eds-acmecorp.db"
             ]
         },
         {
@@ -35,7 +34,7 @@
             "cwd": "${workspaceFolder}",
             "program": "${workspaceFolder}/cmd/server",
             "args": [
-                "--db_path", ".db/eds-acmecorp.db"
+                "--db_path", "/Users/gertd/.config/topaz/db/directory.db"
             ]
         },
         {

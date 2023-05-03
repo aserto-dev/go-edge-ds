@@ -1,17 +1,13 @@
 package ds
 
 import (
-	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/mitchellh/hashstructure/v2"
-	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -29,7 +25,7 @@ type object struct {
 func Object(i *dsc.Object) *object { return &object{i} }
 
 func (i *object) Key() string {
-	return i.GetType() + ":" + i.GetKey()
+	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
 func (i *object) Validate() (bool, error) {
@@ -93,6 +89,7 @@ type objectIdentifier struct {
 
 func ObjectIdentifier(i *dsc.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
 
+// TODO not used, integrated into validate or set.
 func (i *objectIdentifier) Normalize() {
 	i.ObjectIdentifier.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
 	i.ObjectIdentifier.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
@@ -119,26 +116,12 @@ func (i *objectIdentifier) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *objectIdentifier) Get(ctx context.Context, db *bolt.DB, tx *bolt.Tx) (*dsc.Object, error) {
-	if ok, err := i.Validate(); !ok {
-		return nil, err
-	}
-
-	buf, err := boltdb.GetKey(tx, ObjectsPath, i.Key())
-	if err != nil {
-		return nil, err
-	}
-
-	var obj dsc.Object
-	if err := pb.BufToProto(bytes.NewReader(buf), &obj); err != nil {
-		return nil, err
-	}
-
-	return &obj, nil
+func (i *objectIdentifier) Key() string {
+	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *objectIdentifier) Key() string {
-	return i.GetType() + ":" + i.GetKey()
+func (i *objectIdentifier) Equal(n *dsc.ObjectIdentifier) bool {
+	return i.ObjectIdentifier.GetKey() == n.GetKey() && i.ObjectIdentifier.GetType() == n.GetType()
 }
 
 type objectSelector struct {

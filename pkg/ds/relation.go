@@ -23,11 +23,19 @@ func (i *relation) Key() string {
 }
 
 func (i *relation) ObjKey() string {
-	return i.Object.GetType() + ":" + i.Object.GetKey() + "|" + i.GetRelation() + "|" + i.Subject.GetType() + ":" + i.Subject.GetKey()
+	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
+		InstanceSeparator +
+		i.GetRelation() +
+		InstanceSeparator +
+		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
 }
 
 func (i *relation) SubKey() string {
-	return i.Subject.GetType() + ":" + i.Subject.GetKey() + "|" + i.GetRelation() + "|" + i.Object.GetType() + ":" + i.Object.GetKey()
+	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
+		InstanceSeparator +
+		i.GetRelation() +
+		InstanceSeparator +
+		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
 }
 
 func (i *relation) Validate() (bool, error) {
@@ -67,11 +75,19 @@ func (i *relationIdentifier) Key() string {
 }
 
 func (i *relationIdentifier) ObjKey() string {
-	return i.Object.GetType() + ":" + i.Object.GetKey() + "|" + i.Relation.GetName() + "|" + i.Subject.GetType() + ":" + i.Subject.GetKey()
+	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
+		InstanceSeparator +
+		i.Relation.GetName() +
+		InstanceSeparator +
+		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
 }
 
 func (i *relationIdentifier) SubKey() string {
-	return i.Subject.GetType() + ":" + i.Subject.GetKey() + "|" + i.Relation.GetName() + "|" + i.Object.GetType() + ":" + i.Object.GetKey()
+	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
+		InstanceSeparator +
+		i.Relation.GetName() +
+		InstanceSeparator +
+		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
 }
 
 func (i *relationIdentifier) Validate() (bool, error) {

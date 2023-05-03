@@ -149,7 +149,7 @@ func keyModelType[T modelType](v T) []byte {
 	case *dsc.Permission:
 		return []byte(msg.GetName())
 	case *dsc.RelationType:
-		return []byte(msg.GetObjectType() + ":" + msg.GetName())
+		return []byte(msg.GetObjectType() + ds.TypeIDSeparator + msg.GetName())
 	}
 	return []byte{}
 }
@@ -179,7 +179,7 @@ func updateObjects[T objectType](path []string, v T) func(*bolt.DB, *bolt.DB) er
 					return err
 				}
 
-				newKey := v.GetType() + ":" + v.GetKey()
+				newKey := v.GetType() + ds.TypeIDSeparator + v.GetKey()
 
 				if err := rwDB.Update(func(tx *bolt.Tx) error {
 					return mig.SetKey(tx, path, []byte(newKey), buf.Bytes())

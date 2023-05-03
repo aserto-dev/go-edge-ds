@@ -39,7 +39,7 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := ds.List(ctx, tx, ds.ObjectTypesPath, &dsc.ObjectType{}, req.Page)
+		results, page, err := ds.List[dsc.ObjectType](ctx, tx, ds.ObjectTypesPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := ds.List(ctx, tx, ds.RelationTypesPath, &dsc.RelationType{}, req.Page)
+		results, page, err := ds.List[dsc.RelationType](ctx, tx, ds.RelationTypesPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := ds.List(ctx, tx, ds.PermissionsPath, &dsc.Permission{}, req.Page)
+		results, page, err := ds.List[dsc.Permission](ctx, tx, ds.PermissionsPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -212,7 +212,7 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := ds.List(ctx, tx, ds.ObjectsPath, &dsc.Object{}, req.Page)
+		results, page, err := ds.List[dsc.Object](ctx, tx, ds.ObjectsPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -279,7 +279,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := ds.List(ctx, tx, ds.RelationsSubPath, &dsc.Relation{}, req.Page)
+		results, page, err := ds.List[dsc.Relation](ctx, tx, ds.RelationsSubPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -337,8 +337,13 @@ func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*ds
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.GetGraph(req).Exec(ctx)
-		return err
+		results, err := ds.GetGraph(req).Exec(ctx, tx)
+		if err != nil {
+			return err
+		}
+
+		resp.Results = results
+		return nil
 	})
 
 	return resp, err

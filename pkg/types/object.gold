@@ -89,7 +89,7 @@ func (i *object) GetHash() (string, error) {
 }
 
 func (i *object) String() string {
-	return i.GetType() + ":" + i.GetKey()
+	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
 func (sc *StoreContext) GetObject(i *dsc.ObjectIdentifier) (*dsc.Object, error) {

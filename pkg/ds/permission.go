@@ -1,15 +1,10 @@
 package ds
 
 import (
-	"bytes"
-	"context"
 	"hash/fnv"
 	"strconv"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
-	bolt "go.etcd.io/bbolt"
 )
 
 // Permission.
@@ -72,22 +67,4 @@ func (i *permissionIdentifier) Validate() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (i *permissionIdentifier) Get(ctx context.Context, db *bolt.DB, tx *bolt.Tx) (*dsc.Permission, error) {
-	if ok, err := i.Validate(); !ok {
-		return nil, err
-	}
-
-	buf, err := boltdb.GetKey(tx, PermissionsPath, i.Key())
-	if err != nil {
-		return nil, err
-	}
-
-	var perm dsc.Permission
-	if err := pb.BufToProto(bytes.NewReader(buf), &perm); err != nil {
-		return nil, err
-	}
-
-	return &perm, nil
 }

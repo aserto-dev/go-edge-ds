@@ -25,4 +25,5 @@ var (
 	ErrInvalidArgumentPermission             = cerr.NewAsertoError("E20042", codes.InvalidArgument, http.StatusBadRequest, "permission invalid argument")
 	ErrInvalidArgumentObject                 = cerr.NewAsertoError("E20042", codes.InvalidArgument, http.StatusBadRequest, "object invalid argument")
 	ErrInvalidArgumentRelation               = cerr.NewAsertoError("E20042", codes.InvalidArgument, http.StatusBadRequest, "relation invalid argument")
+	ErrGraphDirectionality                   = cerr.NewAsertoError("E20043", codes.InvalidArgument, http.StatusPreconditionFailed, "unable to determine graph directionality")
 )

@@ -16,8 +16,6 @@ type Message[T any] interface {
 	proto.Message
 	*T
 	GetCreatedAt() *timestamppb.Timestamp
-	GetUpdatedAt() *timestamppb.Timestamp
-	GetHash() string
 }
 
 type DirectoryType interface {
@@ -28,41 +26,6 @@ type DirectoryType interface {
 type IdentifierType interface {
 	*dsc.ObjectIdentifier | *dsc.RelationIdentifier | *dsc.ObjectTypeIdentifier | *dsc.RelationTypeIdentifier | *dsc.PermissionIdentifier
 	proto.Message
-}
-
-func List[T DirectoryType](ctx context.Context, tx *bolt.Tx, path []string, t T, page *dsc.PaginationRequest) ([]T, *dsc.PaginationResponse, error) {
-	iter, err := boltdb.List(tx, path, page.Token)
-	if err != nil {
-		return []T{}, &dsc.PaginationResponse{}, err
-	}
-
-	var results []T
-
-	for iter.Next() {
-		v := iter.Value()
-		if err := pb.BufToProto(bytes.NewReader(v), any(t).(proto.Message)); err != nil {
-			return []T{}, &dsc.PaginationResponse{}, err
-		}
-
-		result := proto.Clone(t)
-		results = append(results, result.(T))
-
-		if len(results) == int(page.Size) {
-			break
-		}
-	}
-
-	pageResp := &dsc.PaginationResponse{
-		ResultSize: int32(len(results)),
-		NextToken:  "",
-	}
-
-	// get NextToken value.
-	if iter.Next() {
-		pageResp.NextToken = string(iter.Key())
-	}
-
-	return results, pageResp, nil
 }
 
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string) (M, error) {
@@ -105,4 +68,61 @@ func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 		return nil, err
 	}
 	return &t, nil
+}
+
+func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, page *dsc.PaginationRequest) ([]M, *dsc.PaginationResponse, error) {
+	iter, err := boltdb.List(tx, path, page.Token)
+	if err != nil {
+		return []M{}, &dsc.PaginationResponse{}, err
+	}
+
+	var results []M
+
+	for iter.Next() {
+		v := iter.Value()
+		msg, err := Unmarshal[T, M](v)
+		if err != nil {
+			return []M{}, &dsc.PaginationResponse{}, err
+		}
+
+		results = append(results, msg)
+
+		if len(results) == int(page.Size) {
+			break
+		}
+	}
+
+	pageResp := &dsc.PaginationResponse{
+		ResultSize: int32(len(results)),
+		NextToken:  "",
+	}
+
+	// get NextToken value.
+	if iter.Next() {
+		pageResp.NextToken = string(iter.Key())
+	}
+
+	return results, pageResp, nil
+}
+
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, filter string) ([]M, error) {
+	keys, values, err := boltdb.Scan(tx, path, filter)
+	if err != nil {
+		return []M{}, err
+	}
+
+	var results []M
+
+	for i := 0; i < len(keys); i++ {
+		v := values[i]
+
+		msg, err := Unmarshal[T, M](v)
+		if err != nil {
+			return []M{}, err
+		}
+
+		results = append(results, msg)
+	}
+
+	return results, nil
 }

@@ -42,31 +42,31 @@ func UpdateMetadata[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path 
 }
 
 func SetFieldProperty[T any](target *T, fieldName string, value interface{}) error {
-	// Get the reflect.Value of the target object
+	// Get the reflect.Value of the target object.
 	targetValue := reflect.ValueOf(target).Elem()
 
-	// Get the reflect.Value of the field we want to set
+	// Get the reflect.Value of the field we want to set.
 	field := targetValue.FieldByName(fieldName)
 
-	// Check if the field exists
+	// Check if the field exists.
 	if !field.IsValid() {
 		return fmt.Errorf("field %s does not exist", fieldName) //nolint: goerr113
 	}
 
-	// Check if the field is settable
+	// Check if the field is settable.
 	if !field.CanSet() {
 		return fmt.Errorf("field %s is not settable", fieldName) //nolint: goerr113
 	}
 
-	// Get the reflect.Value of the value we want to set
+	// Get the reflect.Value of the value we want to set.
 	valueToSet := reflect.ValueOf(value)
 
-	// Check if the type of the value we want to set is assignable to the type of the field
+	// Check if the type of the value we want to set is assignable to the type of the field.
 	if !valueToSet.Type().AssignableTo(field.Type()) {
 		return fmt.Errorf("cannot assign value of type %s to field of type %s", valueToSet.Type(), field.Type()) //nolint: goerr113
 	}
 
-	// Set the value of the field
+	// Set the value of the field.
 	field.Set(valueToSet)
 
 	return nil

@@ -1,20 +1,25 @@
 package boltdb
 
 import (
+	"bytes"
+	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
+	cerr "github.com/aserto-dev/errors"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+
+	"google.golang.org/grpc/codes"
 )
 
 // Error codes returned by failures to parse an expression.
 var (
-	ErrPathNotFound     = errors.New("path not found")
-	ErrKeyNotFound      = errors.New("key not found")
-	ErrKeyAlreadyExists = errors.New("key already exists")
+	ErrPathNotFound = cerr.NewAsertoError("E20050", codes.NotFound, http.StatusNotFound, "path not found")
+	ErrKeyNotFound  = cerr.NewAsertoError("E20051", codes.NotFound, http.StatusNotFound, "key not found")
+	ErrKeyExists    = cerr.NewAsertoError("E20052", codes.AlreadyExists, http.StatusConflict, "key already exists")
 )
 
 type Config struct {
@@ -242,9 +247,44 @@ func KeyExists(tx *bolt.Tx, path []string, key string) (bool, error) {
 	return true, nil
 }
 
-// List, returns a key-value iterator for the path specified bucket.
+// List, returns a key-value iterator for the path specified bucket, with a starting position.
 func List(tx *bolt.Tx, path []string, prefix string) (*KVIterator, error) {
-	return NewKVIterator(tx, path, []byte(prefix))
+	return NewKVIterator(tx, path, WithPrefix(prefix))
+}
+
+// Scan, returns a key-value iterator for the specified bucket, with an enforced filter.
+func Scan(tx *bolt.Tx, path []string, filter string) ([][]byte, [][]byte, error) {
+	var (
+		keys   = make([][]byte, 0)
+		values = make([][]byte, 0)
+	)
+
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return [][]byte{}, [][]byte{}, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+	}
+
+	c := b.Cursor()
+
+	prefix := []byte(filter)
+
+	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+		if k == nil {
+			break
+		}
+		keys = append(keys, k)
+		values = append(values, v)
+	}
+
+	return keys, values, nil
+}
+
+type KVIteratorOption func(*KVIterator)
+
+func WithPrefix(prefix string) KVIteratorOption {
+	return func(i *KVIterator) {
+		i.prefix = []byte(prefix)
+	}
 }
 
 // KVIterator - key-value iterator.
@@ -259,7 +299,7 @@ type KVIterator struct {
 	initialized bool
 }
 
-func NewKVIterator(tx *bolt.Tx, path []string, prefix []byte) (*KVIterator, error) {
+func NewKVIterator(tx *bolt.Tx, path []string, opts ...KVIteratorOption) (*KVIterator, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return nil, err
@@ -268,9 +308,12 @@ func NewKVIterator(tx *bolt.Tx, path []string, prefix []byte) (*KVIterator, erro
 	iter := &KVIterator{
 		tx:          tx,
 		path:        path,
-		prefix:      prefix,
 		cursor:      b.Cursor(),
 		initialized: false,
+	}
+
+	for _, opt := range opts {
+		opt(iter)
 	}
 
 	return iter, nil

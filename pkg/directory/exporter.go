@@ -63,7 +63,7 @@ func exportObjectTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objTypes, pageResp, err := ds.List(stream.Context(), tx, ds.ObjectTypesPath, &dsc.ObjectType{}, page)
+		objTypes, pageResp, err := ds.List[dsc.ObjectType](stream.Context(), tx, ds.ObjectTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func exportPermissions(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		permissions, pageResp, err := ds.List(stream.Context(), tx, ds.PermissionsPath, &dsc.Permission{}, page)
+		permissions, pageResp, err := ds.List[dsc.Permission](stream.Context(), tx, ds.PermissionsPath, page)
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func exportRelationTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relTypes, pageResp, err := ds.List(stream.Context(), tx, ds.RelationTypesPath, &dsc.RelationType{}, page)
+		relTypes, pageResp, err := ds.List[dsc.RelationType](stream.Context(), tx, ds.RelationTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func exportObjects(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objects, pageResp, err := ds.List(stream.Context(), tx, ds.ObjectsPath, &dsc.Object{}, page)
+		objects, pageResp, err := ds.List[dsc.Object](stream.Context(), tx, ds.ObjectsPath, page)
 		if err != nil {
 			return err
 		}
@@ -180,7 +180,7 @@ func exportRelations(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := ds.List(stream.Context(), tx, ds.RelationsSubPath, &dsc.Relation{}, page)
+		relations, pageResp, err := ds.List[dsc.Relation](stream.Context(), tx, ds.RelationsSubPath, page)
 		if err != nil {
 			return err
 		}
@@ -210,7 +210,7 @@ func exportRelationsWithKeys(tx *bolt.Tx, stream dse.Exporter_ExportServer) erro
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := ds.List(stream.Context(), tx, ds.RelationsSubPath, &dsc.Relation{}, page)
+		relations, pageResp, err := ds.List[dsc.Relation](stream.Context(), tx, ds.RelationsSubPath, page)
 
 		if err != nil {
 			return err
