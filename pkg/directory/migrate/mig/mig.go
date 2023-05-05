@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -122,7 +122,7 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 	ver, _ := semver.NewVersion(baseVersion)
 
 	err := db.View(func(tx *bolt.Tx) error {
-		b, err := SetBucket(tx, ds.SystemPath)
+		b, err := SetBucket(tx, boltdb.SystemPath)
 		if err != nil {
 			return nil
 		}
@@ -144,7 +144,7 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 
 func SetVersion(db *bolt.DB, version *semver.Version) (err error) {
 	return db.Update(func(tx *bolt.Tx) error {
-		b, err := SetBucket(tx, ds.SystemPath)
+		b, err := SetBucket(tx, boltdb.SystemPath)
 		if err != nil {
 			return nil
 		}
@@ -155,7 +155,7 @@ func SetVersion(db *bolt.DB, version *semver.Version) (err error) {
 
 func EnsureBaseVersion(_, rwDB *bolt.DB) error {
 	return rwDB.Update(func(tx *bolt.Tx) error {
-		b, err := SetBucket(tx, ds.SystemPath)
+		b, err := SetBucket(tx, boltdb.SystemPath)
 		if err != nil {
 			return nil
 		}

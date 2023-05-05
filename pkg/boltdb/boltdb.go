@@ -248,12 +248,12 @@ func KeyExists(tx *bolt.Tx, path []string, key string) (bool, error) {
 }
 
 // List, returns a key-value iterator for the path specified bucket, with a starting position.
-func List(tx *bolt.Tx, path []string, prefix string) (*KVIterator, error) {
+func list(tx *bolt.Tx, path []string, prefix string) (*KVIterator, error) {
 	return NewKVIterator(tx, path, WithPrefix(prefix))
 }
 
 // Scan, returns a key-value iterator for the specified bucket, with an enforced filter.
-func Scan(tx *bolt.Tx, path []string, filter string) ([][]byte, [][]byte, error) {
+func scan(tx *bolt.Tx, path []string, filter string) ([][]byte, [][]byte, error) {
 	var (
 		keys   = make([][]byte, 0)
 		values = make([][]byte, 0)

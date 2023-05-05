@@ -4,6 +4,7 @@ import (
 	"context"
 
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -20,12 +21,12 @@ func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReq
 	req.ObjectType.Hash = ds.ObjectType(req.ObjectType).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := ds.UpdateMetadata(ctx, tx, ds.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), req.ObjectType)
+		updReq, err := boltdb.UpdateMetadata(ctx, tx, boltdb.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), req.ObjectType)
 		if err != nil {
 			return err
 		}
 
-		objType, err := ds.Set(ctx, tx, ds.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), updReq)
+		objType, err := boltdb.Set(ctx, tx, boltdb.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -45,7 +46,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Delete(ctx, tx, ds.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key()); err != nil {
 			return err
 		}
 		resp.Result = &emptypb.Empty{}
@@ -66,12 +67,12 @@ func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTyp
 	req.RelationType.Hash = ds.RelationType(req.RelationType).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := ds.UpdateMetadata(ctx, tx, ds.RelationTypesPath, ds.RelationType(req.RelationType).Key(), req.RelationType)
+		updReq, err := boltdb.UpdateMetadata(ctx, tx, boltdb.RelationTypesPath, ds.RelationType(req.RelationType).Key(), req.RelationType)
 		if err != nil {
 			return err
 		}
 
-		relType, err := ds.Set(ctx, tx, ds.RelationTypesPath, ds.RelationType(req.RelationType).Key(), updReq)
+		relType, err := boltdb.Set(ctx, tx, boltdb.RelationTypesPath, ds.RelationType(req.RelationType).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -91,7 +92,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Delete(ctx, tx, ds.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key()); err != nil {
 			return err
 		}
 		resp.Result = &emptypb.Empty{}
@@ -112,12 +113,12 @@ func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionReq
 	req.Permission.Hash = ds.Permission(req.Permission).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := ds.UpdateMetadata(ctx, tx, ds.PermissionsPath, ds.Permission(req.Permission).Key(), req.Permission)
+		updReq, err := boltdb.UpdateMetadata(ctx, tx, boltdb.PermissionsPath, ds.Permission(req.Permission).Key(), req.Permission)
 		if err != nil {
 			return err
 		}
 
-		objType, err := ds.Set(ctx, tx, ds.PermissionsPath, ds.Permission(req.Permission).Key(), updReq)
+		objType, err := boltdb.Set(ctx, tx, boltdb.PermissionsPath, ds.Permission(req.Permission).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -137,7 +138,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Delete(ctx, tx, ds.PermissionsPath, ds.PermissionIdentifier(req.Param).Key()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.PermissionsPath, ds.PermissionIdentifier(req.Param).Key()); err != nil {
 			return err
 		}
 		resp.Result = &emptypb.Empty{}
@@ -158,12 +159,12 @@ func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*
 	req.Object.Hash = ds.Object(req.Object).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := ds.UpdateMetadata(ctx, tx, ds.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
+		updReq, err := boltdb.UpdateMetadata(ctx, tx, boltdb.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
 		if err != nil {
 			return err
 		}
 
-		objType, err := ds.Set(ctx, tx, ds.ObjectsPath, ds.Object(req.Object).Key(), updReq)
+		objType, err := boltdb.Set(ctx, tx, boltdb.ObjectsPath, ds.Object(req.Object).Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -183,7 +184,7 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Delete(ctx, tx, ds.ObjectsPath, ds.ObjectIdentifier(req.Param).Key()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key()); err != nil {
 			return err
 		}
 		resp.Result = &emptypb.Empty{}
@@ -204,17 +205,17 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 	req.Relation.Hash = ds.Relation(req.Relation).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := ds.UpdateMetadata(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
+		updReq, err := boltdb.UpdateMetadata(ctx, tx, boltdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
 
-		objRel, err := ds.Set(ctx, tx, ds.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
+		objRel, err := boltdb.Set(ctx, tx, boltdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
 		if err != nil {
 			return err
 		}
 
-		subRel, err := ds.Set(ctx, tx, ds.RelationsSubPath, ds.Relation(req.Relation).SubKey(), req.Relation)
+		subRel, err := boltdb.Set(ctx, tx, boltdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), req.Relation)
 		if err != nil {
 			return err
 		}
@@ -236,10 +237,10 @@ func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationR
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Delete(ctx, tx, ds.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey()); err != nil {
 			return err
 		}
-		if err := ds.Delete(ctx, tx, ds.RelationsSubPath, ds.RelationIdentifier(req.Param).SubKey()); err != nil {
+		if err := boltdb.Delete(ctx, tx, boltdb.RelationsSubPath, ds.RelationIdentifier(req.Param).SubKey()); err != nil {
 			return err
 		}
 		resp.Result = &emptypb.Empty{}

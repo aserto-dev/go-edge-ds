@@ -1,10 +1,13 @@
 package directory
 
 import (
+	"context"
 	"time"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate"
+	"github.com/aserto-dev/go-edge-ds/pkg/model"
+	bolt "go.etcd.io/bbolt"
 
 	"github.com/rs/zerolog"
 )
@@ -19,9 +22,10 @@ type Config struct {
 }
 
 type Directory struct {
-	config *Config
-	logger *zerolog.Logger
-	store  *boltdb.BoltDB
+	config   *Config
+	logger   *zerolog.Logger
+	store    *boltdb.BoltDB
+	resolver *model.Model
 }
 
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
@@ -40,17 +44,30 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
-	ds := &Directory{
+	dir := &Directory{
 		config: config,
 		logger: &newLogger,
 		store:  store,
 	}
 
-	if err := ds.Migrate(schemaVersion); err != nil {
+	if err := dir.Migrate(schemaVersion); err != nil {
 		return nil, err
 	}
 
-	return ds, nil
+	resolver, err := model.NewResolver()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := dir.store.DB().View(func(tx *bolt.Tx) error {
+		return resolver.Update(context.Background(), tx)
+	}); err != nil {
+		return nil, err
+	}
+
+	dir.resolver = resolver
+
+	return dir, nil
 }
 
 func (s *Directory) Close() {

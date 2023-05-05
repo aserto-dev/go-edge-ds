@@ -4,6 +4,9 @@ import (
 	"context"
 
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/model"
+
+	bolt "go.etcd.io/bbolt"
 )
 
 type checkPermission struct {
@@ -38,7 +41,7 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context) (*dsr.CheckPermissionResponse, error) {
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, resolver *model.Model) (*dsr.CheckPermissionResponse, error) {
 	return nil, nil
 }
 
@@ -74,6 +77,6 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context) (*dsr.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, resolver *model.Model) (*dsr.CheckRelationResponse, error) {
 	return nil, nil
 }
