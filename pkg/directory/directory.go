@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
 	"github.com/aserto-dev/go-edge-ds/pkg/model"
 	bolt "go.etcd.io/bbolt"
 
@@ -24,14 +24,14 @@ type Config struct {
 type Directory struct {
 	config   *Config
 	logger   *zerolog.Logger
-	store    *boltdb.BoltDB
+	store    *bdb.BoltDB
 	resolver *model.Model
 }
 
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 	newLogger := logger.With().Str("component", "directory").Logger()
 
-	store, err := boltdb.New(&boltdb.Config{
+	store, err := bdb.New(&bdb.Config{
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout},
 		&newLogger,

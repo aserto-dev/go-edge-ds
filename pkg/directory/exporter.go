@@ -3,7 +3,7 @@ package directory
 import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	bolt "go.etcd.io/bbolt"
 )
@@ -64,7 +64,7 @@ func exportObjectTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objTypes, pageResp, err := boltdb.List[dsc.ObjectType](stream.Context(), tx, boltdb.ObjectTypesPath, page)
+		objTypes, pageResp, err := bdb.List[dsc.ObjectType](stream.Context(), tx, bdb.ObjectTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ func exportPermissions(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		permissions, pageResp, err := boltdb.List[dsc.Permission](stream.Context(), tx, boltdb.PermissionsPath, page)
+		permissions, pageResp, err := bdb.List[dsc.Permission](stream.Context(), tx, bdb.PermissionsPath, page)
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func exportRelationTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relTypes, pageResp, err := boltdb.List[dsc.RelationType](stream.Context(), tx, boltdb.RelationTypesPath, page)
+		relTypes, pageResp, err := bdb.List[dsc.RelationType](stream.Context(), tx, bdb.RelationTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func exportObjects(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objects, pageResp, err := boltdb.List[dsc.Object](stream.Context(), tx, boltdb.ObjectsPath, page)
+		objects, pageResp, err := bdb.List[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, page)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func exportRelations(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := boltdb.List[dsc.Relation](stream.Context(), tx, boltdb.RelationsSubPath, page)
+		relations, pageResp, err := bdb.List[dsc.Relation](stream.Context(), tx, bdb.RelationsSubPath, page)
 		if err != nil {
 			return err
 		}
@@ -211,19 +211,19 @@ func exportRelationsWithKeys(tx *bolt.Tx, stream dse.Exporter_ExportServer) erro
 	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := boltdb.List[dsc.Relation](stream.Context(), tx, boltdb.RelationsSubPath, page)
+		relations, pageResp, err := bdb.List[dsc.Relation](stream.Context(), tx, bdb.RelationsSubPath, page)
 
 		if err != nil {
 			return err
 		}
 
 		for _, rel := range relations {
-			sub, err := boltdb.Get[dsc.Object](stream.Context(), tx, boltdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
+			sub, err := bdb.Get[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 			if err != nil {
 				return err
 			}
 
-			obj, err := boltdb.Get[dsc.Object](stream.Context(), tx, boltdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
+			obj, err := bdb.Get[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
 			if err != nil {
 				return err
 			}

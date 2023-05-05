@@ -4,7 +4,7 @@ import (
 	"context"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -32,7 +32,7 @@ func (r *Model) Update(ctx context.Context, tx *bolt.Tx) error {
 	page := &dsc.PaginationRequest{Size: 10}
 
 	for {
-		results, next, err := boltdb.List[dsc.ObjectType](ctx, tx, boltdb.ObjectTypesPath, page)
+		results, next, err := bdb.List[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -52,7 +52,7 @@ func (r *Model) Update(ctx context.Context, tx *bolt.Tx) error {
 	}
 
 	for {
-		results, next, err := boltdb.List[dsc.RelationType](ctx, tx, boltdb.RelationTypesPath, page)
+		results, next, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, page)
 		if err != nil {
 			return err
 		}

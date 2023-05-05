@@ -7,7 +7,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/google/uuid"
@@ -74,7 +74,7 @@ func (s *Directory) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 		return derr.ErrInvalidObjectType.Msg("nil")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
 		return derr.ErrInvalidObjectType.Msg("set")
 	}
 
@@ -88,7 +88,7 @@ func (s *Directory) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 		return derr.ErrInvalidPermission.Msg("nil")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
 		return derr.ErrInvalidPermission.Msg("set")
 	}
 
@@ -102,7 +102,7 @@ func (s *Directory) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *d
 		return derr.ErrInvalidRelationType.Msg("nil")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
 		return derr.ErrInvalidRelationType.Msg("set")
 	}
 
@@ -116,7 +116,7 @@ func (s *Directory) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Obj
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -130,11 +130,11 @@ func (s *Directory) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.R
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.RelationsObjPath, ds.Relation(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).Key(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := boltdb.Set(ctx, tx, boltdb.RelationsSubPath, ds.Relation(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).Key(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

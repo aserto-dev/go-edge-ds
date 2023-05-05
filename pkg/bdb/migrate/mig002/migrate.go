@@ -6,8 +6,8 @@ import (
 	"os"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate/mig"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
@@ -64,32 +64,32 @@ const (
 )
 
 var fnMap = []func(*bolt.DB, *bolt.DB) error{
-	mig.DeleteBucket(boltdb.ObjectTypesPath),
+	mig.DeleteBucket(bdb.ObjectTypesPath),
 	mig.DeleteBucket(ObjectTypesNamePath),
-	mig.CreateBucket(boltdb.ObjectTypesPath),
-	updateModelTypes(boltdb.ObjectTypesPath, &dsc.ObjectType{}),
+	mig.CreateBucket(bdb.ObjectTypesPath),
+	updateModelTypes(bdb.ObjectTypesPath, &dsc.ObjectType{}),
 
-	mig.DeleteBucket(boltdb.RelationTypesPath),
+	mig.DeleteBucket(bdb.RelationTypesPath),
 	mig.DeleteBucket(RelationTypesNamePath),
-	mig.CreateBucket(boltdb.RelationTypesPath),
-	updateModelTypes(boltdb.RelationTypesPath, &dsc.RelationType{}),
+	mig.CreateBucket(bdb.RelationTypesPath),
+	updateModelTypes(bdb.RelationTypesPath, &dsc.RelationType{}),
 
-	mig.DeleteBucket(boltdb.PermissionsPath),
+	mig.DeleteBucket(bdb.PermissionsPath),
 	mig.DeleteBucket(PermissionsNamePath),
-	mig.CreateBucket(boltdb.PermissionsPath),
-	updateModelTypes(boltdb.PermissionsPath, &dsc.Permission{}),
+	mig.CreateBucket(bdb.PermissionsPath),
+	updateModelTypes(bdb.PermissionsPath, &dsc.Permission{}),
 
-	mig.DeleteBucket(boltdb.ObjectsPath),
+	mig.DeleteBucket(bdb.ObjectsPath),
 	mig.DeleteBucket(ObjectsKeyPath),
-	mig.CreateBucket(boltdb.ObjectsPath),
-	updateObjects(boltdb.ObjectsPath, &dsc.Object{}),
+	mig.CreateBucket(bdb.ObjectsPath),
+	updateObjects(bdb.ObjectsPath, &dsc.Object{}),
 
-	mig.DeleteBucket(boltdb.RelationsObjPath),
-	mig.DeleteBucket(boltdb.RelationsSubPath),
-	mig.CreateBucket(boltdb.RelationsObjPath),
-	mig.CreateBucket(boltdb.RelationsSubPath),
-	updateRelations(boltdb.RelationsObjPath, &dsc.Relation{}, ObjectToSubject),
-	updateRelations(boltdb.RelationsSubPath, &dsc.Relation{}, SubjectToObject),
+	mig.DeleteBucket(bdb.RelationsObjPath),
+	mig.DeleteBucket(bdb.RelationsSubPath),
+	mig.CreateBucket(bdb.RelationsObjPath),
+	mig.CreateBucket(bdb.RelationsSubPath),
+	updateRelations(bdb.RelationsObjPath, &dsc.Relation{}, ObjectToSubject),
+	updateRelations(bdb.RelationsSubPath, &dsc.Relation{}, SubjectToObject),
 }
 
 func Migrate(roDB, rwDB *bolt.DB) error {

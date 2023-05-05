@@ -5,7 +5,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	bolt "go.etcd.io/bbolt"
 )
@@ -19,7 +19,7 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := boltdb.Get[dsc.ObjectType](ctx, tx, boltdb.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key())
+		objType, err := bdb.Get[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -40,7 +40,7 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := boltdb.List[dsc.ObjectType](ctx, tx, boltdb.ObjectTypesPath, req.Page)
+		results, page, err := bdb.List[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -63,7 +63,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		relType, err := boltdb.Get[dsc.RelationType](ctx, tx, boltdb.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key())
+		relType, err := bdb.Get[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := boltdb.List[dsc.RelationType](ctx, tx, boltdb.RelationTypesPath, req.Page)
+		results, page, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -115,7 +115,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := boltdb.Get[dsc.Permission](ctx, tx, boltdb.PermissionsPath, ds.PermissionIdentifier(req.Param).Key())
+		objType, err := bdb.Get[dsc.Permission](ctx, tx, bdb.PermissionsPath, ds.PermissionIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := boltdb.List[dsc.Permission](ctx, tx, boltdb.PermissionsPath, req.Page)
+		results, page, err := bdb.List[dsc.Permission](ctx, tx, bdb.PermissionsPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		obj, err := boltdb.Get[dsc.Object](ctx, tx, boltdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key())
+		obj, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key())
 		if err != nil {
 			return err
 		}
@@ -188,7 +188,7 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		for _, i := range req.Param {
-			obj, err := boltdb.Get[dsc.Object](ctx, tx, boltdb.ObjectsPath, ds.ObjectIdentifier(i).Key())
+			obj, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(i).Key())
 			if err != nil {
 				return err
 			}
@@ -213,7 +213,7 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := boltdb.List[dsc.Object](ctx, tx, boltdb.ObjectsPath, req.Page)
+		results, page, err := bdb.List[dsc.Object](ctx, tx, bdb.ObjectsPath, req.Page)
 		if err != nil {
 			return err
 		}
@@ -236,7 +236,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		rel, err := boltdb.Get[dsc.Relation](ctx, tx, boltdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
+		rel, err := bdb.Get[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
 		}
@@ -246,13 +246,13 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 		if req.GetWithObjects() {
 			objects := map[string]*dsc.Object{}
 			for i := 0; i < len(resp.Results); i++ {
-				sub, err := boltdb.Get[dsc.Object](ctx, tx, boltdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
+				sub, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 				if err != nil {
 					return err
 				}
 				objects[ds.ObjectIdentifier(rel.Subject).Key()] = sub
 
-				obj, err := boltdb.Get[dsc.Object](ctx, tx, boltdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
+				obj, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
 				if err != nil {
 					return err
 				}
@@ -280,7 +280,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := boltdb.List[dsc.Relation](ctx, tx, boltdb.RelationsSubPath, req.Page)
+		results, page, err := bdb.List[dsc.Relation](ctx, tx, bdb.RelationsSubPath, req.Page)
 		if err != nil {
 			return err
 		}

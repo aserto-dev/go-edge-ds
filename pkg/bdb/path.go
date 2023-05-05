@@ -1,4 +1,4 @@
-package boltdb
+package bdb
 
 var (
 	SystemPath        = []string{"_system"}

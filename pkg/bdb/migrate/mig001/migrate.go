@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/metadata"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate/mig"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/metadata"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -23,14 +23,14 @@ func MigrationVersion() *semver.Version {
 }
 
 var fnMap = []func(*bolt.DB, *bolt.DB) error{
-	mig.CreateBucket(boltdb.SystemPath),
+	mig.CreateBucket(bdb.SystemPath),
 	mig.EnsureBaseVersion,
-	mig.CreateBucket(boltdb.ObjectTypesPath),
-	mig.CreateBucket(boltdb.PermissionsPath),
-	mig.CreateBucket(boltdb.RelationTypesPath),
-	mig.CreateBucket(boltdb.ObjectsPath),
-	mig.CreateBucket(boltdb.RelationsSubPath),
-	mig.CreateBucket(boltdb.RelationsObjPath),
+	mig.CreateBucket(bdb.ObjectTypesPath),
+	mig.CreateBucket(bdb.PermissionsPath),
+	mig.CreateBucket(bdb.RelationTypesPath),
+	mig.CreateBucket(bdb.ObjectsPath),
+	mig.CreateBucket(bdb.RelationsSubPath),
+	mig.CreateBucket(bdb.RelationsObjPath),
 	seed,
 }
 
@@ -55,7 +55,7 @@ func seed(_, rwDB *bolt.DB) error {
 				return err
 			}
 
-			if err := mig.SetKey(tx, boltdb.ObjectTypesPath, []byte(objType.Name), buf.Bytes()); err != nil {
+			if err := mig.SetKey(tx, bdb.ObjectTypesPath, []byte(objType.Name), buf.Bytes()); err != nil {
 				return err
 			}
 		}
@@ -70,7 +70,7 @@ func seed(_, rwDB *bolt.DB) error {
 				return err
 			}
 
-			if err := mig.SetKey(tx, boltdb.RelationTypesPath, []byte(relType.Name), buf.Bytes()); err != nil {
+			if err := mig.SetKey(tx, bdb.RelationTypesPath, []byte(relType.Name), buf.Bytes()); err != nil {
 				return err
 			}
 		}

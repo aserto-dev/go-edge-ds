@@ -10,7 +10,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/model"
 
 	"github.com/rs/zerolog"
@@ -133,11 +133,11 @@ func NewGraphWalker(ctx context.Context, tx *bolt.Tx, direction Direction) (*Gra
 	}
 
 	if w.direction == SubjectToObject {
-		w.bucketPath = boltdb.RelationsSubPath
+		w.bucketPath = bdb.RelationsSubPath
 	}
 
 	if w.direction == ObjectToSubject {
-		w.bucketPath = boltdb.RelationsObjPath
+		w.bucketPath = bdb.RelationsObjPath
 	}
 
 	return w, nil
@@ -156,7 +156,7 @@ func (w *GraphWalker) Walk(anchor *dsc.ObjectIdentifier, depth int32, path []str
 
 	w.log.Debug().Str("filter", filter).Msg("anchor")
 
-	relations, err := boltdb.Scan[dsc.Relation](w.ctx, w.tx, w.bucketPath, filter)
+	relations, err := bdb.Scan[dsc.Relation](w.ctx, w.tx, w.bucketPath, filter)
 	if err != nil {
 		return err
 	}

@@ -9,7 +9,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 )
 
 // Relation.
@@ -152,9 +152,9 @@ func (i *relation) Hash() string {
 func (i *relationIdentifier) PathAndFilter() ([]string, string, error) {
 	switch {
 	case ObjectSelector(i.RelationIdentifier.Object).IsComplete():
-		return boltdb.RelationsObjPath, i.ObjFilter(), nil
+		return bdb.RelationsObjPath, i.ObjFilter(), nil
 	case ObjectSelector(i.RelationIdentifier.Subject).IsComplete():
-		return boltdb.RelationsSubPath, i.SubFilter(), nil
+		return bdb.RelationsSubPath, i.SubFilter(), nil
 	default:
 		return []string{}, "", ErrNoCompleteObjectIdentifier
 	}

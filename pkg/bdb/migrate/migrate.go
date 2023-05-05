@@ -4,10 +4,10 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate/mig"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate/mig001"
-	"github.com/aserto-dev/go-edge-ds/pkg/directory/migrate/mig002"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
@@ -20,7 +20,7 @@ var migMap = map[string]Migration{
 	mig002.Version: mig002.Migrate,
 }
 
-func Store(logger *zerolog.Logger, store *boltdb.BoltDB, version string) error {
+func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {
 	log := logger.With().Str("component", "migrate").Logger()
 
 	defer func() {
@@ -74,7 +74,7 @@ func Store(logger *zerolog.Logger, store *boltdb.BoltDB, version string) error {
 	return nil
 }
 
-func migrate(store *boltdb.BoltDB, curVersion, nextVersion *semver.Version) error {
+func migrate(store *bdb.BoltDB, curVersion, nextVersion *semver.Version) error {
 	if err := mig.Backup(store.DB(), curVersion); err != nil {
 		return err
 	}
