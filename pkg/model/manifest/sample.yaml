@@ -1,0 +1,29 @@
+schema_version: 0.20.0
+
+# object type (document)
+document:
+  # object relation (document:owner)
+  owner:
+    # include permissions of other object relations on the same object type
+    union:
+    - editor
+    - viewer
+    # permissions for relation on object type
+    permissions:
+    - sample.document.delete
+
+  # object relation (document:editor)
+  editor:
+    # include permissions of other object relations on the same object type
+    union:
+    - viewer
+    # permissions for relation on object type
+    permissions:
+    - sample.document.create
+    - sample.document.update
+
+  # object relation (document:viewer)
+  viewer:
+    # permissions for relation on object type
+    permissions:
+    - sample.document.read

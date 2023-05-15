@@ -1,0 +1,92 @@
+# standard object types
+user:
+
+identity: 
+  identifier:
+
+# domain object types
+account:
+  member:
+
+  owner:
+    union:
+    - contributor
+    - reader
+    permissions:
+    - delete
+
+  contributor:
+    union:
+    - reader
+    permissions:
+    - update
+    - create_write_transaction
+
+  reader:
+    permissions:
+    - read
+    - create_read_transaction
+    - list_transactions
+
+resource_group:
+  parent:
+
+  owner:
+    union:
+    - contributor
+    - reader
+    permissions:
+    - delete
+
+  contributor:
+    union:
+    - reader
+    permissions:
+    - update
+
+  reader:
+    permissions:
+    - read
+
+database:
+  parent:
+
+  owner:
+    union:
+    - contributor
+    - reader
+    permissions:
+    - delete
+
+  contributor:
+    union:
+    - reader
+    permissions:
+    - update
+    - create_write_transaction
+
+  reader:
+    permissions:
+    - read
+    - create_read_transaction
+    - list_transactions
+
+engine:
+  parent:
+
+  owner:
+    union:
+    - contributor
+    - reader
+    permissions:
+    - delete
+
+  contributor:
+    union:
+    - reader
+    permissions:
+    - update
+
+  reader:
+    permissions:
+    - read

@@ -1,0 +1,41 @@
+---
+# object type (user)
+user:
+  # relation type (user:manager)
+  manager:
+    union:
+    permissions:
+
+# object type (identity)
+identity:
+  # relation type (identity:identifier)
+  identifier:
+    union:
+    permissions:
+
+# object type (group)
+group:
+  # relation type (group:member)
+  member:
+    union:
+    permissions:
+
+# object type (system)
+system:
+  # relation type (system:user)
+  user:
+    union:
+    permissions:
+
+# object type (application)
+application:
+  # relation type (application:user)
+  user:
+    union:
+    permissions:
+
+# object type (resource)
+resource:
+
+# object type (user-v1)
+user-v1:
