@@ -3,21 +3,24 @@ package boltdb
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	cerr "github.com/aserto-dev/errors"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
 )
 
 // Error codes returned by failures to parse an expression.
 var (
-	ErrPathNotFound = errors.New("path not found")
-	ErrKeyNotFound  = errors.New("key not found")
-	ErrKeyExists    = errors.New("key already exists")
+	ErrPathNotFound = cerr.NewAsertoError("E90000", codes.NotFound, http.StatusNotFound, "path not found")
+	ErrKeyNotFound  = cerr.NewAsertoError("E90001", codes.NotFound, http.StatusNotFound, "key not found")
 )
 
 type Opts func(interface{})
