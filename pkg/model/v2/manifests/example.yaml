@@ -1,5 +1,3 @@
-schema_version: 0.20.0
-
 # object type (document)
 document:
   # object relation (document:owner)

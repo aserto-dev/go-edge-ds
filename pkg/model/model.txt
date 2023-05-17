@@ -1,0 +1,55 @@
+{
+    "object_types": {
+        "engine": {
+            "relations": {
+                "parent": null,
+                "owner": {
+                    "unions": {
+                        "contributor": null,
+                        "delete": null
+                    },
+                    "permissions: {
+
+                    }
+                },
+                "contributor": {
+                    "unions": {
+                        "reader": null,
+                        "update": null
+                    },
+                    "permissions: {
+                        
+                    }
+                },
+                "reader": {
+                    "unions": {
+                        "read": null
+                    }
+                },
+                "read": {
+                    "permissions": {
+                        "read": null
+                    }
+                },
+                "update": {
+                    "permissions": {
+                        "update": null
+                    }
+                },
+                "delete": {
+                    "permissions": {
+                        "delete": null
+                    }
+                }
+            }
+        }
+    }
+}
+
+engine#parent
+engine#owner [contributor, delete]
+engine#contributor: [reader, update]
+engine#reader: [read]
+engine#read: read
+engine#update: update
+engine#delete: delete
