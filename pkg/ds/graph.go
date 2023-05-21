@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/model"
 
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
@@ -76,7 +76,7 @@ func (i *getGraph) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx, resolver *model.Model) ([]*dsc.ObjectDependency, error) {
+func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx, resolver *azm.Model) ([]*dsc.ObjectDependency, error) {
 	resp := []*dsc.ObjectDependency{}
 
 	// determine graph walk directionality.

@@ -3,8 +3,8 @@ package ds
 import (
 	"context"
 
+	"github.com/aserto-dev/azm"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/model"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -41,7 +41,14 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, resolver *model.Model) (*dsr.CheckPermissionResponse, error) {
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, model *azm.Model) (*dsr.CheckPermissionResponse, error) {
+	resp := &dsr.CheckPermissionResponse{Check: false, Trace: []string{}}
+	r, err := model.ResolvePermission(i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
+	if err != nil {
+		return resp, err
+	}
+
+	_ = r
 	return nil, nil
 }
 
@@ -77,6 +84,13 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, resolver *model.Model) (*dsr.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, model *azm.Model) (*dsr.CheckRelationResponse, error) {
+	resp := &dsr.CheckRelationResponse{Check: false, Trace: []string{}}
+	r, err := model.ResolveRelation(i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
+	if err != nil {
+		return resp, err
+	}
+
+	_ = r
 	return nil, nil
 }
