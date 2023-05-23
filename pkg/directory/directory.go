@@ -71,8 +71,6 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
-	dir.model = model
-
 	return dir, nil
 }
 
