@@ -304,7 +304,7 @@ func (s *Directory) CheckPermission(ctx context.Context, req *dsr.CheckPermissio
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.Model())
+		resp, err = ds.CheckPermission(req).Exec(ctx, tx)
 		return err
 	})
 
@@ -321,7 +321,7 @@ func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationReq
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.Model())
+		resp, err = ds.CheckRelation(req).Exec(ctx, tx)
 		return err
 	})
 
@@ -338,7 +338,7 @@ func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*ds
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		results, err := ds.GetGraph(req).Exec(ctx, tx, s.Model())
+		results, err := ds.GetGraph(req).Exec(ctx, tx)
 		if err != nil {
 			return err
 		}

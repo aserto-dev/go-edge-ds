@@ -1,14 +1,10 @@
 package directory
 
 import (
-	"context"
 	"time"
 
-	azm "github.com/aserto-dev/azm"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	bolt "go.etcd.io/bbolt"
 
 	"github.com/rs/zerolog"
 )
@@ -30,7 +26,6 @@ type Directory struct {
 	config *Config
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
-	model  *azm.Model
 }
 
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
@@ -59,18 +54,6 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
-	model := azm.New(manifestName, manifestVersion)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := dir.store.DB().View(func(tx *bolt.Tx) error {
-		dir.model, err = ds.Model(model).Update(context.Background(), tx)
-		return err
-	}); err != nil {
-		return nil, err
-	}
-
 	return dir, nil
 }
 
@@ -83,8 +66,4 @@ func (s *Directory) Close() {
 
 func (s *Directory) Migrate(version string) error {
 	return migrate.Store(s.logger, s.store, version)
-}
-
-func (s *Directory) Model() *azm.Model {
-	return s.model
 }

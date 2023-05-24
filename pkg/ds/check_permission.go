@@ -2,10 +2,8 @@ package ds
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -45,10 +43,10 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, model *azm.Model) (*dsr.CheckPermissionResponse, error) {
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckPermissionResponse, error) {
 	resp := &dsr.CheckPermissionResponse{Check: false, Trace: []string{}}
 
-	filter, err := model.ResolvePermission(i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
+	filter, err := ResolvePermission(ctx, tx, i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
 	if err != nil {
 		return resp, err
 	}
@@ -87,12 +85,6 @@ func (c *permissionChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		fmt.Println(r.GetObject().GetType() + TypeIDSeparator +
-			r.GetObject().GetKey() + InstanceSeparator +
-			r.GetRelation() + InstanceSeparator +
-			r.GetSubject().GetType() + TypeIDSeparator +
-			r.GetSubject().GetKey())
-
 		if c.isMatch(r) {
 			return true, nil
 		}

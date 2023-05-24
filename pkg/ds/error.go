@@ -13,6 +13,7 @@ var (
 	ErrObjectTypeNotFound                    = cerr.NewAsertoError("E20031", codes.NotFound, http.StatusNotFound, "object type not found")
 	ErrObjectNotFound                        = cerr.NewAsertoError("E20032", codes.NotFound, http.StatusNotFound, "object not found")
 	ErrRelationNotFound                      = cerr.NewAsertoError("E20033", codes.NotFound, http.StatusNotFound, "relation not found")
+	ErrRelationTypeNotFound                  = cerr.NewAsertoError("E20033", codes.NotFound, http.StatusNotFound, "relation type not found")
 	ErrInvalidArgumentObjectTypeIdentifier   = cerr.NewAsertoError("E20034", codes.InvalidArgument, http.StatusBadRequest, "object type identifier invalid argument")
 	ErrInvalidArgumentRelationTypeIdentifier = cerr.NewAsertoError("E20034", codes.InvalidArgument, http.StatusBadRequest, "relation type identifier invalid argument")
 	ErrInvalidArgumentObjectIdentifier       = cerr.NewAsertoError("E20035", codes.InvalidArgument, http.StatusBadRequest, "object identifier invalid argument")

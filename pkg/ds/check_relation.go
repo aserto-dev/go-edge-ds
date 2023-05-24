@@ -2,10 +2,8 @@ package ds
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -44,10 +42,10 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, model *azm.Model) (*dsr.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckRelationResponse, error) {
 	resp := &dsr.CheckRelationResponse{Check: false, Trace: []string{}}
 
-	filter, err := model.ResolveRelation(i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
+	filter, err := ResolveRelation(ctx, tx, i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
 	if err != nil {
 		return resp, err
 	}
@@ -86,12 +84,6 @@ func (c *relationChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		fmt.Println(r.GetObject().GetType() + TypeIDSeparator +
-			r.GetObject().GetKey() + InstanceSeparator +
-			r.GetRelation() + InstanceSeparator +
-			r.GetSubject().GetType() + TypeIDSeparator +
-			r.GetSubject().GetKey())
-
 		if c.isMatch(r) {
 			return true, nil
 		}

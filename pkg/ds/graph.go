@@ -2,18 +2,12 @@ package ds
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
-	"time"
 
-	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
-	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -76,7 +70,7 @@ func (i *getGraph) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx, resolver *azm.Model) ([]*dsc.ObjectDependency, error) {
+func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *azm.Model*/) ([]*dsc.ObjectDependency, error) {
 	resp := []*dsc.ObjectDependency{}
 
 	// determine graph walk directionality.
@@ -113,7 +107,6 @@ const (
 type GraphWalker struct {
 	ctx        context.Context
 	tx         *bolt.Tx
-	log        *zerolog.Logger
 	bucketPath []string
 	direction  Direction
 	err        error
@@ -121,13 +114,9 @@ type GraphWalker struct {
 }
 
 func NewGraphWalker(ctx context.Context, tx *bolt.Tx, direction Direction) (*GraphWalker, error) {
-	logFile, _ := os.Create(logFileName())
-	logger := zerolog.New(logFile)
-
 	w := &GraphWalker{
 		ctx:       ctx,
 		tx:        tx,
-		log:       &logger,
 		direction: direction,
 		results:   []*dsc.ObjectDependency{},
 	}
@@ -154,22 +143,9 @@ func (w *GraphWalker) Walk(anchor *dsc.ObjectIdentifier, depth int32, path []str
 
 	filter := ObjectIdentifier(anchor).Key() + InstanceSeparator
 
-	w.log.Debug().Str("filter", filter).Msg("anchor")
-
 	relations, err := bdb.Scan[dsc.Relation](w.ctx, w.tx, w.bucketPath, filter)
 	if err != nil {
 		return err
-	}
-
-	for _, rel := range relations {
-		w.log.Debug().
-			Int32("depth", depth).
-			Str("object_type", rel.GetObject().GetType()).
-			Str("object_key", rel.GetObject().GetKey()).
-			Str("relation", rel.GetRelation()).
-			Str("subject_type", rel.GetSubject().GetType()).
-			Str("subject_key", rel.GetSubject().GetKey()).
-			Msg("rel")
 	}
 
 	for i := 0; i < len(relations); i++ {
@@ -198,15 +174,6 @@ func (w *GraphWalker) Walk(anchor *dsc.ObjectIdentifier, depth int32, path []str
 			Path:        p,
 		}
 
-		w.log.Debug().
-			Int32("depth", depth).
-			Str("object_type", rel.GetObject().GetType()).
-			Str("object_key", rel.GetObject().GetKey()).
-			Str("relation", rel.GetRelation()).
-			Str("subject_type", rel.GetSubject().GetType()).
-			Str("subject_key", rel.GetSubject().GetKey()).
-			Msg("dep")
-
 		w.results = append(w.results, &dep)
 
 		if err := w.Walk(w.next(rel), depth, p); err != nil {
@@ -225,13 +192,4 @@ func (w *GraphWalker) next(r *dsc.Relation) *dsc.ObjectIdentifier {
 		return r.GetSubject()
 	}
 	return r.GetObject()
-}
-
-func logFileName() string {
-	return fmt.Sprintf("graph-%s.log", timeStamp())
-}
-
-func timeStamp() string {
-	ts := time.Now().UTC().Format(time.RFC3339)
-	return strings.Replace(strings.Replace(ts, ":", "", -1), "-", "", -1)
 }
