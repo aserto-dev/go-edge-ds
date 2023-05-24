@@ -2,8 +2,6 @@ module github.com/aserto-dev/go-edge-ds
 
 go 1.19
 
-replace github.com/aserto-dev/azm => ../azm
-
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/certs v0.0.2
@@ -34,7 +32,7 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	google.golang.org/genproto v0.0.0-20230410155749-daa745c078e1 // indirect
+	google.golang.org/genproto v0.0.0-20230524185152-1884fd1fac28 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

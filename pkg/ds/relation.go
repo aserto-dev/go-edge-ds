@@ -101,7 +101,7 @@ func (i *relationIdentifier) Validate() (bool, error) {
 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
 	}
 
-	if ok, err := ObjectIdentifier(i.RelationIdentifier.Object).Validate(); !ok {
+	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
 		return ok, err
 	}
 
@@ -113,7 +113,7 @@ func (i *relationIdentifier) Validate() (bool, error) {
 		return ok, err
 	}
 
-	if ok, err := ObjectIdentifier(i.RelationIdentifier.Subject).Validate(); !ok {
+	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
 		return ok, err
 	}
 

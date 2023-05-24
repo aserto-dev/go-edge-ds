@@ -236,11 +236,19 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		rel, err := bdb.Get[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
+		rels, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
 		}
 
+		if len(rels) == 0 {
+			return bdb.ErrKeyNotFound
+		}
+		if len(rels) != 1 {
+			return bdb.ErrMultipleResults
+		}
+
+		rel := rels[0]
 		resp.Results = append(resp.Results, rel)
 
 		if req.GetWithObjects() {

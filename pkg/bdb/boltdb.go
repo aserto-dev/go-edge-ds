@@ -17,9 +17,10 @@ import (
 
 // Error codes returned by failures to parse an expression.
 var (
-	ErrPathNotFound = cerr.NewAsertoError("E20050", codes.NotFound, http.StatusNotFound, "path not found")
-	ErrKeyNotFound  = cerr.NewAsertoError("E20051", codes.NotFound, http.StatusNotFound, "key not found")
-	ErrKeyExists    = cerr.NewAsertoError("E20052", codes.AlreadyExists, http.StatusConflict, "key already exists")
+	ErrPathNotFound    = cerr.NewAsertoError("E20050", codes.NotFound, http.StatusNotFound, "path not found")
+	ErrKeyNotFound     = cerr.NewAsertoError("E20051", codes.NotFound, http.StatusNotFound, "key not found")
+	ErrKeyExists       = cerr.NewAsertoError("E20052", codes.AlreadyExists, http.StatusConflict, "key already exists")
+	ErrMultipleResults = cerr.NewAsertoError("E20053", codes.FailedPrecondition, http.StatusExpectationFailed, "multiple results for singleton request")
 )
 
 type Config struct {
