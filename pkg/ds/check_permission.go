@@ -7,6 +7,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/samber/lo"
 
 	bolt "go.etcd.io/bbolt"
 )
@@ -46,12 +47,12 @@ func (i *checkPermission) Validate() (bool, error) {
 func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckPermissionResponse, error) {
 	resp := &dsr.CheckPermissionResponse{Check: false, Trace: []string{}}
 
-	filter, err := ResolvePermission(ctx, tx, i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
+	relations, err := ResolvePermission(ctx, tx, i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
 	if err != nil {
 		return resp, err
 	}
 
-	check := i.newChecker(ctx, tx, bdb.RelationsObjPath, filter)
+	check := i.newChecker(ctx, tx, bdb.RelationsObjPath, relations)
 	match, err := check.Check(i.Object)
 
 	return &dsr.CheckPermissionResponse{Check: match}, err
@@ -91,7 +92,7 @@ func (c *permissionChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if inSet(c.filter, r.Relation) || r.Relation == "parent" {
+		if lo.Contains(c.filter, r.Relation) || r.Relation == "parent" {
 			match, err := c.Check(r.Subject)
 			if err != nil {
 				return false, err
@@ -107,19 +108,10 @@ func (c *permissionChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 }
 
 func (c *permissionChecker) isMatch(relation *dsc.Relation) bool {
-	if inSet(c.filter, relation.Relation) &&
+	if lo.Contains(c.filter, relation.Relation) &&
 		strings.EqualFold(relation.Subject.GetType(), c.anchor.Subject.GetType()) &&
 		strings.EqualFold(relation.Subject.GetKey(), c.anchor.Subject.GetKey()) {
 		return true
-	}
-	return false
-}
-
-func inSet(s []string, v string) bool {
-	for i := 0; i < len(s); i++ {
-		if strings.EqualFold(s[i], v) {
-			return true
-		}
 	}
 	return false
 }

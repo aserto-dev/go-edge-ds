@@ -29,16 +29,16 @@ func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
 		for {
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Debug().Interface("res", res).Msg("load user response")
+				s.logger.Debug().Interface("res", res).Msg("import streamload user response")
 				return stream.Send(res)
 			} else if err != nil {
 				s.logger.Err(err).Msg("cannot receive req")
-				return stream.Send(res)
+				return err // stream.Send(res)
 			}
 
 			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
 				s.logger.Err(err).Msg("cannot handle load request")
-				return stream.Send(res)
+				// return err // stream.Send(res)
 			}
 		}
 	})
@@ -130,11 +130,11 @@ func (s *Directory) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.R
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).Key(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

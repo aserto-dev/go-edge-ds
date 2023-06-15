@@ -14,6 +14,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.29.1
+	github.com/samber/lo v1.38.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.3
 	go.etcd.io/bbolt v1.3.7
@@ -29,6 +30,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect

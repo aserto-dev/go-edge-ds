@@ -30,17 +30,17 @@ func (i *object) Key() string {
 
 func (i *object) Validate() (bool, error) {
 	if i.Object == nil {
-		return false, ErrInvalidArgumentObject.Msg("")
+		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
 	}
 
 	// #1 check is type field is set.
 	if IsNotSet(i.GetType()) {
-		return false, ErrInvalidArgumentObject.Msg("type")
+		return false, ErrInvalidArgumentObject.Msg(objectIdentifierType)
 	}
 
 	// #2 check if key field is set.
 	if IsNotSet(i.GetKey()) {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg("key")
+		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierKey)
 	}
 
 	if i.Properties == nil {

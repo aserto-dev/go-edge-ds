@@ -12,6 +12,7 @@
         "Msgf",
         "nolint",
         "protobuf",
+        "samber",
         "stretchr",
         "timestamppb",
         "wrapf",

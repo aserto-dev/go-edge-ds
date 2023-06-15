@@ -7,6 +7,7 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -90,7 +91,7 @@ func (c *relationChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if inSet(c.filter, r.Relation) {
+		if lo.Contains(c.filter, r.Relation) {
 			match, err := c.Check(r.Subject)
 			if err != nil {
 				return false, err
@@ -106,7 +107,7 @@ func (c *relationChecker) Check(root *dsc.ObjectIdentifier) (bool, error) {
 }
 
 func (c *relationChecker) isMatch(relation *dsc.Relation) bool {
-	if inSet(c.filter, relation.Relation) &&
+	if lo.Contains(c.filter, relation.Relation) &&
 		strings.EqualFold(relation.Subject.GetType(), c.anchor.Subject.GetType()) &&
 		strings.EqualFold(relation.Subject.GetKey(), c.anchor.Subject.GetKey()) {
 		return true
