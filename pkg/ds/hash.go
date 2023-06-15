@@ -1,4 +1,4 @@
-package types
+package ds
 
 import (
 	"encoding/binary"

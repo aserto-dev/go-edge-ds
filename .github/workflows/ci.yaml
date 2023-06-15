@@ -39,9 +39,6 @@ jobs:
       - name: Install Tools
         run: |
           go run mage.go deps
-      - name: Build
-        run: |
-          go run mage.go build
       - name: Lint
         run: |
           go run mage.go lint

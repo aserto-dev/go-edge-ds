@@ -1,15 +1,17 @@
 package directory
 
 import (
+	"context"
 	"io"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
-	"github.com/aserto-dev/go-edge-ds/pkg/types"
 	"github.com/google/uuid"
+	bolt "go.etcd.io/bbolt"
 )
 
 func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
@@ -21,125 +23,118 @@ func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
 		Relation:     &dsi.ImportCounter{},
 	}
 
-	txOpt, cleanup, err := s.store.WriteTxOpts()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		cErr := cleanup(err)
-		if cErr != nil {
-			err = cErr
-		}
-	}()
-
 	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
 
-	sc := types.StoreContext{Context: ctx, Store: s.store, Opts: []boltdb.Opts{txOpt}}
+	importErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+		for {
+			req, err := stream.Recv()
+			if err == io.EOF {
+				s.logger.Debug().Interface("res", res).Msg("import stream EOF")
+				return stream.Send(res)
+			} else if err != nil {
+				s.logger.Err(err).Msg("cannot receive req")
+				return stream.Send(res)
+			}
 
-	for {
-		req, err := stream.Recv()
-		if err == io.EOF {
-			s.logger.Debug().Interface("res", res).Msg("load user response")
-			return stream.Send(res)
-		} else if err != nil {
-			s.logger.Err(err).Msg("cannot receive req")
-			return stream.Send(res)
+			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
+				s.logger.Err(err).Msg("cannot handle load request")
+				return stream.Send(res)
+			}
 		}
-
-		if err := s.handleImportRequest(&sc, req, res); err != nil {
-			s.logger.Err(err).Msg("cannot handle load request")
-			return stream.Send(res)
-		}
-	}
+	})
+	return importErr
 }
 
-func (s *Directory) handleImportRequest(sc *types.StoreContext, req *dsi.ImportRequest, res *dsi.ImportResponse) (err error) {
+func (s *Directory) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi.ImportRequest, res *dsi.ImportResponse) (err error) {
 
 	if objType := req.GetObjectType(); objType != nil {
-		err = s.objectTypeHandler(sc, objType)
+		err = s.objectTypeHandler(ctx, tx, objType)
 		res.ObjectType = updateCounter(res.ObjectType, req.OpCode, err)
 	} else if perm := req.GetPermission(); perm != nil {
-		err = s.permissionHandler(sc, perm)
+		err = s.permissionHandler(ctx, tx, perm)
 		res.Permission = updateCounter(res.Permission, req.OpCode, err)
 	} else if relType := req.GetRelationType(); relType != nil {
-		err = s.relationTypeHandler(sc, relType)
+		err = s.relationTypeHandler(ctx, tx, relType)
 		res.RelationType = updateCounter(res.RelationType, req.OpCode, err)
 	} else if obj := req.GetObject(); obj != nil {
-		err = s.objectHandler(sc, obj)
+		err = s.objectHandler(ctx, tx, obj)
 		res.Object = updateCounter(res.Object, req.OpCode, err)
 	} else if rel := req.GetRelation(); rel != nil {
-		err = s.relationHandler(sc, rel)
+		err = s.relationHandler(ctx, tx, rel)
 		res.Relation = updateCounter(res.Relation, req.OpCode, err)
 	}
 
 	return err
 }
 
-func (s *Directory) objectTypeHandler(sc *types.StoreContext, req *dsc.ObjectType) error {
+func (s *Directory) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.ObjectType) error {
 	s.logger.Debug().Interface("objectType", req).Msg("import_object_type")
 
 	if req == nil {
 		return derr.ErrInvalidObjectType.Msg("nil")
 	}
 
-	_, err := sc.SetObjectType(&types.ObjectType{ObjectType: req})
-	if err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
 		return derr.ErrInvalidObjectType.Msg("set")
 	}
 
 	return nil
 }
 
-func (s *Directory) permissionHandler(sc *types.StoreContext, req *dsc.Permission) error {
+func (s *Directory) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Permission) error {
 	s.logger.Debug().Interface("permission", req).Msg("import_permission")
 
 	if req == nil {
 		return derr.ErrInvalidPermission.Msg("nil")
 	}
 
-	if _, err := sc.SetPermission(&types.Permission{Permission: req}); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
 		return derr.ErrInvalidPermission.Msg("set")
 	}
 
 	return nil
 }
 
-func (s *Directory) relationTypeHandler(sc *types.StoreContext, req *dsc.RelationType) error {
+func (s *Directory) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.RelationType) error {
 	s.logger.Debug().Interface("relationType", req).Msg("import_relation_type")
 
 	if req == nil {
 		return derr.ErrInvalidRelationType.Msg("nil")
 	}
 
-	if _, err := sc.SetRelationType(&types.RelationType{RelationType: req}); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
 		return derr.ErrInvalidRelationType.Msg("set")
 	}
 
 	return nil
 }
 
-func (s *Directory) objectHandler(sc *types.StoreContext, req *dsc.Object) error {
+func (s *Directory) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("import_object")
 
 	if req == nil {
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if _, err := sc.SetObject(&types.Object{Object: req}); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
 	return nil
 }
 
-func (s *Directory) relationHandler(sc *types.StoreContext, req *dsc.Relation) error {
+func (s *Directory) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
 	if req == nil {
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if _, err := sc.SetRelation(&types.Relation{Relation: req}); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
+		return derr.ErrInvalidRelation.Msg("set")
+	}
+
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

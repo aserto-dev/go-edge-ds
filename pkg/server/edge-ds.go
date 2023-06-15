@@ -33,7 +33,7 @@ type edgeServer struct {
 
 func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host string, grpcPort int, logger *zerolog.Logger) (*edgeServer, error) {
 
-	edgeDSLogger := logger.With().Str("component", "api.edge-directory").Logger()
+	edgeDSLogger := logger.With().Str("component", "api.edge-directory").Logger().Level(zerolog.InfoLevel)
 
 	edgeDirServer, err := eds.New(&cfg, &edgeDSLogger)
 	if err != nil {

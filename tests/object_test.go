@@ -7,7 +7,6 @@ import (
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-directory/pkg/pb"
-	"github.com/aserto-dev/go-edge-ds/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,6 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "create test-obj-1",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Type:        "user",
 				Key:         "test-user@acmecorp.com",
 				DisplayName: "test obj 1",
@@ -46,14 +44,13 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8123438213397438108", resp.Result.Hash)
+				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -62,7 +59,8 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "get test-obj-1",
 		Req: &dsr.GetObjectRequest{
 			Param: &dsc.ObjectIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Type: proto.String("user"),
+				Key:  proto.String("test-user@acmecorp.com"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -74,14 +72,13 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8123438213397438108", resp.Result.Hash)
+				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},
@@ -90,11 +87,10 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "update test-obj-1",
 		Req: &dsw.SetObjectRequest{
 			Object: &dsc.Object{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Type:        "user",
 				Key:         "test-user-11@acmecorp.com",
 				DisplayName: "test obj 11",
-				Hash:        "8123438213397438108",
+				Hash:        "3016620182482667549",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -106,14 +102,13 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "1525294859288182108", resp.Result.Hash)
+				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},
@@ -135,14 +130,13 @@ var objectTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "1525294859288182108", resp.Result.Hash)
+				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
 			}
 			return func(req proto.Message) {}
 		},
@@ -176,6 +170,7 @@ var objectTestCasesWithID = []*TestCase{
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
+			assert.Contains(t, tErr.Error(), "key not found")
 			assert.Nil(t, msg)
 			return func(req proto.Message) {}
 		},
@@ -184,7 +179,8 @@ var objectTestCasesWithID = []*TestCase{
 		Name: "delete deleted test-obj-11 by id",
 		Req: &dsw.DeleteObjectRequest{
 			Param: &dsc.ObjectIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Type: proto.String("user"),
+				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -221,9 +217,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
@@ -260,9 +254,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
@@ -300,9 +292,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
@@ -330,9 +320,7 @@ var objectTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
-				t.Logf("resp id:%s", resp.Result.Id)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "user", resp.Result.Type)
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
@@ -373,6 +361,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
+			assert.Contains(t, tErr.Error(), "key not found")
 			assert.Nil(t, msg)
 			return func(req proto.Message) {}
 		},

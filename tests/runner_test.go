@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package tests_test
 
 import (
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
@@ -60,7 +61,7 @@ func TestGetObjectTypes(t *testing.T) {
 	resp, err := client.Reader.GetObjectTypes(context.Background(), &dsr.GetObjectTypesRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%d %s", v.Id, v.Name)
+		t.Logf("object_type: %s", v.Name)
 	}
 }
 
@@ -68,10 +69,13 @@ func TestGetRelationTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{})
+	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{
+		Param: &dsc.ObjectTypeIdentifier{},
+		Page:  &dsc.PaginationRequest{},
+	})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%d %s %s", v.Id, v.Name, v.ObjectType)
+		t.Logf("relation_type: %s:%s", v.ObjectType, v.Name)
 	}
 }
 
@@ -82,7 +86,7 @@ func TestGetPermissions(t *testing.T) {
 	resp, err := client.Reader.GetPermissions(context.Background(), &dsr.GetPermissionsRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
-		t.Logf("%s %s", v.Id, v.Name)
+		t.Logf("permission: %s", v.Name)
 	}
 }
 

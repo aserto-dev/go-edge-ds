@@ -50,7 +50,7 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%s:%s\n", resp.Result.Type, resp.Result.Id)
+		log.Printf("%s:%s\n", resp.Result.Type, resp.Result.Key)
 	}
 
 	for _, relation := range loader.Relations {
@@ -58,13 +58,12 @@ func main() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-		log.Printf("%s:%s|%s:%s|%s:%s\n",
-			resp.Result.Subject.GetType(),
-			resp.Result.Subject.GetId(),
+		log.Printf("%s:%s|%s|%s:%s\n",
 			resp.Result.Object.GetType(),
+			resp.Result.Object.GetKey(),
 			resp.Result.Relation,
-			resp.Result.Object.GetType(),
-			resp.Result.Object.GetId(),
+			resp.Result.Subject.GetType(),
+			resp.Result.Subject.GetKey(),
 		)
 	}
 }

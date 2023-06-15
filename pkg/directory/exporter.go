@@ -3,79 +3,68 @@ package directory
 import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/boltdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/types"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	bolt "go.etcd.io/bbolt"
 )
 
-func (s *Directory) Export(req *dse.ExportRequest, stream dse.Exporter_ExportServer) (err error) {
+func (s *Directory) Export(req *dse.ExportRequest, stream dse.Exporter_ExportServer) error {
 	logger := s.logger.With().Str("method", "Export").Interface("req", req).Logger()
 
-	txOpt, cleanup, err := s.store.ReadTxOpts()
-	if err != nil {
-		return err
-	}
-	defer func() {
-		cErr := cleanup()
-		if cErr != nil {
-			err = cErr
+	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		if req.Options&uint32(dse.Option_OPTION_METADATA_OBJECT_TYPES) != 0 {
+			if err := exportObjectTypes(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_object_types")
+				return err
+			}
 		}
-	}()
 
-	sc := types.StoreContext{Context: stream.Context(), Store: s.store, Opts: []boltdb.Opts{txOpt}}
-
-	if req.Options&uint32(dse.Option_OPTION_METADATA_OBJECT_TYPES) != 0 {
-		if err := exportObjectTypes(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_object_types")
-			return err
+		if req.Options&uint32(dse.Option_OPTION_METADATA_PERMISSIONS) != 0 {
+			if err := exportPermissions(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_permissions")
+				return err
+			}
 		}
-	}
 
-	if req.Options&uint32(dse.Option_OPTION_METADATA_PERMISSIONS) != 0 {
-		if err := exportPermissions(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_permissions")
-			return err
+		if req.Options&uint32(dse.Option_OPTION_METADATA_RELATION_TYPES) != 0 {
+			if err := exportRelationTypes(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_relation_types")
+				return err
+			}
 		}
-	}
 
-	if req.Options&uint32(dse.Option_OPTION_METADATA_RELATION_TYPES) != 0 {
-		if err := exportRelationTypes(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_relation_types")
-			return err
+		if req.Options&uint32(dse.Option_OPTION_DATA_OBJECTS) != 0 {
+			if err := exportObjects(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_objects")
+				return err
+			}
 		}
-	}
 
-	if req.Options&uint32(dse.Option_OPTION_DATA_OBJECTS) != 0 {
-		if err := exportObjects(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_objects")
-			return err
+		if req.Options&uint32(dse.Option_OPTION_DATA_RELATIONS) != 0 {
+			if err := exportRelations(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_relations")
+				return err
+			}
 		}
-	}
 
-	if req.Options&uint32(dse.Option_OPTION_DATA_RELATIONS) != 0 {
-		if err := exportRelations(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_relations")
-			return err
+		if req.Options&uint32(dse.Option_OPTION_DATA_RELATIONS_WITH_KEYS) != 0 {
+			if err := exportRelationsWithKeys(tx, stream); err != nil {
+				logger.Error().Err(err).Msg("export_relations_with_keys")
+				return err
+			}
 		}
-	}
 
-	if req.Options&uint32(dse.Option_OPTION_DATA_RELATIONS_WITH_KEYS) != 0 {
-		if err := exportRelationsWithKeys(&sc, stream); err != nil {
-			logger.Error().Err(err).Msg("export_relations_with_keys")
-			return err
-		}
-	}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
-func exportObjectTypes(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+func exportObjectTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objTypes, pageResp, err := sc.GetObjectTypes(page)
+		objTypes, pageResp, err := bdb.List[dsc.ObjectType](stream.Context(), tx, bdb.ObjectTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -84,7 +73,7 @@ func exportObjectTypes(sc *types.StoreContext, stream dse.Exporter_ExportServer)
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_ObjectType{
-					ObjectType: objType.ObjectType,
+					ObjectType: objType,
 				},
 			}); err != nil {
 				return err
@@ -100,14 +89,11 @@ func exportObjectTypes(sc *types.StoreContext, stream dse.Exporter_ExportServer)
 	return nil
 }
 
-func exportPermissions(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+func exportPermissions(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		permissions, pageResp, err := sc.GetPermissions(page)
+		permissions, pageResp, err := bdb.List[dsc.Permission](stream.Context(), tx, bdb.PermissionsPath, page)
 		if err != nil {
 			return err
 		}
@@ -116,7 +102,7 @@ func exportPermissions(sc *types.StoreContext, stream dse.Exporter_ExportServer)
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_Permission{
-					Permission: permission.Permission,
+					Permission: permission,
 				},
 			}); err != nil {
 				return err
@@ -132,16 +118,11 @@ func exportPermissions(sc *types.StoreContext, stream dse.Exporter_ExportServer)
 	return nil
 }
 
-func exportRelationTypes(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+func exportRelationTypes(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relTypes, pageResp, err := sc.GetRelationTypes(&types.ObjectTypeIdentifier{
-			ObjectTypeIdentifier: &dsc.ObjectTypeIdentifier{},
-		}, page)
+		relTypes, pageResp, err := bdb.List[dsc.RelationType](stream.Context(), tx, bdb.RelationTypesPath, page)
 		if err != nil {
 			return err
 		}
@@ -150,7 +131,7 @@ func exportRelationTypes(sc *types.StoreContext, stream dse.Exporter_ExportServe
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_RelationType{
-					RelationType: relType.RelationType,
+					RelationType: relType,
 				},
 			}); err != nil {
 				return err
@@ -163,19 +144,15 @@ func exportRelationTypes(sc *types.StoreContext, stream dse.Exporter_ExportServe
 
 		page.Token = pageResp.NextToken
 	}
+
 	return nil
 }
 
-func exportObjects(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+func exportObjects(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		objects, pageResp, err := sc.GetObjects(&types.ObjectTypeIdentifier{
-			ObjectTypeIdentifier: &dsc.ObjectTypeIdentifier{},
-		}, page)
+		objects, pageResp, err := bdb.List[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, page)
 		if err != nil {
 			return err
 		}
@@ -184,7 +161,7 @@ func exportObjects(sc *types.StoreContext, stream dse.Exporter_ExportServer) err
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_Object{
-					Object: obj.Object,
+					Object: obj,
 				},
 			}); err != nil {
 				return err
@@ -200,16 +177,11 @@ func exportObjects(sc *types.StoreContext, stream dse.Exporter_ExportServer) err
 	return nil
 }
 
-func exportRelations(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+func exportRelations(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := sc.GetRelations(&types.RelationIdentifier{
-			RelationIdentifier: &dsc.RelationIdentifier{},
-		}, page)
+		relations, pageResp, err := bdb.List[dsc.Relation](stream.Context(), tx, bdb.RelationsSubPath, page)
 		if err != nil {
 			return err
 		}
@@ -218,7 +190,7 @@ func exportRelations(sc *types.StoreContext, stream dse.Exporter_ExportServer) e
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_Relation{
-					Relation: rel.Relation,
+					Relation: rel,
 				},
 			}); err != nil {
 				return err
@@ -234,37 +206,34 @@ func exportRelations(sc *types.StoreContext, stream dse.Exporter_ExportServer) e
 	return nil
 }
 
-func exportRelationsWithKeys(sc *types.StoreContext, stream dse.Exporter_ExportServer) error {
-	page := &types.PaginationRequest{PaginationRequest: &dsc.PaginationRequest{
-		Size:  100,
-		Token: "",
-	}}
+// TODO this should be the main and only code path without IDs.
+func exportRelationsWithKeys(tx *bolt.Tx, stream dse.Exporter_ExportServer) error {
+	page := &dsc.PaginationRequest{Size: 100}
 
 	for {
-		relations, pageResp, err := sc.GetRelations(&types.RelationIdentifier{
-			RelationIdentifier: &dsc.RelationIdentifier{},
-		}, page)
+		relations, pageResp, err := bdb.List[dsc.Relation](stream.Context(), tx, bdb.RelationsSubPath, page)
+
 		if err != nil {
 			return err
 		}
 
 		for _, rel := range relations {
-			sub, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Subject.Id}})
+			sub, err := bdb.Get[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 			if err != nil {
 				return err
 			}
 
-			obj, err := sc.GetObject(&types.ObjectIdentifier{ObjectIdentifier: &dsc.ObjectIdentifier{Id: rel.Relation.Object.Id}})
+			obj, err := bdb.Get[dsc.Object](stream.Context(), tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
 			if err != nil {
 				return err
 			}
 
-			rel.Relation.Subject.Key = &sub.Key
-			rel.Relation.Object.Key = &obj.Key
+			rel.Subject.Key = &sub.Key
+			rel.Object.Key = &obj.Key
 
 			if err := stream.Send(&dse.ExportResponse{
 				Msg: &dse.ExportResponse_Relation{
-					Relation: rel.Relation,
+					Relation: rel,
 				},
 			}); err != nil {
 				return err

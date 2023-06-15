@@ -6,7 +6,6 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
-	"github.com/aserto-dev/go-edge-ds/pkg/types"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +27,6 @@ var permissionTestCasesWithID = []*TestCase{
 		Name: "create test-perm-1",
 		Req: &dsw.SetPermissionRequest{
 			Permission: &dsc.Permission{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Name:        "permission-1",
 				DisplayName: "Permission 1",
 				Hash:        "",
@@ -41,12 +39,11 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 1", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "17366720711330694741", resp.Result.Hash)
+				assert.Equal(t, "7685029755427542192", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -55,7 +52,7 @@ var permissionTestCasesWithID = []*TestCase{
 		Name: "get test-perm-1",
 		Req: &dsr.GetPermissionRequest{
 			Param: &dsc.PermissionIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -68,11 +65,10 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 1", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "17366720711330694741", resp.Result.Hash)
+				assert.Equal(t, "7685029755427542192", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -81,10 +77,9 @@ var permissionTestCasesWithID = []*TestCase{
 		Name: "update test-perm-1",
 		Req: &dsw.SetPermissionRequest{
 			Permission: &dsc.Permission{
-				Id:          "fd20c049-ea32-42b3-9ced-c4037a33026b",
 				Name:        "permission-1",
 				DisplayName: "Permission 11",
-				Hash:        "17366720711330694741",
+				Hash:        "7685029755427542192",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -97,11 +92,10 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 11", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "15067186447437388780", resp.Result.Hash)
+				assert.Equal(t, "14563374343076255539", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -123,11 +117,10 @@ var permissionTestCasesWithID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.Equal(t, "fd20c049-ea32-42b3-9ced-c4037a33026b", resp.Result.Id)
 				assert.Equal(t, "permission-1", resp.Result.Name)
 				assert.Equal(t, "Permission 11", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "15067186447437388780", resp.Result.Hash)
+				assert.Equal(t, "14563374343076255539", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -153,7 +146,7 @@ var permissionTestCasesWithID = []*TestCase{
 		Name: "get deleted test-perm-1",
 		Req: &dsr.GetPermissionRequest{
 			Param: &dsc.PermissionIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -166,7 +159,7 @@ var permissionTestCasesWithID = []*TestCase{
 		Name: "delete deleted test-perm-1 by id",
 		Req: &dsw.DeletePermissionRequest{
 			Param: &dsc.PermissionIdentifier{
-				Id: proto.String("fd20c049-ea32-42b3-9ced-c4037a33026b"),
+				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
@@ -200,7 +193,6 @@ var permissionTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "permission", resp.Result.Name)
 				assert.Equal(t, "Permission", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
@@ -235,7 +227,6 @@ var permissionTestCasesWithoutID = []*TestCase{
 				assert.NotNil(t, resp.Result)
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
-				assert.True(t, types.ID.IsValid(resp.Result.Id))
 				assert.Equal(t, "permission", resp.Result.Name)
 				assert.Equal(t, "Permission NO-ID", resp.Result.DisplayName)
 				assert.NotEmpty(t, resp.Result.Hash)
