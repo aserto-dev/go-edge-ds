@@ -29,16 +29,16 @@ func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
 		for {
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Debug().Interface("res", res).Msg("import streamload user response")
+				s.logger.Debug().Interface("res", res).Msg("import stream EOF")
 				return stream.Send(res)
 			} else if err != nil {
 				s.logger.Err(err).Msg("cannot receive req")
-				return err // stream.Send(res)
+				return stream.Send(res)
 			}
 
 			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
 				s.logger.Err(err).Msg("cannot handle load request")
-				// return err // stream.Send(res)
+				return stream.Send(res)
 			}
 		}
 	})
