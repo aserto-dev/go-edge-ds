@@ -60,7 +60,7 @@ func ExpandRelation(relTypes []*dsc.RelationType, relation string) []string {
 
 // ResolveRelation, resolves the relation to covering relations within the scope of the object_type.
 func ResolveRelation(ctx context.Context, tx *bolt.Tx, objectType, relation string) ([]string, error) {
-	relations := []string{}
+	relations := []string{relation}
 
 	filter := fmt.Sprintf("%s:", objectType)
 	relTypes, err := bdb.Scan[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, filter)
