@@ -121,7 +121,7 @@ func (i *objectIdentifier) Key() string {
 }
 
 func (i *objectIdentifier) Equal(n *dsc.ObjectIdentifier) bool {
-	return i.ObjectIdentifier.GetKey() == n.GetKey() && i.ObjectIdentifier.GetType() == n.GetType()
+	return strings.EqualFold(i.ObjectIdentifier.GetKey(), n.GetKey()) && strings.EqualFold(i.ObjectIdentifier.GetType(), n.GetType())
 }
 
 type objectSelector struct {
