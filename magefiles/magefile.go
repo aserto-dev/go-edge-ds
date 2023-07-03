@@ -32,7 +32,10 @@ func Deps() {
 }
 
 func Build() error {
-	return common.Build()
+	return sh.RunV("go", []string{
+		"build",
+		"-o", "./bin/" + runtime.GOOS + "-" + runtime.GOARCH + "/server",
+		"./internal/cmd/server"}...)
 }
 
 func Run() error {
