@@ -8,6 +8,7 @@ import (
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/convert"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 
 	"github.com/rs/zerolog"
@@ -70,44 +71,16 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 
 	incoming := make([]*dsc3.Relation, len(resp.Incoming))
 	for i, r := range resp.Incoming {
-		incoming[i] = &dsc3.Relation{
-			ObjectType:      r.Object.GetType(),
-			ObjectId:        r.Object.GetKey(),
-			Relation:        r.Relation,
-			SubjectType:     r.Subject.GetType(),
-			SubjectId:       r.Subject.GetKey(),
-			SubjectRelation: "",
-			CreatedAt:       r.CreatedAt,
-			UpdatedAt:       r.UpdatedAt,
-			Etag:            r.Hash,
-		}
+		incoming[i] = convert.Relation2(r)
 	}
 
 	outgoing := make([]*dsc3.Relation, len(resp.Outgoing))
 	for i, r := range resp.Outgoing {
-		outgoing[i] = &dsc3.Relation{
-			ObjectType:      r.Object.GetType(),
-			ObjectId:        r.Object.GetKey(),
-			Relation:        r.Relation,
-			SubjectType:     r.Subject.GetType(),
-			SubjectId:       r.Subject.GetKey(),
-			SubjectRelation: "",
-			CreatedAt:       r.CreatedAt,
-			UpdatedAt:       r.UpdatedAt,
-			Etag:            r.Hash,
-		}
+		outgoing[i] = convert.Relation2(r)
 	}
 
 	return &dsr3.GetObjectResponse{
-		Result: &dsc3.Object{
-			Type:        resp.Result.Type,
-			Id:          resp.Result.Key,
-			DisplayName: resp.Result.DisplayName,
-			Properties:  resp.Result.Properties,
-			CreatedAt:   resp.Result.CreatedAt,
-			UpdatedAt:   resp.Result.UpdatedAt,
-			Etag:        resp.Result.Hash,
-		},
+		Result:   convert.Object2(resp.Result),
 		Incoming: incoming,
 		Outgoing: outgoing,
 	}, nil
@@ -132,15 +105,7 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 
 	results := make([]*dsc3.Object, len(resp.Results))
 	for i, r := range resp.Results {
-		results[i] = &dsc3.Object{
-			Type:        r.Type,
-			Id:          r.Key,
-			DisplayName: r.DisplayName,
-			Properties:  r.Properties,
-			CreatedAt:   r.CreatedAt,
-			UpdatedAt:   r.UpdatedAt,
-			Etag:        r.Hash,
-		}
+		results[i] = convert.Object2(r)
 	}
 
 	return &dsr3.GetObjectManyResponse{
@@ -153,10 +118,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 		Param: &dsc2.ObjectTypeIdentifier{
 			Name: &req.ObjectType,
 		},
-		Page: &dsc2.PaginationRequest{
-			Size:  req.Page.Size,
-			Token: req.Page.Token,
-		},
+		Page: convert.PaginationRequest3(req.Page),
 	})
 
 	if err != nil {
@@ -165,22 +127,12 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 
 	results := make([]*dsc3.Object, len(resp.Results))
 	for i, r := range resp.Results {
-		results[i] = &dsc3.Object{
-			Type:        r.Type,
-			Id:          r.Key,
-			DisplayName: r.DisplayName,
-			Properties:  r.Properties,
-			CreatedAt:   r.CreatedAt,
-			UpdatedAt:   r.UpdatedAt,
-			Etag:        r.Hash,
-		}
+		results[i] = convert.Object2(r)
 	}
 
 	return &dsr3.GetObjectsResponse{
 		Results: results,
-		Page: &dsc3.PaginationResponse{
-			NextToken: resp.Page.NextToken,
-		},
+		Page:    convert.PaginationResponse2(resp.Page),
 	}, nil
 }
 
@@ -210,30 +162,12 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 
 	results := make([]*dsc3.Relation, len(resp.Results))
 	for i, r := range resp.Results {
-		results[i] = &dsc3.Relation{
-			ObjectType:      r.Object.GetType(),
-			ObjectId:        r.Object.GetKey(),
-			Relation:        r.Relation,
-			SubjectType:     r.Subject.GetType(),
-			SubjectId:       r.Subject.GetKey(),
-			SubjectRelation: "",
-			CreatedAt:       r.CreatedAt,
-			UpdatedAt:       r.UpdatedAt,
-			Etag:            r.Hash,
-		}
+		results[i] = convert.Relation2(r)
 	}
 
 	objects := make(map[string]*dsc3.Object, len(resp.Objects))
 	for k, v := range resp.Objects {
-		objects[k] = &dsc3.Object{
-			Type:        v.Type,
-			Id:          v.Key,
-			DisplayName: v.DisplayName,
-			Properties:  v.Properties,
-			CreatedAt:   v.CreatedAt,
-			UpdatedAt:   v.UpdatedAt,
-			Etag:        v.Hash,
-		}
+		objects[k] = convert.Object2(v)
 	}
 
 	return &dsr3.GetRelationResponse{
@@ -258,10 +192,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				Key:  &req.SubjectId,
 			},
 		},
-		Page: &dsc2.PaginationRequest{
-			Size:  req.Page.Size,
-			Token: req.Page.Token,
-		},
+		Page: convert.PaginationRequest3(req.Page),
 	})
 
 	if err != nil {
@@ -270,24 +201,12 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 
 	results := make([]*dsc3.Relation, len(resp.Results))
 	for i, r := range resp.Results {
-		results[i] = &dsc3.Relation{
-			ObjectType:      r.Object.GetType(),
-			ObjectId:        r.Object.GetKey(),
-			Relation:        r.Relation,
-			SubjectType:     r.Subject.GetType(),
-			SubjectId:       r.Subject.GetKey(),
-			SubjectRelation: "",
-			CreatedAt:       r.CreatedAt,
-			UpdatedAt:       r.UpdatedAt,
-			Etag:            r.Hash,
-		}
+		results[i] = convert.Relation2(r)
 	}
 
 	return &dsr3.GetRelationsResponse{
 		Results: results,
-		Page: &dsc3.PaginationResponse{
-			NextToken: resp.Page.NextToken,
-		},
+		Page:    convert.PaginationResponse2(resp.Page),
 	}, nil
 }
 
@@ -371,17 +290,7 @@ func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3
 
 	results := make([]*dsc3.ObjectDependency, len(resp.Results))
 	for i, r := range resp.Results {
-		results[i] = &dsc3.ObjectDependency{
-			ObjectType:      r.ObjectType,
-			ObjectId:        r.ObjectKey,
-			Relation:        r.Relation,
-			SubjectType:     r.SubjectType,
-			SubjectId:       r.SubjectKey,
-			SubjectRelation: "",
-			Depth:           r.Depth,
-			IsCycle:         r.IsCycle,
-			Path:            r.Path,
-		}
+		results[i] = convert.ObjectDependency2(r)
 	}
 
 	return &dsr3.GetGraphResponse{
