@@ -7,10 +7,17 @@ import (
 	"time"
 
 	"github.com/aserto-dev/certs"
-	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+
+	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+
+	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
+	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+
 	eds "github.com/aserto-dev/go-edge-ds"
 	edgeDirectory "github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
@@ -56,10 +63,15 @@ func NewEdgeServer(cfg edgeDirectory.Config, certCfg *certs.TLSCredsConfig, host
 	}
 	s := grpc.NewServer(opts...)
 
-	dsr.RegisterReaderServer(s, edgeDirServer)
-	dsw.RegisterWriterServer(s, edgeDirServer)
-	dse.RegisterExporterServer(s, edgeDirServer)
-	dsi.RegisterImporterServer(s, edgeDirServer)
+	dsr2.RegisterReaderServer(s, edgeDirServer.Reader2())
+	dsw2.RegisterWriterServer(s, edgeDirServer.Writer2())
+	dse2.RegisterExporterServer(s, edgeDirServer.Exporter2())
+	dsi2.RegisterImporterServer(s, edgeDirServer.Importer2())
+
+	dsr3.RegisterReaderServer(s, edgeDirServer.Reader3())
+	dsw3.RegisterWriterServer(s, edgeDirServer.Writer3())
+	dse3.RegisterExporterServer(s, edgeDirServer.Exporter3())
+	dsi3.RegisterImporterServer(s, edgeDirServer.Importer3())
 
 	reflection.Register(s)
 	return &edgeServer{server: s,

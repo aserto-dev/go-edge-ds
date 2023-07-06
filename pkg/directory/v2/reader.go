@@ -1,4 +1,4 @@
-package directory
+package v2
 
 import (
 	"context"
@@ -7,11 +7,24 @@ import (
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
+type Reader struct {
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
+}
+
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
+	return &Reader{
+		logger: logger,
+		store:  store,
+	}
+}
+
 // Get object type (metadata).
-func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeRequest) (*dsr.GetObjectTypeResponse, error) {
+func (s *Reader) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeRequest) (*dsr.GetObjectTypeResponse, error) {
 	resp := &dsr.GetObjectTypeResponse{}
 
 	if ok, err := ds.ObjectTypeIdentifier(req.Param).Validate(); !ok {
@@ -32,7 +45,7 @@ func (s *Directory) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReq
 }
 
 // Get all objects types (metadata) (paginated).
-func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (*dsr.GetObjectTypesResponse, error) {
+func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequest) (*dsr.GetObjectTypesResponse, error) {
 	resp := &dsr.GetObjectTypesResponse{Results: []*dsc.ObjectType{}}
 
 	if req.Page == nil {
@@ -55,7 +68,7 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 }
 
 // Get relation type (metadata).
-func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTypeRequest) (*dsr.GetRelationTypeResponse, error) {
+func (s *Reader) GetRelationType(ctx context.Context, req *dsr.GetRelationTypeRequest) (*dsr.GetRelationTypeResponse, error) {
 	resp := &dsr.GetRelationTypeResponse{}
 
 	if ok, err := ds.RelationTypeIdentifier(req.Param).Validate(); !ok {
@@ -76,7 +89,7 @@ func (s *Directory) GetRelationType(ctx context.Context, req *dsr.GetRelationTyp
 }
 
 // Get all relation types, optionally filtered by object type (metadata) (paginated).
-func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest) (*dsr.GetRelationTypesResponse, error) {
+func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypesRequest) (*dsr.GetRelationTypesResponse, error) {
 	resp := &dsr.GetRelationTypesResponse{Results: []*dsc.RelationType{}, Page: &dsc.PaginationResponse{}}
 
 	if req.Param == nil {
@@ -107,7 +120,7 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 }
 
 // Get permission (metadata).
-func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionRequest) (*dsr.GetPermissionResponse, error) {
+func (s *Reader) GetPermission(ctx context.Context, req *dsr.GetPermissionRequest) (*dsr.GetPermissionResponse, error) {
 	resp := &dsr.GetPermissionResponse{}
 
 	if ok, err := ds.PermissionIdentifier(req.Param).Validate(); !ok {
@@ -128,7 +141,7 @@ func (s *Directory) GetPermission(ctx context.Context, req *dsr.GetPermissionReq
 }
 
 // Get all permissions (metadata) (paginated).
-func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (*dsr.GetPermissionsResponse, error) {
+func (s *Reader) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequest) (*dsr.GetPermissionsResponse, error) {
 	resp := &dsr.GetPermissionsResponse{Results: []*dsc.Permission{}}
 
 	if req.Page == nil {
@@ -151,7 +164,7 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 }
 
 // Get single object instance.
-func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*dsr.GetObjectResponse, error) {
+func (s *Reader) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*dsr.GetObjectResponse, error) {
 	resp := &dsr.GetObjectResponse{}
 
 	if ok, err := ds.ObjectIdentifier(req.Param).Validate(); !ok {
@@ -172,7 +185,7 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 }
 
 // Get multiple object instances by id or type+key, in a single request.
-func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyRequest) (*dsr.GetObjectManyResponse, error) {
+func (s *Reader) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyRequest) (*dsr.GetObjectManyResponse, error) {
 	resp := &dsr.GetObjectManyResponse{Results: []*dsc.Object{}}
 
 	if req.Param == nil {
@@ -201,7 +214,7 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 }
 
 // Get all object instances, optionally filtered by object type. (paginated).
-func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
+func (s *Reader) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
 	resp := &dsr.GetObjectsResponse{Results: []*dsc.Object{}, Page: &dsc.PaginationResponse{}}
 
 	if req.Page == nil {
@@ -228,7 +241,7 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 }
 
 // Get relation instances based on subject, relation, object filter.
-func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (*dsr.GetRelationResponse, error) {
+func (s *Reader) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (*dsr.GetRelationResponse, error) {
 	resp := &dsr.GetRelationResponse{Results: []*dsc.Relation{}, Objects: map[string]*dsc.Object{}}
 
 	if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {
@@ -276,7 +289,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 }
 
 // Get relation instances based on subject, relation, object filter (paginated).
-func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {
+func (s *Reader) GetRelations(ctx context.Context, req *dsr.GetRelationsRequest) (*dsr.GetRelationsResponse, error) {
 	resp := &dsr.GetRelationsResponse{Results: []*dsc.Relation{}, Page: &dsc.PaginationResponse{}}
 
 	if req.Page == nil {
@@ -303,7 +316,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 }
 
 // Check if subject has permission on object.
-func (s *Directory) CheckPermission(ctx context.Context, req *dsr.CheckPermissionRequest) (*dsr.CheckPermissionResponse, error) {
+func (s *Reader) CheckPermission(ctx context.Context, req *dsr.CheckPermissionRequest) (*dsr.CheckPermissionResponse, error) {
 	resp := &dsr.CheckPermissionResponse{}
 
 	if ok, err := ds.CheckPermission(req).Validate(); !ok {
@@ -320,7 +333,7 @@ func (s *Directory) CheckPermission(ctx context.Context, req *dsr.CheckPermissio
 }
 
 // Check if subject has relation to object.
-func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest) (*dsr.CheckRelationResponse, error) {
+func (s *Reader) CheckRelation(ctx context.Context, req *dsr.CheckRelationRequest) (*dsr.CheckRelationResponse, error) {
 	resp := &dsr.CheckRelationResponse{}
 
 	if ok, err := ds.CheckRelation(req).Validate(); !ok {
@@ -337,7 +350,7 @@ func (s *Directory) CheckRelation(ctx context.Context, req *dsr.CheckRelationReq
 }
 
 // Get object dependency graph.
-func (s *Directory) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*dsr.GetGraphResponse, error) {
+func (s *Reader) GetGraph(ctx context.Context, req *dsr.GetGraphRequest) (*dsr.GetGraphResponse, error) {
 	resp := &dsr.GetGraphResponse{}
 
 	if ok, err := ds.GetGraph(req).Validate(); !ok {

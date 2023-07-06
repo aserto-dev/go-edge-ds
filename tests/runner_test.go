@@ -58,7 +58,7 @@ func TestGetObjectTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.Reader.GetObjectTypes(context.Background(), &dsr.GetObjectTypesRequest{})
+	resp, err := client.V2.Reader.GetObjectTypes(context.Background(), &dsr.GetObjectTypesRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("object_type: %s", v.Name)
@@ -69,7 +69,7 @@ func TestGetRelationTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{
+	resp, err := client.V2.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{
 		Param: &dsc.ObjectTypeIdentifier{},
 		Page:  &dsc.PaginationRequest{},
 	})
@@ -83,7 +83,7 @@ func TestGetPermissions(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.Reader.GetPermissions(context.Background(), &dsr.GetPermissionsRequest{})
+	resp, err := client.V2.Reader.GetPermissions(context.Background(), &dsr.GetPermissionsRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("permission: %s", v.Name)
@@ -111,7 +111,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Reader.GetObject(ctx, req)
+			resp, err := client.V2.Reader.GetObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.SetObjectRequest:
@@ -120,7 +120,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				t.Logf("propagated hash:%s", req.Object.Hash)
 			}
 
-			resp, err := client.Writer.SetObject(ctx, req)
+			resp, err := client.V2.Writer.SetObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.DeleteObjectRequest:
@@ -128,7 +128,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Writer.DeleteObject(ctx, req)
+			resp, err := client.V2.Writer.DeleteObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsr.GetObjectTypeRequest:
@@ -136,7 +136,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Reader.GetObjectType(ctx, req)
+			resp, err := client.V2.Reader.GetObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.SetObjectTypeRequest:
@@ -145,7 +145,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				t.Logf("propagated hash:%s", req.ObjectType.Hash)
 			}
 
-			resp, err := client.Writer.SetObjectType(ctx, req)
+			resp, err := client.V2.Writer.SetObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.DeleteObjectTypeRequest:
@@ -153,7 +153,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Writer.DeleteObjectType(ctx, req)
+			resp, err := client.V2.Writer.DeleteObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsr.GetPermissionRequest:
@@ -161,7 +161,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Reader.GetPermission(ctx, req)
+			resp, err := client.V2.Reader.GetPermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.SetPermissionRequest:
@@ -170,7 +170,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				t.Logf("propagated hash:%s", req.Permission.Hash)
 			}
 
-			resp, err := client.Writer.SetPermission(ctx, req)
+			resp, err := client.V2.Writer.SetPermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.DeletePermissionRequest:
@@ -178,7 +178,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Writer.DeletePermission(ctx, req)
+			resp, err := client.V2.Writer.DeletePermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsr.GetRelationRequest:
@@ -186,7 +186,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Reader.GetRelation(ctx, req)
+			resp, err := client.V2.Reader.GetRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.SetRelationRequest:
@@ -195,7 +195,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				t.Logf("propagated hash:%s", req.Relation.Hash)
 			}
 
-			resp, err := client.Writer.SetRelation(ctx, req)
+			resp, err := client.V2.Writer.SetRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.DeleteRelationRequest:
@@ -203,7 +203,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Writer.DeleteRelation(ctx, req)
+			resp, err := client.V2.Writer.DeleteRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsr.GetRelationTypeRequest:
@@ -211,7 +211,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Reader.GetRelationType(ctx, req)
+			resp, err := client.V2.Reader.GetRelationType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.SetRelationTypeRequest:
@@ -220,7 +220,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				t.Logf("propagated hash:%s", req.RelationType.Hash)
 			}
 
-			resp, err := client.Writer.SetRelationType(ctx, req)
+			resp, err := client.V2.Writer.SetRelationType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
 		case *dsw.DeleteRelationTypeRequest:
@@ -228,7 +228,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 				apply(req)
 			}
 
-			resp, err := client.Writer.DeleteRelationType(ctx, req)
+			resp, err := client.V2.Writer.DeleteRelationType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 		}
 	}

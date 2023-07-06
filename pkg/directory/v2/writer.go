@@ -1,4 +1,4 @@
-package directory
+package v2
 
 import (
 	"context"
@@ -6,12 +6,25 @@ import (
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+type Writer struct {
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
+}
+
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
+	return &Writer{
+		logger: logger,
+		store:  store,
+	}
+}
+
 // object type metadata methods.
-func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (*dsw.SetObjectTypeResponse, error) {
+func (s *Writer) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (*dsw.SetObjectTypeResponse, error) {
 	resp := &dsw.SetObjectTypeResponse{}
 
 	if ok, err := ds.ObjectType(req.ObjectType).Validate(); !ok {
@@ -38,7 +51,7 @@ func (s *Directory) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReq
 	return resp, err
 }
 
-func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectTypeRequest) (*dsw.DeleteObjectTypeResponse, error) {
+func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectTypeRequest) (*dsw.DeleteObjectTypeResponse, error) {
 	resp := &dsw.DeleteObjectTypeResponse{}
 
 	if ok, err := ds.ObjectTypeIdentifier(req.Param).Validate(); !ok {
@@ -57,7 +70,7 @@ func (s *Directory) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectT
 }
 
 // relation type metadata methods.
-func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
+func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
 	resp := &dsw.SetRelationTypeResponse{}
 
 	if ok, err := ds.RelationType(req.RelationType).Validate(); !ok {
@@ -84,7 +97,7 @@ func (s *Directory) SetRelationType(ctx context.Context, req *dsw.SetRelationTyp
 	return resp, err
 }
 
-func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelationTypeRequest) (*dsw.DeleteRelationTypeResponse, error) {
+func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelationTypeRequest) (*dsw.DeleteRelationTypeResponse, error) {
 	resp := &dsw.DeleteRelationTypeResponse{}
 
 	if ok, err := ds.RelationTypeIdentifier(req.Param).Validate(); !ok {
@@ -103,7 +116,7 @@ func (s *Directory) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelat
 }
 
 // permission metadata methods.
-func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (*dsw.SetPermissionResponse, error) {
+func (s *Writer) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (*dsw.SetPermissionResponse, error) {
 	resp := &dsw.SetPermissionResponse{}
 
 	if ok, err := ds.Permission(req.Permission).Validate(); !ok {
@@ -130,7 +143,7 @@ func (s *Directory) SetPermission(ctx context.Context, req *dsw.SetPermissionReq
 	return resp, err
 }
 
-func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermissionRequest) (*dsw.DeletePermissionResponse, error) {
+func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermissionRequest) (*dsw.DeletePermissionResponse, error) {
 	resp := &dsw.DeletePermissionResponse{}
 
 	if ok, err := ds.PermissionIdentifier(req.Param).Validate(); !ok {
@@ -149,7 +162,7 @@ func (s *Directory) DeletePermission(ctx context.Context, req *dsw.DeletePermiss
 }
 
 // object methods.
-func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
+func (s *Writer) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
 	resp := &dsw.SetObjectResponse{}
 
 	if ok, err := ds.Object(req.Object).Validate(); !ok {
@@ -176,7 +189,7 @@ func (s *Directory) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*
 	return resp, err
 }
 
-func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (*dsw.DeleteObjectResponse, error) {
+func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (*dsw.DeleteObjectResponse, error) {
 	resp := &dsw.DeleteObjectResponse{}
 
 	if ok, err := ds.ObjectIdentifier(req.Param).Validate(); !ok {
@@ -195,7 +208,7 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 }
 
 // relation methods.
-func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
+func (s *Writer) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
 	resp := &dsw.SetRelationResponse{}
 
 	if ok, err := ds.Relation(req.Relation).Validate(); !ok {
@@ -229,7 +242,7 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 	return resp, err
 }
 
-func (s *Directory) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (*dsw.DeleteRelationResponse, error) {
+func (s *Writer) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (*dsw.DeleteRelationResponse, error) {
 	resp := &dsw.DeleteRelationResponse{}
 
 	if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {

@@ -4,10 +4,16 @@ import (
 	"context"
 	"net"
 
-	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+
+	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
+	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+
 	eds "github.com/aserto-dev/go-edge-ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/rs/zerolog"
@@ -18,10 +24,22 @@ import (
 )
 
 type TestEdgeClient struct {
-	Reader   dsr.ReaderClient
-	Writer   dsw.WriterClient
-	Importer dsi.ImporterClient
-	Exporter dse.ExporterClient
+	V2 ClientV2
+	V3 ClientV3
+}
+
+type ClientV2 struct {
+	Reader   dsr2.ReaderClient
+	Writer   dsw2.WriterClient
+	Importer dsi2.ImporterClient
+	Exporter dse2.ExporterClient
+}
+
+type ClientV3 struct {
+	Reader   dsr3.ReaderClient
+	Writer   dsw3.WriterClient
+	Importer dsi3.ImporterClient
+	Exporter dse3.ExporterClient
 }
 
 func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directory.Config) (*TestEdgeClient, func()) {
@@ -36,10 +54,15 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 	}
 
 	s := grpc.NewServer()
-	dsr.RegisterReaderServer(s, edgeDirServer)
-	dsw.RegisterWriterServer(s, edgeDirServer)
-	dse.RegisterExporterServer(s, edgeDirServer)
-	dsi.RegisterImporterServer(s, edgeDirServer)
+	dsr2.RegisterReaderServer(s, edgeDirServer.Reader2())
+	dsw2.RegisterWriterServer(s, edgeDirServer.Writer2())
+	dse2.RegisterExporterServer(s, edgeDirServer.Exporter2())
+	dsi2.RegisterImporterServer(s, edgeDirServer.Importer2())
+
+	dsr3.RegisterReaderServer(s, edgeDirServer.Reader3())
+	dsw3.RegisterWriterServer(s, edgeDirServer.Writer3())
+	dse3.RegisterExporterServer(s, edgeDirServer.Exporter3())
+	dsi3.RegisterImporterServer(s, edgeDirServer.Importer3())
 
 	go func() {
 		if err := s.Serve(listener); err != nil {
@@ -52,10 +75,18 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 	}), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
 	client := TestEdgeClient{
-		Reader:   dsr.NewReaderClient(conn),
-		Writer:   dsw.NewWriterClient(conn),
-		Importer: dsi.NewImporterClient(conn),
-		Exporter: dse.NewExporterClient(conn),
+		V2: ClientV2{
+			Reader:   dsr2.NewReaderClient(conn),
+			Writer:   dsw2.NewWriterClient(conn),
+			Importer: dsi2.NewImporterClient(conn),
+			Exporter: dse2.NewExporterClient(conn),
+		},
+		V3: ClientV3{
+			Reader:   dsr3.NewReaderClient(conn),
+			Writer:   dsw3.NewWriterClient(conn),
+			Importer: dsi3.NewImporterClient(conn),
+			Exporter: dse3.NewExporterClient(conn),
+		},
 	}
 
 	return &client, s.Stop

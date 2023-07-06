@@ -1,4 +1,4 @@
-package directory
+package v2
 
 import (
 	"context"
@@ -11,10 +11,23 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
-func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
+type Importer struct {
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
+}
+
+func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
+	return &Importer{
+		logger: logger,
+		store:  store,
+	}
+}
+
+func (s *Importer) Import(stream dsi.Importer_ImportServer) error {
 	res := &dsi.ImportResponse{
 		ObjectType:   &dsi.ImportCounter{},
 		Permission:   &dsi.ImportCounter{},
@@ -45,7 +58,7 @@ func (s *Directory) Import(stream dsi.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Directory) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi.ImportRequest, res *dsi.ImportResponse) (err error) {
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi.ImportRequest, res *dsi.ImportResponse) (err error) {
 
 	if objType := req.GetObjectType(); objType != nil {
 		err = s.objectTypeHandler(ctx, tx, objType)
@@ -67,7 +80,7 @@ func (s *Directory) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *d
 	return err
 }
 
-func (s *Directory) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.ObjectType) error {
+func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.ObjectType) error {
 	s.logger.Debug().Interface("objectType", req).Msg("import_object_type")
 
 	if req == nil {
@@ -81,7 +94,7 @@ func (s *Directory) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	return nil
 }
 
-func (s *Directory) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Permission) error {
+func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Permission) error {
 	s.logger.Debug().Interface("permission", req).Msg("import_permission")
 
 	if req == nil {
@@ -95,7 +108,7 @@ func (s *Directory) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	return nil
 }
 
-func (s *Directory) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.RelationType) error {
+func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.RelationType) error {
 	s.logger.Debug().Interface("relationType", req).Msg("import_relation_type")
 
 	if req == nil {
@@ -109,7 +122,7 @@ func (s *Directory) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *d
 	return nil
 }
 
-func (s *Directory) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Object) error {
+func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("import_object")
 
 	if req == nil {
@@ -123,7 +136,7 @@ func (s *Directory) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Obj
 	return nil
 }
 
-func (s *Directory) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Relation) error {
+func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
 	if req == nil {
