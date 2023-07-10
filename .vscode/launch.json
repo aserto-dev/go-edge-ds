@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/server",
+            "program": "${workspaceFolder}/internal/cmd/server",
             "args": [
                 "--db_path", ".db/eds-acmecorp.db"
             ]
@@ -21,7 +21,7 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/server",
+            "program": "${workspaceFolder}/internal/cmd/server",
             "args": [
                 "--db_path", ".db/ds0.db"
             ]
@@ -32,9 +32,9 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/server",
+            "program": "${workspaceFolder}/internal/cmd/server",
             "args": [
-                "--db_path", "/Users/gertd/.config/topaz/db/directory.db"
+                "--db_path", "${env:HOME}/.config/topaz/db/directory.db"
             ]
         },
         {
@@ -43,7 +43,7 @@
             "request": "launch",
             "mode": "auto",
             "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/cmd/server",
+            "program": "${workspaceFolder}/internal/cmd/server",
             "args": [
                 "--db_path", "/var/folders/rf/gl1z9fw97l93q791rd6zv90c0000gn/T/edge-ds/test-eds.db"
             ]
@@ -53,8 +53,8 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "cwd": "${workspaceFolder}/cmd/load",
-            "program": "${workspaceFolder}/cmd/load",
+            "cwd": "${workspaceFolder}/internal/cmd/load",
+            "program": "${workspaceFolder}/internal/cmd/load",
             "args": [
             ]
         }
