@@ -188,6 +188,9 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 			return err
 		}
 		resp.Result = &emptypb.Empty{}
+		if req.GetWithRelations() {
+			s.logger.Trace().Msg("delete object relations")
+		}
 		return nil
 	})
 
