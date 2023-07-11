@@ -289,7 +289,7 @@ func WithStartToken(token string) KVIteratorOption {
 	}
 }
 
-// withKeyFiler key filter to determine membership.
+// withKeyFilter key filter to determine membership.
 func WithKeyFilter(filter string) KVIteratorOption {
 	return func(i *KVIterator) {
 		i.keyFilter = []byte(filter)
