@@ -1,11 +1,13 @@
 package bdb
 
+type Path []string
+
 var (
-	SystemPath        = []string{"_system"}
-	ObjectTypesPath   = []string{"object_types"}
-	PermissionsPath   = []string{"permissions"}
-	RelationTypesPath = []string{"relation_types"}
-	ObjectsPath       = []string{"objects"}
-	RelationsSubPath  = []string{"relations_sub"}
-	RelationsObjPath  = []string{"relations_obj"}
+	SystemPath        Path = []string{"_system"}
+	ObjectTypesPath   Path = []string{"object_types"}
+	PermissionsPath   Path = []string{"permissions"}
+	RelationTypesPath Path = []string{"relation_types"}
+	ObjectsPath       Path = []string{"objects"}
+	RelationsSubPath  Path = []string{"relations_sub"}
+	RelationsObjPath  Path = []string{"relations_obj"}
 )

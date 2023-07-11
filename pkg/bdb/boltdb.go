@@ -102,7 +102,7 @@ func (s *BoltDB) Config() *Config {
 }
 
 // SetBucket, set bucket context to path.
-func SetBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
+func SetBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 	var b *bolt.Bucket
 
 	for index, p := range path {
@@ -123,7 +123,7 @@ func SetBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
 }
 
 // CreateBucket, create bucket path if not exists.
-func CreateBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
+func CreateBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 	var (
 		b   *bolt.Bucket
 		err error
@@ -144,7 +144,7 @@ func CreateBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
 }
 
 // DeleteBucket, delete tail bucket of path provided.
-func DeleteBucket(tx *bolt.Tx, path []string) error {
+func DeleteBucket(tx *bolt.Tx, path Path) error {
 	if len(path) == 1 {
 		err := tx.DeleteBucket([]byte(path[0]))
 		switch {
@@ -174,7 +174,7 @@ func DeleteBucket(tx *bolt.Tx, path []string) error {
 }
 
 // BucketExists, check if bucket path exists.
-func BucketExists(tx *bolt.Tx, path []string) (bool, error) {
+func BucketExists(tx *bolt.Tx, path Path) (bool, error) {
 	_, err := SetBucket(tx, path)
 	switch {
 	case errors.Is(err, ErrPathNotFound):
@@ -187,7 +187,7 @@ func BucketExists(tx *bolt.Tx, path []string) (bool, error) {
 }
 
 // SetKey, set key and value in the path specified bucket.
-func SetKey(tx *bolt.Tx, path []string, key string, value []byte) error {
+func SetKey(tx *bolt.Tx, path Path, key string, value []byte) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func SetKey(tx *bolt.Tx, path []string, key string, value []byte) error {
 }
 
 // DeleteKey, delete key and value in path specified bucket, when it exists. None existing keys will not raise an error.
-func DeleteKey(tx *bolt.Tx, path []string, key string) error {
+func DeleteKey(tx *bolt.Tx, path Path, key string) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return err
@@ -213,7 +213,7 @@ func DeleteKey(tx *bolt.Tx, path []string, key string) error {
 }
 
 // GetKey, get key and value from path specified bucket.
-func GetKey(tx *bolt.Tx, path []string, key string) ([]byte, error) {
+func GetKey(tx *bolt.Tx, path Path, key string) ([]byte, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return []byte{}, err
@@ -231,7 +231,7 @@ func GetKey(tx *bolt.Tx, path []string, key string) ([]byte, error) {
 }
 
 // KeyExists, check if the key exists in the path specified bucket.
-func KeyExists(tx *bolt.Tx, path []string, key string) (bool, error) {
+func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return false, err
@@ -249,12 +249,12 @@ func KeyExists(tx *bolt.Tx, path []string, key string) (bool, error) {
 }
 
 // List, returns a key-value iterator for the path specified bucket, with a starting position.
-func list(tx *bolt.Tx, path []string, prefix string) (*KVIterator, error) {
+func list(tx *bolt.Tx, path Path, prefix string) (*KVIterator, error) {
 	return NewKVIterator(tx, path, WithPrefix(prefix))
 }
 
 // Scan, returns a key-value iterator for the specified bucket, with an enforced filter.
-func scan(tx *bolt.Tx, path []string, filter string) ([][]byte, [][]byte, error) {
+func scan(tx *bolt.Tx, path Path, filter string) ([][]byte, [][]byte, error) {
 	var (
 		keys   = make([][]byte, 0)
 		values = make([][]byte, 0)
@@ -300,7 +300,7 @@ type KVIterator struct {
 	initialized bool
 }
 
-func NewKVIterator(tx *bolt.Tx, path []string, opts ...KVIteratorOption) (*KVIterator, error) {
+func NewKVIterator(tx *bolt.Tx, path Path, opts ...KVIteratorOption) (*KVIterator, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return nil, err

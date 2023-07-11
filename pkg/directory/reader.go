@@ -164,6 +164,10 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 			return err
 		}
 
+		if req.GetWithRelations() {
+			s.logger.Trace().Msg("get object with relations")
+		}
+
 		resp.Result = obj
 		return nil
 	})

@@ -17,17 +17,7 @@ type Message[T any] interface {
 	GetCreatedAt() *timestamppb.Timestamp
 }
 
-type DirectoryType interface {
-	*dsc.Object | *dsc.Relation | *dsc.ObjectType | *dsc.RelationType | *dsc.Permission
-	proto.Message
-}
-
-type IdentifierType interface {
-	*dsc.ObjectIdentifier | *dsc.RelationIdentifier | *dsc.ObjectTypeIdentifier | *dsc.RelationTypeIdentifier | *dsc.PermissionIdentifier
-	proto.Message
-}
-
-func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string) (M, error) {
+func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {
 	buf, err := GetKey(tx, path, key)
 	if err != nil {
 		return nil, err
@@ -36,7 +26,7 @@ func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, k
 	return Unmarshal[T, M](buf)
 }
 
-func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string, t M) (M, error) {
+func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string, t M) (M, error) {
 	buf, err := Marshal(t)
 	if err != nil {
 		return nil, err
@@ -49,7 +39,7 @@ func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, k
 	return t, nil
 }
 
-func Delete(ctx context.Context, tx *bolt.Tx, path []string, key string) error {
+func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
 	return DeleteKey(tx, path, key)
 }
 
@@ -69,7 +59,7 @@ func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	return &t, nil
 }
 
-func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, page *dsc.PaginationRequest) ([]M, *dsc.PaginationResponse, error) {
+func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, page *dsc.PaginationRequest) ([]M, *dsc.PaginationResponse, error) {
 	iter, err := list(tx, path, page.Token)
 	if err != nil {
 		return []M{}, &dsc.PaginationResponse{}, err
@@ -104,7 +94,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, 
 	return results, pageResp, nil
 }
 
-func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, filter string) ([]M, error) {
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
 	keys, values, err := scan(tx, path, filter)
 	if err != nil {
 		return []M{}, err
