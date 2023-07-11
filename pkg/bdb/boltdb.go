@@ -249,8 +249,8 @@ func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
 }
 
 // List, returns a key-value iterator for the path specified bucket, with a starting position.
-func list(tx *bolt.Tx, path Path, prefix string) (*KVIterator, error) {
-	return NewKVIterator(tx, path, WithPrefix(prefix))
+func list(tx *bolt.Tx, path Path, opts ...KVIteratorOption) (*KVIterator, error) {
+	return NewKVIterator(tx, path, opts...)
 }
 
 // Scan, returns a key-value iterator for the specified bucket, with an enforced filter.
@@ -282,22 +282,31 @@ func scan(tx *bolt.Tx, path Path, filter string) ([][]byte, [][]byte, error) {
 
 type KVIteratorOption func(*KVIterator)
 
-func WithPrefix(prefix string) KVIteratorOption {
+// WithStartToken determine start position in cursor.
+func WithStartToken(token string) KVIteratorOption {
 	return func(i *KVIterator) {
-		i.prefix = []byte(prefix)
+		i.startToken = []byte(token)
+	}
+}
+
+// withKeyFiler key filter to determine membership.
+func WithKeyFilter(filter string) KVIteratorOption {
+	return func(i *KVIterator) {
+		i.keyFilter = []byte(filter)
 	}
 }
 
 // KVIterator - key-value iterator.
 type KVIterator struct {
-	path        []string
-	prefix      []byte
-	tx          *bolt.Tx
-	cursor      *bolt.Cursor
-	key         []byte
-	value       []byte
-	err         error
-	initialized bool
+	path        Path         // bucket path
+	tx          *bolt.Tx     // transaction handle
+	cursor      *bolt.Cursor // cursor handle
+	startToken  []byte       // start token
+	keyFilter   []byte       // key filter
+	key         []byte       // current key (of kv)
+	value       []byte       // current value  of (kv)
+	err         error        // last error
+	initialized bool         // iterator initialization state
 }
 
 func NewKVIterator(tx *bolt.Tx, path Path, opts ...KVIteratorOption) (*KVIterator, error) {
@@ -317,6 +326,11 @@ func NewKVIterator(tx *bolt.Tx, path Path, opts ...KVIteratorOption) (*KVIterato
 		opt(iter)
 	}
 
+	// when start token not set, make key filter the starting position.
+	if iter.startToken == nil && iter.keyFilter != nil {
+		iter.startToken = iter.keyFilter
+	}
+
 	return iter, nil
 }
 
@@ -327,7 +341,11 @@ func (i *KVIterator) Next() bool {
 
 	i.fetch()
 
-	return i.key != nil
+	if i.keyFilter == nil {
+		return i.key != nil
+	}
+
+	return i.key != nil && bytes.HasPrefix(i.key, i.keyFilter)
 }
 
 func (i *KVIterator) Key() []byte {
@@ -343,10 +361,10 @@ func (i *KVIterator) Error() error {
 }
 
 func (i *KVIterator) init() {
-	if i.prefix == nil {
+	if i.startToken == nil {
 		i.key, i.value = i.cursor.First()
 	} else {
-		i.key, i.value = i.cursor.Seek(i.prefix)
+		i.key, i.value = i.cursor.Seek(i.startToken)
 	}
 	i.initialized = true
 }

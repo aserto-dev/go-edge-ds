@@ -91,8 +91,13 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.KVIteratorOption{}
+	if req.Param.GetName() != "" {
+		opts = append(opts, bdb.WithKeyFilter(req.Param.GetName()))
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, req.Page)
+		results, page, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, req.Page, opts...)
 		if err != nil {
 			return err
 		}
@@ -208,6 +213,10 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
 	resp := &dsr.GetObjectsResponse{Results: []*dsc.Object{}, Page: &dsc.PaginationResponse{}}
 
+	if req.Param == nil {
+		req.Param = &dsc.ObjectTypeIdentifier{}
+	}
+
 	if req.Page == nil {
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
@@ -216,8 +225,13 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 		return resp, err
 	}
 
+	opts := []bdb.KVIteratorOption{}
+	if req.Param.GetName() != "" {
+		opts = append(opts, bdb.WithKeyFilter(req.Param.GetName()))
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Object](ctx, tx, bdb.ObjectsPath, req.Page)
+		results, page, err := bdb.List[dsc.Object](ctx, tx, bdb.ObjectsPath, req.Page, opts...)
 		if err != nil {
 			return err
 		}
@@ -291,8 +305,11 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		return resp, err
 	}
 
+	opts := []bdb.KVIteratorOption{}
+	// TODO: impl relation value filter.
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Relation](ctx, tx, bdb.RelationsSubPath, req.Page)
+		results, page, err := bdb.List[dsc.Relation](ctx, tx, bdb.RelationsSubPath, req.Page, opts...)
 		if err != nil {
 			return err
 		}

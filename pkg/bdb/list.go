@@ -59,8 +59,8 @@ func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	return &t, nil
 }
 
-func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, page *dsc.PaginationRequest) ([]M, *dsc.PaginationResponse, error) {
-	iter, err := list(tx, path, page.Token)
+func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, page *dsc.PaginationRequest, opts ...KVIteratorOption) ([]M, *dsc.PaginationResponse, error) {
+	iter, err := list(tx, path, opts...)
 	if err != nil {
 		return []M{}, &dsc.PaginationResponse{}, err
 	}
