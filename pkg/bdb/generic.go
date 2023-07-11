@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
@@ -57,61 +56,4 @@ func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 		return nil, err
 	}
 	return &t, nil
-}
-
-func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, page *dsc.PaginationRequest, opts ...KVIteratorOption) ([]M, *dsc.PaginationResponse, error) {
-	iter, err := list(tx, path, opts...)
-	if err != nil {
-		return []M{}, &dsc.PaginationResponse{}, err
-	}
-
-	var results []M
-
-	for iter.Next() {
-		v := iter.Value()
-		msg, err := Unmarshal[T, M](v)
-		if err != nil {
-			return []M{}, &dsc.PaginationResponse{}, err
-		}
-
-		results = append(results, msg)
-
-		if len(results) == int(page.Size) {
-			break
-		}
-	}
-
-	pageResp := &dsc.PaginationResponse{
-		ResultSize: int32(len(results)),
-		NextToken:  "",
-	}
-
-	// get NextToken value.
-	if iter.Next() {
-		pageResp.NextToken = string(iter.Key())
-	}
-
-	return results, pageResp, nil
-}
-
-func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
-	keys, values, err := scan(tx, path, filter)
-	if err != nil {
-		return []M{}, err
-	}
-
-	var results []M
-
-	for i := 0; i < len(keys); i++ {
-		v := values[i]
-
-		msg, err := Unmarshal[T, M](v)
-		if err != nil {
-			return []M{}, err
-		}
-
-		results = append(results, msg)
-	}
-
-	return results, nil
 }

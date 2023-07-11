@@ -28,27 +28,34 @@ type ScanOption func(*ScanArgs)
 type ScanArgs struct {
 	startToken []byte
 	keyFilter  []byte
+	pageSize   int32
 }
 
-func WithStart(token []byte) ScanOption {
+func WithKeyFilter(filter string) ScanOption {
 	return func(a *ScanArgs) {
-		a.startToken = token
+		a.keyFilter = []byte(filter)
 	}
 }
 
-func WithFilter(filter []byte) ScanOption {
+func WithPageSize(size int32) ScanOption {
 	return func(a *ScanArgs) {
-		a.keyFilter = filter
+		a.pageSize = size
+	}
+}
+
+func WithPageToken(token string) ScanOption {
+	return func(a *ScanArgs) {
+		a.startToken = []byte(token)
 	}
 }
 
 func NewScanIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, opts ...ScanOption) (Iterator[T, M], error) {
-	args := &ScanArgs{}
+	args := &ScanArgs{startToken: nil, keyFilter: nil, pageSize: 100}
 	for _, opt := range opts {
 		opt(args)
 	}
 
-	if args.startToken == nil && args.keyFilter != nil {
+	if len(args.startToken) == 0 && len(args.keyFilter) != 0 {
 		args.startToken = args.keyFilter
 	}
 
@@ -61,6 +68,10 @@ func NewScanIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path
 }
 
 func (s *ScanIterator[T, M]) Next() bool {
+	if s.init {
+		s.key, s.value = s.c.Next()
+	}
+
 	if !s.init {
 		if s.args.startToken == nil {
 			s.key, s.value = s.c.First()
@@ -68,10 +79,6 @@ func (s *ScanIterator[T, M]) Next() bool {
 			s.key, s.value = s.c.Seek(s.args.startToken)
 		}
 		s.init = true
-	}
-
-	if s.init {
-		s.key, s.value = s.c.Next()
 	}
 
 	return s.key != nil && bytes.HasPrefix(s.key, s.args.keyFilter)
@@ -92,4 +99,66 @@ func (s *ScanIterator[T, M]) K() []byte {
 
 func (s *ScanIterator[T, M]) V() []byte {
 	return s.value
+}
+
+type PagedIterator[T any, M Message[T]] interface {
+	Next() bool
+	Value() []M
+	NextToken() string
+}
+
+type PageIterator[T any, M Message[T]] struct {
+	iter      *ScanIterator[T, M]
+	nextToken []byte
+	values    []M
+}
+
+func NewPageIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, opts ...ScanOption) (PagedIterator[T, M], error) {
+	iter, err := NewScanIterator[T, M](ctx, tx, path, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &PageIterator[T, M]{iter: iter.(*ScanIterator[T, M])}, nil
+}
+
+func (p *PageIterator[T, M]) Next() bool {
+	results := []M{}
+	for p.iter.Next() {
+		results = append(results, p.iter.Value())
+
+		if len(results) == int(p.iter.args.pageSize) {
+			break
+		}
+	}
+
+	p.values = results
+	p.nextToken = []byte{}
+
+	if p.iter.Next() {
+		p.nextToken = p.iter.K()
+	}
+
+	return false
+}
+
+func (p *PageIterator[T, M]) Value() []M {
+	return p.values
+}
+
+func (p *PageIterator[T, M]) NextToken() string {
+	return string(p.nextToken)
+}
+
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
+	iter, err := NewScanIterator[T, M](ctx, tx, RelationsObjPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []M
+	for iter.Next() {
+		results = append(results, iter.Value())
+	}
+	return results, nil
 }

@@ -39,14 +39,24 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -91,19 +101,25 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
-	opts := []bdb.KVIteratorOption{}
-	if req.Param.GetName() != "" {
-		opts = append(opts, bdb.WithKeyFilter(req.Param.GetName()))
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(req.Param.GetName()),
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, req.Page, opts...)
+		iter, err := bdb.NewPageIterator[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -140,14 +156,24 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Permission](ctx, tx, bdb.PermissionsPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.Permission](ctx, tx, bdb.PermissionsPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -225,19 +251,25 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 		return resp, err
 	}
 
-	opts := []bdb.KVIteratorOption{}
-	if req.Param.GetName() != "" {
-		opts = append(opts, bdb.WithKeyFilter(req.Param.GetName()))
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(req.Param.GetName()),
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Object](ctx, tx, bdb.ObjectsPath, req.Page, opts...)
+		iter, err := bdb.NewPageIterator[dsc.Object](ctx, tx, bdb.ObjectsPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -254,6 +286,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		// TODO revisit implementation
 		rels, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
@@ -305,17 +338,25 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		return resp, err
 	}
 
-	opts := []bdb.KVIteratorOption{}
 	// TODO: impl relation value filter.
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Relation](ctx, tx, bdb.RelationsSubPath, req.Page, opts...)
+		iter, err := bdb.NewPageIterator[dsc.Relation](ctx, tx, bdb.RelationsSubPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
