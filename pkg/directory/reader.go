@@ -196,6 +196,17 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 		}
 
 		if req.GetWithRelations() {
+			incoming, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
+			if err != nil {
+				return err
+			}
+			outgoing, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
+			if err != nil {
+				return err
+			}
+
+			resp.Incoming = incoming
+			resp.Outgoing = outgoing
 			s.logger.Trace().Msg("get object with relations")
 		}
 
@@ -334,29 +345,46 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	if req.Param == nil {
+		req.Param = &dsc.RelationIdentifier{
+			Object:   &dsc.ObjectIdentifier{},
+			Relation: &dsc.RelationTypeIdentifier{},
+			Subject:  &dsc.ObjectIdentifier{},
+		}
+	}
+
 	if ok, err := ds.RelationSelector(req.Param).Validate(); !ok {
 		return resp, err
 	}
 
-	// TODO: impl relation value filter.
+	path, keyFilter, valueFilter := ds.RelationSelector(req.Param).Filter()
+
 	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
 		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(keyFilter),
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewPageIterator[dsc.Relation](ctx, tx, bdb.RelationsSubPath, opts...)
+		iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, path, opts...)
 		if err != nil {
 			return err
 		}
 
-		iter.Next()
+		for iter.Next() {
+			if !valueFilter(iter.Value()) {
+				continue
+			}
+			resp.Results = append(resp.Results, iter.Value())
 
-		resp.Results = iter.Value()
-		resp.Page = &dsc.PaginationResponse{
-			NextToken:  iter.NextToken(),
-			ResultSize: int32(len(resp.Results)),
+			if req.Page.Size == int32(len(resp.Results)) {
+				if iter.Next() {
+					resp.Page.NextToken = string(iter.Key())
+				}
+				break
+			}
 		}
+
+		resp.Page.ResultSize = int32(len(resp.Results))
 
 		return nil
 	})

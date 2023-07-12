@@ -143,6 +143,7 @@ func (w *GraphWalker) Fetch() error {
 	return nil
 }
 
+// TODO: consolidate with ScanIterator filter impl.
 func (w *GraphWalker) Filter() error {
 
 	filters := []func(item *dsc.ObjectDependency, index int) bool{}

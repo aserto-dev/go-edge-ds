@@ -10,17 +10,19 @@ import (
 
 type Iterator[T any, M Message[T]] interface {
 	Next() bool
+	Key() []byte
 	Value() M
 }
 
 type ScanIterator[T any, M Message[T]] struct {
-	ctx   context.Context
-	tx    *bolt.Tx
-	c     *bolt.Cursor
-	args  *ScanArgs
-	init  bool
-	key   []byte
-	value []byte
+	ctx    context.Context
+	tx     *bolt.Tx
+	c      *bolt.Cursor
+	args   *ScanArgs
+	init   bool
+	key    []byte
+	value  []byte
+	filter func(M) bool
 }
 
 type ScanOption func(*ScanArgs)
@@ -29,12 +31,6 @@ type ScanArgs struct {
 	startToken []byte
 	keyFilter  []byte
 	pageSize   int32
-}
-
-func WithKeyFilter(filter string) ScanOption {
-	return func(a *ScanArgs) {
-		a.keyFilter = []byte(filter)
-	}
 }
 
 func WithPageSize(size int32) ScanOption {
@@ -46,6 +42,12 @@ func WithPageSize(size int32) ScanOption {
 func WithPageToken(token string) ScanOption {
 	return func(a *ScanArgs) {
 		a.startToken = []byte(token)
+	}
+}
+
+func WithKeyFilter(filter string) ScanOption {
+	return func(a *ScanArgs) {
+		a.keyFilter = []byte(filter)
 	}
 }
 
@@ -84,6 +86,10 @@ func (s *ScanIterator[T, M]) Next() bool {
 	return s.key != nil && bytes.HasPrefix(s.key, s.args.keyFilter)
 }
 
+func (s *ScanIterator[T, M]) Key() []byte {
+	return s.key
+}
+
 func (s *ScanIterator[T, M]) Value() M {
 	msg, err := Unmarshal[T, M](s.value)
 	if err != nil {
@@ -93,12 +99,15 @@ func (s *ScanIterator[T, M]) Value() M {
 	return msg
 }
 
-func (s *ScanIterator[T, M]) K() []byte {
-	return s.key
-}
-
-func (s *ScanIterator[T, M]) V() []byte {
-	return s.value
+func (s *ScanIterator[T, M]) SetFilter(filters []func(M) bool) {
+	s.filter = func(item M) bool {
+		for _, filter := range filters {
+			if !filter(item) {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 type PagedIterator[T any, M Message[T]] interface {
@@ -136,7 +145,7 @@ func (p *PageIterator[T, M]) Next() bool {
 	p.nextToken = []byte{}
 
 	if p.iter.Next() {
-		p.nextToken = p.iter.K()
+		p.nextToken = p.iter.Key()
 	}
 
 	return false
@@ -151,7 +160,7 @@ func (p *PageIterator[T, M]) NextToken() string {
 }
 
 func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
-	iter, err := NewScanIterator[T, M](ctx, tx, RelationsObjPath)
+	iter, err := NewScanIterator[T, M](ctx, tx, path, WithKeyFilter(filter))
 	if err != nil {
 		return nil, err
 	}

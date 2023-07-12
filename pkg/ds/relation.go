@@ -10,6 +10,8 @@ import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // Relation.
@@ -272,5 +274,87 @@ func (i *relationSelector) Validate() (bool, error) {
 		return ok, err
 	}
 
+	// propagate object type to relation if missing.
+	if i.RelationIdentifier.Relation.GetObjectType() == "" {
+		i.RelationIdentifier.Relation.ObjectType = i.RelationIdentifier.Object.Type
+	}
+
+	// relation:object_type and object:object_type must match
+	if i.RelationIdentifier.Relation.GetObjectType() != i.RelationIdentifier.Object.GetType() {
+		return false, errors.Wrapf(derr.ErrInvalidObjectType, "conflicting object types relation:%s object:%s",
+			i.RelationIdentifier.Relation.GetObjectType(),
+			i.RelationIdentifier.Object.GetType(),
+		)
+	}
+
 	return true, nil
+}
+
+type RelationFilter func(*dsc.Relation) bool
+
+func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
+	var (
+		path      bdb.Path
+		keyFilter string
+	)
+
+	// #1  determine if object identifier is complete (has type+id)
+	// set index path accordingly
+	// set keyFilter to match covering path
+	// when no complete object identifier, fallback to a full table scan
+	if ObjectIdentifier(i.Object).IsComplete() {
+		path = bdb.RelationsObjPath
+		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjKey()
+	}
+	if ObjectIdentifier(i.Subject).IsComplete() {
+		path = bdb.RelationsSubPath
+		keyFilter = RelationIdentifier(i.RelationIdentifier).SubFilter()
+	}
+	if len(path) == 0 {
+		log.Warn().Msg("!!! no covering index path, full scan !!!")
+		path = bdb.RelationsObjPath
+		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjFilter()
+	}
+
+	// #2 build valueFilter function
+	filters := []func(item *dsc.Relation) bool{}
+
+	if i.RelationIdentifier.Object.GetType() != "" {
+		filters = append(filters, func(item *dsc.Relation) bool {
+			return strings.EqualFold(item.Object.GetType(), i.RelationIdentifier.Object.GetType())
+		})
+	}
+	if i.RelationIdentifier.Object.GetKey() != "" {
+		filters = append(filters, func(item *dsc.Relation) bool {
+			return strings.EqualFold(item.Object.GetKey(), i.RelationIdentifier.Object.GetKey())
+		})
+	}
+
+	if i.RelationIdentifier.Relation.GetName() != "" {
+		filters = append(filters, func(item *dsc.Relation) bool {
+			return strings.EqualFold(item.Relation, i.RelationIdentifier.Relation.GetName())
+		})
+	}
+
+	if i.RelationIdentifier.Subject.GetType() != "" {
+		filters = append(filters, func(item *dsc.Relation) bool {
+			return strings.EqualFold(item.Subject.GetType(), i.RelationIdentifier.Subject.GetType())
+		})
+	}
+	if i.RelationIdentifier.Subject.GetKey() != "" {
+		filters = append(filters, func(item *dsc.Relation) bool {
+			return strings.EqualFold(item.Subject.GetKey(), i.RelationIdentifier.Subject.GetKey())
+		})
+	}
+
+	valueFilter := func(i *dsc.Relation) bool {
+		for _, filter := range filters {
+			if !filter(i) {
+				return false
+			}
+		}
+		return true
+	}
+
+	return path, keyFilter, valueFilter
 }
