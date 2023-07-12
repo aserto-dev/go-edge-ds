@@ -5,13 +5,17 @@ import (
 	"context"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	bolt "go.etcd.io/bbolt"
 )
 
 type Iterator[T any, M Message[T]] interface {
-	Next() bool
-	Key() []byte
-	Value() M
+	Next() bool       // move cursor to next element.
+	RawKey() []byte   // return raw key value ([]byte).
+	RawValue() []byte // return ram value value ([]byte).
+	Key() string      // return key value (string).
+	Value() M         // return typed value (M).
+	Delete() error    // delete element underneath cursor.
 }
 
 type ScanIterator[T any, M Message[T]] struct {
@@ -86,8 +90,16 @@ func (s *ScanIterator[T, M]) Next() bool {
 	return s.key != nil && bytes.HasPrefix(s.key, s.args.keyFilter)
 }
 
-func (s *ScanIterator[T, M]) Key() []byte {
+func (s *ScanIterator[T, M]) RawKey() []byte {
 	return s.key
+}
+
+func (s *ScanIterator[T, M]) RawValue() []byte {
+	return s.value
+}
+
+func (s *ScanIterator[T, M]) Key() string {
+	return string(s.key)
 }
 
 func (s *ScanIterator[T, M]) Value() M {
@@ -97,6 +109,14 @@ func (s *ScanIterator[T, M]) Value() M {
 		return result
 	}
 	return msg
+}
+
+func (s *ScanIterator[T, M]) Delete() error {
+	if s.key != nil {
+		log.Trace().Str("key", s.Key()).Msg("delete")
+		return s.c.Delete()
+	}
+	return nil
 }
 
 func (s *ScanIterator[T, M]) SetFilter(filters []func(M) bool) {
@@ -145,7 +165,7 @@ func (p *PageIterator[T, M]) Next() bool {
 	p.nextToken = []byte{}
 
 	if p.iter.Next() {
-		p.nextToken = p.iter.Key()
+		p.nextToken = p.iter.RawKey()
 	}
 
 	return false

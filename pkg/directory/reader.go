@@ -196,11 +196,13 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 		}
 
 		if req.GetWithRelations() {
-			incoming, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
+			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+			incoming, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
 			}
-			outgoing, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
+			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+			outgoing, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
 			}
@@ -378,7 +380,7 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 
 			if req.Page.Size == int32(len(resp.Results)) {
 				if iter.Next() {
-					resp.Page.NextToken = string(iter.Key())
+					resp.Page.NextToken = iter.Key()
 				}
 				break
 			}
