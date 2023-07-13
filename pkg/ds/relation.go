@@ -304,7 +304,7 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	// when no complete object identifier, fallback to a full table scan
 	if ObjectIdentifier(i.Object).IsComplete() {
 		path = bdb.RelationsObjPath
-		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjKey()
+		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjFilter()
 	}
 	if ObjectIdentifier(i.Subject).IsComplete() {
 		path = bdb.RelationsSubPath
@@ -313,7 +313,7 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	if len(path) == 0 {
 		log.Warn().Msg("!!! no covering index path, full scan !!!")
 		path = bdb.RelationsObjPath
-		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjFilter()
+		keyFilter = ""
 	}
 
 	// #2 build valueFilter function
