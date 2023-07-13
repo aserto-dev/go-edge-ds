@@ -102,7 +102,7 @@ func Migrate(roDB, rwDB *bolt.DB) error {
 }
 
 // updateModelTypes, read values from read-only backup, write to new bucket.
-func updateModelTypes[T modelType](path []string, v T) func(*bolt.DB, *bolt.DB) error {
+func updateModelTypes[T modelType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) error {
 	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
 
 		if err := roDB.View(func(tx *bolt.Tx) error {
@@ -156,7 +156,7 @@ func keyModelType[T modelType](v T) []byte {
 }
 
 // updateObjects, read values from read-only backup, write to new bucket.
-func updateObjects[T objectType](path []string, v T) func(*bolt.DB, *bolt.DB) error {
+func updateObjects[T objectType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) error {
 	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
 
 		if err := roDB.View(func(tx *bolt.Tx) error {
@@ -199,7 +199,7 @@ func updateObjects[T objectType](path []string, v T) func(*bolt.DB, *bolt.DB) er
 }
 
 // updateRelations, read values from read-only backup, write to new bucket.
-func updateRelations[T relationType](path []string, v T, d direction) func(*bolt.DB, *bolt.DB) error {
+func updateRelations[T relationType](path bdb.Path, v T, d direction) func(*bolt.DB, *bolt.DB) error {
 	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
 
 		if err := roDB.View(func(tx *bolt.Tx) error {

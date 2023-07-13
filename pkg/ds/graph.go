@@ -144,48 +144,53 @@ func (w *GraphWalker) Fetch() error {
 }
 
 func (w *GraphWalker) Filter() error {
+	filters := []func(item *dsc.ObjectDependency) bool{}
 
-	filters := []func(item *dsc.ObjectDependency, index int) bool{}
-
-	// Object Filter.
-	if w.direction == SubjectToObject && w.req.Object != nil {
-		// When SubjectToObject, req.Object defines the object filter clause.
-		if w.req.Object.Type != nil && w.req.Object.Key != nil {
-			filters = append(filters, func(item *dsc.ObjectDependency, index int) bool {
-				return strings.EqualFold(item.ObjectType, w.req.Object.GetType()) &&
-					strings.EqualFold(item.ObjectKey, w.req.Object.GetKey())
-			})
-
-		} else if w.req.Object.Type != nil {
-			filters = append(filters, func(item *dsc.ObjectDependency, index int) bool {
-				return strings.EqualFold(item.ObjectType, w.req.Object.GetType())
+	// SubjectToObject: subject == anchor => filter on object & relation.
+	if w.direction == SubjectToObject {
+		if w.req.Object.GetType() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetObjectType(), w.req.Object.GetType())
 			})
 		}
-	} else if w.direction == ObjectToSubject && w.req.Subject != nil {
-		// When ObjectToSubject, the req.Subject defines the object filter clause.
-		if w.req.Subject.Type != nil && w.req.Subject.Key != nil {
-			filters = append(filters, func(item *dsc.ObjectDependency, index int) bool {
-				return strings.EqualFold(item.SubjectType, w.req.Subject.GetType()) &&
-					strings.EqualFold(item.SubjectKey, w.req.Subject.GetKey())
-			})
 
-		} else if w.req.Subject.Type != nil {
-			filters = append(filters, func(item *dsc.ObjectDependency, index int) bool {
-				return strings.EqualFold(item.SubjectType, w.req.Subject.GetType())
+		if w.req.Object.GetKey() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetObjectKey(), w.req.Object.GetKey())
+			})
+		}
+
+		if w.req.Relation.GetName() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetRelation(), w.req.Relation.GetName())
 			})
 		}
 	}
 
-	// Relation Filter.
-	if w.req.Relation != nil && w.req.Relation.ObjectType != nil && w.req.Relation.Name != nil {
-		filters = append(filters, func(item *dsc.ObjectDependency, index int) bool {
-			return strings.EqualFold(item.Relation, w.req.Relation.GetName())
-		})
+	// ObjectToSubject: object == anchor => filter on subject & relation.
+	if w.direction == ObjectToSubject {
+		if w.req.Subject.GetType() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetSubjectType(), w.req.Subject.GetType())
+			})
+		}
+
+		if w.req.Subject.GetKey() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetSubjectKey(), w.req.Subject.GetKey())
+			})
+		}
+
+		if w.req.Relation.GetName() != "" {
+			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+				return strings.EqualFold(item.GetRelation(), w.req.Relation.GetName())
+			})
+		}
 	}
 
 	w.results = lo.Filter[*dsc.ObjectDependency](w.results, func(item *dsc.ObjectDependency, index int) bool {
 		for _, filter := range filters {
-			if !filter(item, index) {
+			if !filter(item) {
 				return false
 			}
 		}

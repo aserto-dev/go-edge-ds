@@ -3,6 +3,7 @@ package directory
 import (
 	"context"
 
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
@@ -187,6 +188,44 @@ func (s *Directory) DeleteObject(ctx context.Context, req *dsw.DeleteObjectReque
 		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key()); err != nil {
 			return err
 		}
+
+		if req.GetWithRelations() {
+			{
+				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+				iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
+				if err != nil {
+					return err
+				}
+
+				for iter.Next() {
+					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(iter.Value()).ObjKey()); err != nil {
+						return err
+					}
+
+					if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(iter.Value()).SubKey()); err != nil {
+						return err
+					}
+				}
+			}
+			{
+				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+				iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
+				if err != nil {
+					return err
+				}
+
+				for iter.Next() {
+					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(iter.Value()).ObjKey()); err != nil {
+						return err
+					}
+
+					if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(iter.Value()).SubKey()); err != nil {
+						return err
+					}
+				}
+			}
+		}
+
 		resp.Result = &emptypb.Empty{}
 		return nil
 	})
@@ -215,7 +254,7 @@ func (s *Directory) SetRelation(ctx context.Context, req *dsw.SetRelationRequest
 			return err
 		}
 
-		subRel, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), req.Relation)
+		subRel, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), updReq)
 		if err != nil {
 			return err
 		}

@@ -39,14 +39,24 @@ func (s *Directory) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesR
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -91,14 +101,25 @@ func (s *Directory) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTy
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(req.Param.GetName()),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -135,14 +156,24 @@ func (s *Directory) GetPermissions(ctx context.Context, req *dsr.GetPermissionsR
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Permission](ctx, tx, bdb.PermissionsPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.Permission](ctx, tx, bdb.PermissionsPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -162,6 +193,23 @@ func (s *Directory) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*
 		obj, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key())
 		if err != nil {
 			return err
+		}
+
+		if req.GetWithRelations() {
+			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+			incoming, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
+			if err != nil {
+				return err
+			}
+			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+			outgoing, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
+			if err != nil {
+				return err
+			}
+
+			resp.Incoming = incoming
+			resp.Outgoing = outgoing
+			s.logger.Trace().Msg("get object with relations")
 		}
 
 		resp.Result = obj
@@ -204,6 +252,10 @@ func (s *Directory) GetObjectMany(ctx context.Context, req *dsr.GetObjectManyReq
 func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) (*dsr.GetObjectsResponse, error) {
 	resp := &dsr.GetObjectsResponse{Results: []*dsc.Object{}, Page: &dsc.PaginationResponse{}}
 
+	if req.Param == nil {
+		req.Param = &dsc.ObjectTypeIdentifier{}
+	}
+
 	if req.Page == nil {
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
@@ -212,14 +264,25 @@ func (s *Directory) GetObjects(ctx context.Context, req *dsr.GetObjectsRequest) 
 		return resp, err
 	}
 
+	opts := []bdb.ScanOption{
+		bdb.WithPageSize(req.Page.Size),
+		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(req.Param.GetName()),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Object](ctx, tx, bdb.ObjectsPath, req.Page)
+		iter, err := bdb.NewPageIterator[dsc.Object](ctx, tx, bdb.ObjectsPath, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		iter.Next()
+
+		resp.Results = iter.Value()
+		resp.Page = &dsc.PaginationResponse{
+			NextToken:  iter.NextToken(),
+			ResultSize: int32(len(resp.Results)),
+		}
 
 		return nil
 	})
@@ -236,6 +299,7 @@ func (s *Directory) GetRelation(ctx context.Context, req *dsr.GetRelationRequest
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		// TODO revisit implementation
 		rels, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
@@ -283,18 +347,46 @@ func (s *Directory) GetRelations(ctx context.Context, req *dsr.GetRelationsReque
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
+	if req.Param == nil {
+		req.Param = &dsc.RelationIdentifier{
+			Object:   &dsc.ObjectIdentifier{},
+			Relation: &dsc.RelationTypeIdentifier{},
+			Subject:  &dsc.ObjectIdentifier{},
+		}
+	}
+
 	if ok, err := ds.RelationSelector(req.Param).Validate(); !ok {
 		return resp, err
 	}
 
+	path, keyFilter, valueFilter := ds.RelationSelector(req.Param).Filter()
+
+	opts := []bdb.ScanOption{
+		bdb.WithPageToken(req.Page.Token),
+		bdb.WithKeyFilter(keyFilter),
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		results, page, err := bdb.List[dsc.Relation](ctx, tx, bdb.RelationsSubPath, req.Page)
+		iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, path, opts...)
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
-		resp.Page = page
+		for iter.Next() {
+			if !valueFilter(iter.Value()) {
+				continue
+			}
+			resp.Results = append(resp.Results, iter.Value())
+
+			if req.Page.Size == int32(len(resp.Results)) {
+				if iter.Next() {
+					resp.Page.NextToken = iter.Key()
+				}
+				break
+			}
+		}
+
+		resp.Page.ResultSize = int32(len(resp.Results))
 
 		return nil
 	})

@@ -124,6 +124,10 @@ func (i *objectIdentifier) Equal(n *dsc.ObjectIdentifier) bool {
 	return strings.EqualFold(i.ObjectIdentifier.GetKey(), n.GetKey()) && strings.EqualFold(i.ObjectIdentifier.GetType(), n.GetType())
 }
 
+func (i *objectIdentifier) IsComplete() bool {
+	return i != nil && i.GetType() != "" && i.GetKey() != ""
+}
+
 type objectSelector struct {
 	*dsc.ObjectIdentifier
 }

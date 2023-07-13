@@ -17,7 +17,7 @@ const (
 	baseVersion string = "0.0.0"
 )
 
-func SetBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
+func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {
 	var b *bolt.Bucket
 
 	for index, p := range path {
@@ -37,7 +37,7 @@ func SetBucket(tx *bolt.Tx, path []string) (*bolt.Bucket, error) {
 	return b, nil
 }
 
-func SetKey(tx *bolt.Tx, path []string, key, value []byte) error {
+func SetKey(tx *bolt.Tx, path bdb.Path, key, value []byte) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func SetKey(tx *bolt.Tx, path []string, key, value []byte) error {
 	return b.Put(key, value)
 }
 
-func CreateBucket(path []string) func(*bolt.DB, *bolt.DB) error {
+func CreateBucket(path bdb.Path) func(*bolt.DB, *bolt.DB) error {
 	return func(_ *bolt.DB, rwDB *bolt.DB) error {
 
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
@@ -79,7 +79,7 @@ func CreateBucket(path []string) func(*bolt.DB, *bolt.DB) error {
 	}
 }
 
-func DeleteBucket(path []string) func(*bolt.DB, *bolt.DB) error {
+func DeleteBucket(path bdb.Path) func(*bolt.DB, *bolt.DB) error {
 	return func(_ *bolt.DB, rwDB *bolt.DB) error {
 
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
