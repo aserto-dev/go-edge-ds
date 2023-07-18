@@ -3,8 +3,13 @@ package directory
 import (
 	"time"
 
+	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
+	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 
 	"github.com/rs/zerolog"
 )
@@ -23,9 +28,13 @@ type Config struct {
 }
 
 type Directory struct {
-	config *Config
-	logger *zerolog.Logger
-	store  *bdb.BoltDB
+	config    *Config
+	logger    *zerolog.Logger
+	store     *bdb.BoltDB
+	exporter2 dse2.ExporterServer
+	importer2 dsi2.ImporterServer
+	reader2   dsr2.ReaderServer
+	writer2   dsw2.WriterServer
 }
 
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
@@ -44,10 +53,17 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
+	reader2 := v2.NewReader(logger, store)
+	writer2 := v2.NewWriter(logger, store)
+
 	dir := &Directory{
-		config: config,
-		logger: &newLogger,
-		store:  store,
+		config:    config,
+		logger:    &newLogger,
+		store:     store,
+		exporter2: v2.NewExporter(logger, store),
+		importer2: v2.NewImporter(logger, store),
+		reader2:   reader2,
+		writer2:   writer2,
 	}
 
 	if err := dir.Migrate(schemaVersion); err != nil {
@@ -66,4 +82,20 @@ func (s *Directory) Close() {
 
 func (s *Directory) Migrate(version string) error {
 	return migrate.Store(s.logger, s.store, version)
+}
+
+func (s *Directory) Exporter2() dse2.ExporterServer {
+	return s.exporter2
+}
+
+func (s *Directory) Importer2() dsi2.ImporterServer {
+	return s.importer2
+}
+
+func (s *Directory) Reader2() dsr2.ReaderServer {
+	return s.reader2
+}
+
+func (s *Directory) Writer2() dsw2.WriterServer {
+	return s.writer2
 }

@@ -1,13 +1,26 @@
-package directory
+package v2
 
 import (
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
-func (s *Directory) Export(req *dse.ExportRequest, stream dse.Exporter_ExportServer) error {
+type Exporter struct {
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
+}
+
+func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB) *Exporter {
+	return &Exporter{
+		logger: logger,
+		store:  store,
+	}
+}
+
+func (s *Exporter) Export(req *dse.ExportRequest, stream dse.Exporter_ExportServer) error {
 	logger := s.logger.With().Str("method", "Export").Interface("req", req).Logger()
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
