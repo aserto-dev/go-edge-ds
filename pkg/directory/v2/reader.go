@@ -214,14 +214,15 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr.GetObjectRequest) (*dsr
 			if err != nil {
 				return err
 			}
+			resp.Relations = append(resp.Relations, incoming...)
+
 			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
 			outgoing, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
 			}
+			resp.Relations = append(resp.Relations, outgoing...)
 
-			resp.Incoming = incoming
-			resp.Outgoing = outgoing
 			s.logger.Trace().Msg("get object with relations")
 		}
 
