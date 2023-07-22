@@ -3,13 +3,12 @@ module github.com/aserto-dev/go-edge-ds
 go 1.19
 
 // replace github.com/aserto-dev/go-directory => ../go-directory
-// replace github.com/aserto-dev/topaz => ../topaz
 
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/errors v0.0.5
 	github.com/aserto-dev/go-aserto v0.20.3
-	github.com/aserto-dev/go-directory v0.21.5
+	github.com/aserto-dev/go-directory v0.21.7-0.20230722013923-9fdfd15a06e4
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/magefile/mage v1.15.0
@@ -35,6 +34,7 @@ require (
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
+	google.golang.org/genproto v0.0.0-20230629202037-9506855d4529 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

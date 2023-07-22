@@ -8,6 +8,12 @@ import (
 	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+
+	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
+	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+
 	eds "github.com/aserto-dev/go-edge-ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/rs/zerolog"
@@ -19,6 +25,7 @@ import (
 
 type TestEdgeClient struct {
 	V2 ClientV2
+	V3 ClientV3
 }
 
 type ClientV2 struct {
@@ -26,6 +33,13 @@ type ClientV2 struct {
 	Writer   dsw2.WriterClient
 	Importer dsi2.ImporterClient
 	Exporter dse2.ExporterClient
+}
+
+type ClientV3 struct {
+	Reader   dsr3.ReaderClient
+	Writer   dsw3.WriterClient
+	Importer dsi3.ImporterClient
+	Exporter dse3.ExporterClient
 }
 
 func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directory.Config) (*TestEdgeClient, func()) {
@@ -45,6 +59,11 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 	dse2.RegisterExporterServer(s, edgeDirServer.Exporter2())
 	dsi2.RegisterImporterServer(s, edgeDirServer.Importer2())
 
+	dsr3.RegisterReaderServer(s, edgeDirServer.Reader3())
+	dsw3.RegisterWriterServer(s, edgeDirServer.Writer3())
+	dse3.RegisterExporterServer(s, edgeDirServer.Exporter3())
+	dsi3.RegisterImporterServer(s, edgeDirServer.Importer3())
+
 	go func() {
 		if err := s.Serve(listener); err != nil {
 			panic(err)
@@ -61,6 +80,12 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 			Writer:   dsw2.NewWriterClient(conn),
 			Importer: dsi2.NewImporterClient(conn),
 			Exporter: dse2.NewExporterClient(conn),
+		},
+		V3: ClientV3{
+			Reader:   dsr3.NewReaderClient(conn),
+			Writer:   dsw3.NewWriterClient(conn),
+			Importer: dsi3.NewImporterClient(conn),
+			Exporter: dse3.NewExporterClient(conn),
 		},
 	}
 

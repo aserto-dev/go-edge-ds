@@ -6,10 +6,8 @@ github.com/aserto-dev/errors v0.0.5 h1:9sSeCKZbPEs8CKBj9SzKLoyxsmhimlKuygZd3cRX2
 github.com/aserto-dev/errors v0.0.5/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-aserto v0.20.3 h1:yUhMIENFIdKA6TxE36E+99N3baEIuzfj7Y+onsOuLyg=
 github.com/aserto-dev/go-aserto v0.20.3/go.mod h1:6e5FdSQNvVvaRVIVrAqlQk9uh5k3jtIcDIXciQtN+GQ=
-github.com/aserto-dev/go-directory v0.21.4 h1:vjHlgpL1zeICBiEzM3G3eWViKyf1oeAmNzyoAEurvYs=
-github.com/aserto-dev/go-directory v0.21.4/go.mod h1:xzUJUiyOcVj9B8Nd/nNYsIB0JSQps3IMuiPKejZkCnc=
-github.com/aserto-dev/go-directory v0.21.5 h1:2SkTjImS7MhIRb+22kUCNyobs8Ac5YhKd+Qgo8bl4r0=
-github.com/aserto-dev/go-directory v0.21.5/go.mod h1:xzUJUiyOcVj9B8Nd/nNYsIB0JSQps3IMuiPKejZkCnc=
+github.com/aserto-dev/go-directory v0.21.7-0.20230722013923-9fdfd15a06e4 h1:TbB/GjOq3Pq0zCvxpNRP969OW1+8fDJo3NuH/CqY1QY=
+github.com/aserto-dev/go-directory v0.21.7-0.20230722013923-9fdfd15a06e4/go.mod h1:xzUJUiyOcVj9B8Nd/nNYsIB0JSQps3IMuiPKejZkCnc=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
@@ -81,7 +79,6 @@ github.com/samber/lo v1.38.1/go.mod h1:+m/ZKRl6ClXCE2Lgf3MsQlWfh4bn1bz6CXEOxnEXn
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
-github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
@@ -159,6 +156,7 @@ google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8/go.mod h1:JiN7NxoA
 google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98Agz4BDEuKkezgsaosCRResVns1a3J2ZsMNc=
 google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215/go.mod h1:55QSHmfGQM9UVYDPBsyGGes0y52j32PQ3BqQfXhyH3c=
 google.golang.org/genproto v0.0.0-20230629202037-9506855d4529 h1:9JucMWR7sPvCxUFd6UsOUNmA5kCcWOfORaT3tpAsKQs=
+google.golang.org/genproto v0.0.0-20230629202037-9506855d4529/go.mod h1:xZnkP7mREFX5MORlOPEzLMr+90PPZQ2QWzrVTWfAq64=
 google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc h1:kVKPf/IiYSBWEWtkIn6wZXwWGCnLKcC8oWfZvXjsGnM=
 google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc/go.mod h1:vHYtlOoi6TsQ3Uk2yxR7NI5z8uoV+3pZtR4jmHIkRig=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20230629202037-9506855d4529 h1:DEH99RbiLZhMxrpEJCZ0A+wdTe0EOgou/poSLx9vWf4=
