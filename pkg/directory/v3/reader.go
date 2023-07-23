@@ -9,6 +9,7 @@ import (
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/rs/zerolog"
 )
@@ -110,10 +111,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 		Param: &dsc2.ObjectTypeIdentifier{
 			Name: &req.ObjectType,
 		},
-		Page: &dsc2.PaginationRequest{
-			Size:  req.Page.Size,
-			Token: req.Page.Token,
-		},
+		Page: ds.PaginationRequest2(req.Page),
 	})
 
 	if err != nil {
@@ -135,9 +133,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 
 	return &dsr3.GetObjectsResponse{
 		Results: results,
-		Page: &dsc3.PaginationResponse{
-			NextToken: resp.Page.NextToken,
-		},
+		Page:    ds.PaginationResponse3(resp.Page),
 	}, nil
 }
 
@@ -200,6 +196,7 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 }
 
 func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest) (*dsr3.GetRelationsResponse, error) {
+
 	resp, err := s.r2.GetRelations(ctx, &dsr2.GetRelationsRequest{
 		Param: &dsc2.RelationIdentifier{
 			Object: &dsc2.ObjectIdentifier{
@@ -215,10 +212,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				Key:  &req.SubjectId,
 			},
 		},
-		Page: &dsc2.PaginationRequest{
-			Size:  req.Page.Size,
-			Token: req.Page.Token,
-		},
+		Page: ds.PaginationRequest2(req.Page),
 	})
 
 	if err != nil {
@@ -242,9 +236,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 
 	return &dsr3.GetRelationsResponse{
 		Results: results,
-		Page: &dsc3.PaginationResponse{
-			NextToken: resp.Page.NextToken,
-		},
+		Page:    ds.PaginationResponse3(resp.Page),
 	}, nil
 }
 
