@@ -92,7 +92,7 @@ func (i *objectTypeSelector) Validate() (bool, error) {
 		return false, ErrInvalidArgumentObjectTypeIdentifier.Msg(objectIdentifierNil)
 	}
 
-	if i.Name != nil && IsSet(i.GetName()) {
+	if i.Name != nil && IsNotSet(i.GetName()) {
 		return false, ErrInvalidArgumentObjectTypeIdentifier.Msg("name")
 	}
 
