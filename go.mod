@@ -2,13 +2,13 @@ module github.com/aserto-dev/go-edge-ds
 
 go 1.19
 
-// replace github.com/aserto-dev/go-directory => ../go-directory
+replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/errors v0.0.5
 	github.com/aserto-dev/go-aserto v0.20.3
-	github.com/aserto-dev/go-directory v0.21.7-0.20230723043430-5bfeefbb0cb5
+	github.com/aserto-dev/go-directory v0.21.7-0.20230725182626-60ef07904a4d
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/magefile/mage v1.15.0

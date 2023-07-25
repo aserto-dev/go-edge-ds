@@ -190,7 +190,7 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 	}
 
 	return &dsr3.GetRelationResponse{
-		Results: results,
+		Result:  results[0],
 		Objects: objects,
 	}, nil
 }
