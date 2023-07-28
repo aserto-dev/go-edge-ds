@@ -9,6 +9,7 @@ import (
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
+	"github.com/bufbuild/protovalidate-go"
 
 	"github.com/rs/zerolog"
 )
@@ -17,18 +18,25 @@ type Writer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 	w2     dsw2.WriterServer
+	v      *protovalidate.Validator
 }
 
 func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, w *v2.Writer) *Writer {
+	v, _ := protovalidate.New()
 	return &Writer{
 		logger: logger,
 		store:  store,
 		w2:     w,
+		v:      v,
 	}
 }
 
 // object methods.
 func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*dsw3.SetObjectResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsw3.SetObjectResponse{}, err
+	}
+
 	resp, err := s.w2.SetObject(ctx, &dsw2.SetObjectRequest{
 		Object: &dsc2.Object{
 			Type:        req.Object.Type,
@@ -59,6 +67,10 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 }
 
 func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest) (*dsw3.DeleteObjectResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsw3.DeleteObjectResponse{}, err
+	}
+
 	resp, err := s.w2.DeleteObject(ctx, &dsw2.DeleteObjectRequest{
 		Param: &dsc2.ObjectIdentifier{
 			Type: &req.ObjectType,
@@ -77,6 +89,10 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 
 // relation methods.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) (*dsw3.SetRelationResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsw3.SetRelationResponse{}, err
+	}
+
 	resp, err := s.w2.SetRelation(ctx, &dsw2.SetRelationRequest{
 		Relation: &dsc2.Relation{
 			Object: &dsc2.ObjectIdentifier{
@@ -113,6 +129,10 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 }
 
 func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationRequest) (*dsw3.DeleteRelationResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsw3.DeleteRelationResponse{}, err
+	}
+
 	resp, err := s.w2.DeleteRelation(ctx, &dsw2.DeleteRelationRequest{
 		Param: &dsc2.RelationIdentifier{
 			Object: &dsc2.ObjectIdentifier{

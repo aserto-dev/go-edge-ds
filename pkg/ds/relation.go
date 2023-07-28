@@ -274,8 +274,8 @@ func (i *relationSelector) Validate() (bool, error) {
 		return ok, err
 	}
 
-	// propagate object type to relation if missing.
-	if i.RelationIdentifier.Relation.GetObjectType() == "" {
+	// if relation name is set, propagate object type to relation if missing.
+	if i.RelationIdentifier.Relation.GetName() != "" && i.RelationIdentifier.Relation.GetObjectType() == "" {
 		i.RelationIdentifier.Relation.ObjectType = i.RelationIdentifier.Object.Type
 	}
 
@@ -320,30 +320,45 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	filters := []func(item *dsc.Relation) bool{}
 
 	if i.RelationIdentifier.Object.GetType() != "" {
+		fv := i.RelationIdentifier.Object.GetType()
 		filters = append(filters, func(item *dsc.Relation) bool {
-			return strings.EqualFold(item.Object.GetType(), i.RelationIdentifier.Object.GetType())
+			equal := strings.EqualFold(item.Object.GetType(), fv)
+			log.Trace().Str("fv", fv).Str("item", item.Object.GetType()).Bool("equal", equal).Msg("object_type filter")
+			return equal
 		})
 	}
 	if i.RelationIdentifier.Object.GetKey() != "" {
+		fv := i.RelationIdentifier.Object.GetKey()
 		filters = append(filters, func(item *dsc.Relation) bool {
-			return strings.EqualFold(item.Object.GetKey(), i.RelationIdentifier.Object.GetKey())
+			equal := strings.Compare(fv, item.Object.GetKey())
+			log.Trace().Str("fv", fv).Str("item", item.Object.GetKey()).Bool("equal", equal == 0).Msg("object_id filter")
+			return equal == 0
 		})
 	}
 
 	if i.RelationIdentifier.Relation.GetName() != "" {
+		fv := i.RelationIdentifier.Relation.GetName()
 		filters = append(filters, func(item *dsc.Relation) bool {
-			return strings.EqualFold(item.Relation, i.RelationIdentifier.Relation.GetName())
+			equal := strings.EqualFold(item.Relation, fv)
+			log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal).Msg("relation filter")
+			return equal
 		})
 	}
 
 	if i.RelationIdentifier.Subject.GetType() != "" {
+		fv := i.RelationIdentifier.Subject.GetType()
 		filters = append(filters, func(item *dsc.Relation) bool {
-			return strings.EqualFold(item.Subject.GetType(), i.RelationIdentifier.Subject.GetType())
+			equal := strings.EqualFold(item.Subject.GetType(), fv)
+			log.Trace().Str("fv", fv).Str("item", item.Subject.GetType()).Bool("equal", equal).Msg("subject_type filter")
+			return equal
 		})
 	}
 	if i.RelationIdentifier.Subject.GetKey() != "" {
+		fv := i.RelationIdentifier.Subject.GetKey()
 		filters = append(filters, func(item *dsc.Relation) bool {
-			return strings.EqualFold(item.Subject.GetKey(), i.RelationIdentifier.Subject.GetKey())
+			equal := strings.Compare(fv, item.Subject.GetKey())
+			log.Trace().Str("fv", fv).Str("item", item.Subject.GetKey()).Bool("equal", equal == 0).Msg("subject_id filter")
+			return equal == 0
 		})
 	}
 
