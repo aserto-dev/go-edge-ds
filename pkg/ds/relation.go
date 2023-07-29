@@ -7,19 +7,20 @@ import (
 	"strconv"
 	"strings"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 // Relation.
 type relation struct {
-	*dsc.Relation
+	*dsc2.Relation
 }
 
-func Relation(i *dsc.Relation) *relation { return &relation{i} }
+func Relation(i *dsc2.Relation) *relation { return &relation{i} }
 
 func (i *relation) Key() string {
 	return i.ObjKey()
@@ -68,10 +69,12 @@ func (i *relation) Validate() (bool, error) {
 
 // RelationIdentifier.
 type relationIdentifier struct {
-	*dsc.RelationIdentifier
+	*dsc2.RelationIdentifier
 }
 
-func RelationIdentifier(i *dsc.RelationIdentifier) *relationIdentifier { return &relationIdentifier{i} }
+func RelationIdentifier(i *dsc2.RelationIdentifier) *relationIdentifier {
+	return &relationIdentifier{i}
+}
 
 func (i *relationIdentifier) Key() string {
 	return i.ObjKey()
@@ -232,10 +235,10 @@ func (i *relationIdentifier) SubFilter() string {
 
 // RelationSelector.
 type relationSelector struct {
-	*dsc.RelationIdentifier
+	*dsc2.RelationIdentifier
 }
 
-func RelationSelector(i *dsc.RelationIdentifier) *relationSelector { return &relationSelector{i} }
+func RelationSelector(i *dsc2.RelationIdentifier) *relationSelector { return &relationSelector{i} }
 
 func (i *relationSelector) Validate() (bool, error) {
 	if i == nil {
@@ -243,23 +246,23 @@ func (i *relationSelector) Validate() (bool, error) {
 	}
 
 	if i.RelationIdentifier == nil {
-		i.RelationIdentifier = &dsc.RelationIdentifier{
-			Subject:  &dsc.ObjectIdentifier{},
-			Relation: &dsc.RelationTypeIdentifier{},
-			Object:   &dsc.ObjectIdentifier{},
+		i.RelationIdentifier = &dsc2.RelationIdentifier{
+			Subject:  &dsc2.ObjectIdentifier{},
+			Relation: &dsc2.RelationTypeIdentifier{},
+			Object:   &dsc2.ObjectIdentifier{},
 		}
 	}
 
 	if i.RelationIdentifier.Subject == nil {
-		i.RelationIdentifier.Subject = &dsc.ObjectIdentifier{}
+		i.RelationIdentifier.Subject = &dsc2.ObjectIdentifier{}
 	}
 
 	if i.RelationIdentifier.Relation == nil {
-		i.RelationIdentifier.Relation = &dsc.RelationTypeIdentifier{}
+		i.RelationIdentifier.Relation = &dsc2.RelationTypeIdentifier{}
 	}
 
 	if i.RelationIdentifier.Object == nil {
-		i.RelationIdentifier.Object = &dsc.ObjectIdentifier{}
+		i.RelationIdentifier.Object = &dsc2.ObjectIdentifier{}
 	}
 
 	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
@@ -290,7 +293,7 @@ func (i *relationSelector) Validate() (bool, error) {
 	return true, nil
 }
 
-type RelationFilter func(*dsc.Relation) bool
+type RelationFilter func(*dsc2.Relation) bool
 
 func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	var (
@@ -317,11 +320,11 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	}
 
 	// #2 build valueFilter function
-	filters := []func(item *dsc.Relation) bool{}
+	filters := []func(item *dsc2.Relation) bool{}
 
 	if i.RelationIdentifier.Object.GetType() != "" {
 		fv := i.RelationIdentifier.Object.GetType()
-		filters = append(filters, func(item *dsc.Relation) bool {
+		filters = append(filters, func(item *dsc2.Relation) bool {
 			equal := strings.EqualFold(item.Object.GetType(), fv)
 			log.Trace().Str("fv", fv).Str("item", item.Object.GetType()).Bool("equal", equal).Msg("object_type filter")
 			return equal
@@ -329,7 +332,7 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	}
 	if i.RelationIdentifier.Object.GetKey() != "" {
 		fv := i.RelationIdentifier.Object.GetKey()
-		filters = append(filters, func(item *dsc.Relation) bool {
+		filters = append(filters, func(item *dsc2.Relation) bool {
 			equal := strings.Compare(fv, item.Object.GetKey())
 			log.Trace().Str("fv", fv).Str("item", item.Object.GetKey()).Bool("equal", equal == 0).Msg("object_id filter")
 			return equal == 0
@@ -338,7 +341,7 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 
 	if i.RelationIdentifier.Relation.GetName() != "" {
 		fv := i.RelationIdentifier.Relation.GetName()
-		filters = append(filters, func(item *dsc.Relation) bool {
+		filters = append(filters, func(item *dsc2.Relation) bool {
 			equal := strings.EqualFold(item.Relation, fv)
 			log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal).Msg("relation filter")
 			return equal
@@ -347,7 +350,7 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 
 	if i.RelationIdentifier.Subject.GetType() != "" {
 		fv := i.RelationIdentifier.Subject.GetType()
-		filters = append(filters, func(item *dsc.Relation) bool {
+		filters = append(filters, func(item *dsc2.Relation) bool {
 			equal := strings.EqualFold(item.Subject.GetType(), fv)
 			log.Trace().Str("fv", fv).Str("item", item.Subject.GetType()).Bool("equal", equal).Msg("subject_type filter")
 			return equal
@@ -355,14 +358,14 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	}
 	if i.RelationIdentifier.Subject.GetKey() != "" {
 		fv := i.RelationIdentifier.Subject.GetKey()
-		filters = append(filters, func(item *dsc.Relation) bool {
+		filters = append(filters, func(item *dsc2.Relation) bool {
 			equal := strings.Compare(fv, item.Subject.GetKey())
 			log.Trace().Str("fv", fv).Str("item", item.Subject.GetKey()).Bool("equal", equal == 0).Msg("subject_id filter")
 			return equal == 0
 		})
 	}
 
-	valueFilter := func(i *dsc.Relation) bool {
+	valueFilter := func(i *dsc2.Relation) bool {
 		for _, filter := range filters {
 			if !filter(i) {
 				return false

@@ -6,15 +6,15 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
 // RelationType.
 type relationType struct {
-	*dsc.RelationType
+	*dsc2.RelationType
 }
 
-func RelationType(i *dsc.RelationType) *relationType { return &relationType{i} }
+func RelationType(i *dsc2.RelationType) *relationType { return &relationType{i} }
 
 func (i *relationType) Key() string {
 	return i.ObjectType + TypeIDSeparator + i.Name
@@ -73,10 +73,10 @@ func (i *relationType) Hash() string {
 
 // RelationTypeIdentifier.
 type relationTypeIdentifier struct {
-	*dsc.RelationTypeIdentifier
+	*dsc2.RelationTypeIdentifier
 }
 
-func RelationTypeIdentifier(i *dsc.RelationTypeIdentifier) *relationTypeIdentifier {
+func RelationTypeIdentifier(i *dsc2.RelationTypeIdentifier) *relationTypeIdentifier {
 	return &relationTypeIdentifier{i}
 }
 
@@ -102,10 +102,10 @@ func (i *relationTypeIdentifier) Validate() (bool, error) {
 
 // RelationTypeSelector.
 type relationTypeSelector struct {
-	*dsc.RelationTypeIdentifier
+	*dsc2.RelationTypeIdentifier
 }
 
-func RelationTypeSelector(i *dsc.RelationTypeIdentifier) *relationTypeSelector {
+func RelationTypeSelector(i *dsc2.RelationTypeIdentifier) *relationTypeSelector {
 	return &relationTypeSelector{i}
 }
 

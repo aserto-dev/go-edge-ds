@@ -1,9 +1,20 @@
 package v3
 
 import (
+	"context"
+	"io"
+
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/session"
+
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	bolt "go.etcd.io/bbolt"
 )
 
 type Importer struct {
@@ -18,6 +29,113 @@ func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
 	}
 }
 
-func (s *Importer) Import(dsi3.Importer_ImportServer) error {
+func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
+	res := &dsi3.ImportResponse{
+		Object:   &dsi3.ImportCounter{},
+		Relation: &dsi3.ImportCounter{},
+	}
+
+	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
+
+	importErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+		for {
+			req, err := stream.Recv()
+			if err == io.EOF {
+				s.logger.Debug().Interface("res", res).Msg("import stream EOF")
+				return stream.Send(res)
+			} else if err != nil {
+				s.logger.Err(err).Msg("cannot receive req")
+				return stream.Send(res)
+			}
+
+			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
+				s.logger.Err(err).Msg("cannot handle load request")
+				return stream.Send(res)
+			}
+		}
+	})
+	return importErr
+}
+
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
+
+	if obj := req.GetObject(); obj != nil {
+		err = s.objectHandler(ctx, tx, obj)
+		res.Object = updateCounter(res.Object, req.OpCode, err)
+	} else if rel := req.GetRelation(); rel != nil {
+		err = s.relationHandler(ctx, tx, rel)
+		res.Relation = updateCounter(res.Relation, req.OpCode, err)
+	}
+
+	return err
+}
+
+func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
+	s.logger.Debug().Interface("object", req).Msg("import_object")
+
+	if req == nil {
+		return derr.ErrInvalidObject.Msg("nil")
+	}
+
+	o2 := &dsc2.Object{
+		Type:        req.Type,
+		Key:         req.Id,
+		DisplayName: req.DisplayName,
+		Properties:  req.Properties,
+		CreatedAt:   req.CreatedAt,
+		UpdatedAt:   req.UpdatedAt,
+		Hash:        req.Etag,
+	}
+
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(o2).Key(), o2); err != nil {
+		return derr.ErrInvalidObject.Msg("set")
+	}
+
 	return nil
+}
+
+func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
+	s.logger.Debug().Interface("relation", req).Msg("import_relation")
+
+	if req == nil {
+		return derr.ErrInvalidRelation.Msg("nil")
+	}
+
+	r2 := &dsc2.Relation{
+		Object: &dsc2.ObjectIdentifier{
+			Type: &req.ObjectType,
+			Key:  &req.ObjectId,
+		},
+		Relation: req.Relation,
+		Subject: &dsc2.ObjectIdentifier{
+			Type: &req.SubjectType,
+			Key:  &req.SubjectId,
+		},
+		CreatedAt: req.CreatedAt,
+		UpdatedAt: req.UpdatedAt,
+		Hash:      req.Etag,
+	}
+
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(r2).ObjKey(), r2); err != nil {
+		return derr.ErrInvalidRelation.Msg("set")
+	}
+
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(r2).SubKey(), r2); err != nil {
+		return derr.ErrInvalidRelation.Msg("set")
+	}
+
+	return nil
+}
+
+func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.ImportCounter {
+	c.Recv++
+	if opCode == dsi3.Opcode_OPCODE_SET {
+		c.Set++
+	} else if opCode == dsi3.Opcode_OPCODE_DELETE {
+		c.Delete++
+	}
+	if err != nil {
+		c.Error++
+	}
+	return c
 }

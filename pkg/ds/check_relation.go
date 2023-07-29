@@ -3,19 +3,20 @@ package ds
 import (
 	"context"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
 )
 
 type checkRelation struct {
-	*dsr.CheckRelationRequest
+	*dsr2.CheckRelationRequest
 }
 
-func CheckRelation(i *dsr.CheckRelationRequest) *checkRelation {
+func CheckRelation(i *dsr2.CheckRelationRequest) *checkRelation {
 	return &checkRelation{i}
 }
 
@@ -43,8 +44,8 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckRelationResponse, error) {
-	resp := &dsr.CheckRelationResponse{Check: false, Trace: []string{}}
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr2.CheckRelationResponse, error) {
+	resp := &dsr2.CheckRelationResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath)
 	if err != nil {
@@ -53,7 +54,7 @@ func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckRelati
 
 	match, err := check.check(i.Object)
 
-	return &dsr.CheckRelationResponse{Check: match}, err
+	return &dsr2.CheckRelationResponse{Check: match}, err
 }
 
 func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string) (*relationChecker, error) {
@@ -74,7 +75,7 @@ func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []stri
 		anchor:  i,
 		userSet: userSet,
 		filter:  relations,
-		trace:   [][]*dsc.Relation{},
+		trace:   [][]*dsc2.Relation{},
 	}, nil
 }
 
@@ -83,16 +84,16 @@ type relationChecker struct {
 	tx      *bolt.Tx
 	path    []string
 	anchor  *checkRelation
-	userSet []*dsc.ObjectIdentifier
+	userSet []*dsc2.ObjectIdentifier
 	filter  []string
-	trace   [][]*dsc.Relation
+	trace   [][]*dsc2.Relation
 }
 
-func (c *relationChecker) check(root *dsc.ObjectIdentifier) (bool, error) {
+func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	filter := ObjectIdentifier(root).Key() + InstanceSeparator
 
 	// relations associated to object instance.
-	relations, err := bdb.Scan[dsc.Relation](c.ctx, c.tx, c.path, filter)
+	relations, err := bdb.Scan[dsc2.Relation](c.ctx, c.tx, c.path, filter)
 	if err != nil {
 		return false, err
 	}
@@ -119,8 +120,8 @@ func (c *relationChecker) check(root *dsc.ObjectIdentifier) (bool, error) {
 	return false, nil
 }
 
-func (c *relationChecker) isMatch(relation *dsc.Relation) bool {
-	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc.ObjectIdentifier](c.userSet, relation.Subject) {
+func (c *relationChecker) isMatch(relation *dsc2.Relation) bool {
+	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
 		return true
 	}
 	return false

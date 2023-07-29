@@ -4,14 +4,14 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
 type objectType struct {
-	*dsc.ObjectType
+	*dsc2.ObjectType
 }
 
-func ObjectType(i *dsc.ObjectType) *objectType { return &objectType{i} }
+func ObjectType(i *dsc2.ObjectType) *objectType { return &objectType{i} }
 
 func (i *objectType) Key() string {
 	return i.GetName()
@@ -53,10 +53,10 @@ func (i *objectType) Hash() string {
 }
 
 type objectTypeIdentifier struct {
-	*dsc.ObjectTypeIdentifier
+	*dsc2.ObjectTypeIdentifier
 }
 
-func ObjectTypeIdentifier(i *dsc.ObjectTypeIdentifier) *objectTypeIdentifier {
+func ObjectTypeIdentifier(i *dsc2.ObjectTypeIdentifier) *objectTypeIdentifier {
 	return &objectTypeIdentifier{i}
 }
 
@@ -77,12 +77,12 @@ func (i *objectTypeIdentifier) Validate() (bool, error) {
 }
 
 type objectTypeSelector struct {
-	*dsc.ObjectTypeIdentifier
+	*dsc2.ObjectTypeIdentifier
 }
 
-func ObjectTypeSelector(i *dsc.ObjectTypeIdentifier) *objectTypeSelector {
+func ObjectTypeSelector(i *dsc2.ObjectTypeIdentifier) *objectTypeSelector {
 	if i == nil {
-		return &objectTypeSelector{&dsc.ObjectTypeIdentifier{}}
+		return &objectTypeSelector{&dsc2.ObjectTypeIdentifier{}}
 	}
 	return &objectTypeSelector{i}
 }
