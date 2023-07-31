@@ -3,10 +3,11 @@ package v2
 import (
 	"context"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -25,8 +26,8 @@ func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
 }
 
 // object type metadata methods.
-func (s *Writer) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeRequest) (*dsw.SetObjectTypeResponse, error) {
-	resp := &dsw.SetObjectTypeResponse{}
+func (s *Writer) SetObjectType(ctx context.Context, req *dsw2.SetObjectTypeRequest) (*dsw2.SetObjectTypeResponse, error) {
+	resp := &dsw2.SetObjectTypeResponse{}
 
 	if ok, err := ds.ObjectType(req.ObjectType).Validate(); !ok {
 		return resp, err
@@ -52,8 +53,8 @@ func (s *Writer) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReques
 	return resp, err
 }
 
-func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectTypeRequest) (*dsw.DeleteObjectTypeResponse, error) {
-	resp := &dsw.DeleteObjectTypeResponse{}
+func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw2.DeleteObjectTypeRequest) (*dsw2.DeleteObjectTypeResponse, error) {
+	resp := &dsw2.DeleteObjectTypeResponse{}
 
 	if ok, err := ds.ObjectTypeIdentifier(req.Param).Validate(); !ok {
 		return resp, err
@@ -71,8 +72,8 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectType
 }
 
 // relation type metadata methods.
-func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
-	resp := &dsw.SetRelationTypeResponse{}
+func (s *Writer) SetRelationType(ctx context.Context, req *dsw2.SetRelationTypeRequest) (*dsw2.SetRelationTypeResponse, error) {
+	resp := &dsw2.SetRelationTypeResponse{}
 
 	if ok, err := ds.RelationType(req.RelationType).Validate(); !ok {
 		return resp, err
@@ -98,8 +99,8 @@ func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRe
 	return resp, err
 }
 
-func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelationTypeRequest) (*dsw.DeleteRelationTypeResponse, error) {
-	resp := &dsw.DeleteRelationTypeResponse{}
+func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw2.DeleteRelationTypeRequest) (*dsw2.DeleteRelationTypeResponse, error) {
+	resp := &dsw2.DeleteRelationTypeResponse{}
 
 	if ok, err := ds.RelationTypeIdentifier(req.Param).Validate(); !ok {
 		return resp, err
@@ -117,8 +118,8 @@ func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelation
 }
 
 // permission metadata methods.
-func (s *Writer) SetPermission(ctx context.Context, req *dsw.SetPermissionRequest) (*dsw.SetPermissionResponse, error) {
-	resp := &dsw.SetPermissionResponse{}
+func (s *Writer) SetPermission(ctx context.Context, req *dsw2.SetPermissionRequest) (*dsw2.SetPermissionResponse, error) {
+	resp := &dsw2.SetPermissionResponse{}
 
 	if ok, err := ds.Permission(req.Permission).Validate(); !ok {
 		return resp, err
@@ -144,8 +145,8 @@ func (s *Writer) SetPermission(ctx context.Context, req *dsw.SetPermissionReques
 	return resp, err
 }
 
-func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermissionRequest) (*dsw.DeletePermissionResponse, error) {
-	resp := &dsw.DeletePermissionResponse{}
+func (s *Writer) DeletePermission(ctx context.Context, req *dsw2.DeletePermissionRequest) (*dsw2.DeletePermissionResponse, error) {
+	resp := &dsw2.DeletePermissionResponse{}
 
 	if ok, err := ds.PermissionIdentifier(req.Param).Validate(); !ok {
 		return resp, err
@@ -163,8 +164,8 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermission
 }
 
 // object methods.
-func (s *Writer) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
-	resp := &dsw.SetObjectResponse{}
+func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*dsw2.SetObjectResponse, error) {
+	resp := &dsw2.SetObjectResponse{}
 
 	if ok, err := ds.Object(req.Object).Validate(); !ok {
 		return resp, err
@@ -190,8 +191,8 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw
 	return resp, err
 }
 
-func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest) (*dsw.DeleteObjectResponse, error) {
-	resp := &dsw.DeleteObjectResponse{}
+func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest) (*dsw2.DeleteObjectResponse, error) {
+	resp := &dsw2.DeleteObjectResponse{}
 
 	if ok, err := ds.ObjectIdentifier(req.Param).Validate(); !ok {
 		return resp, err
@@ -205,7 +206,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest)
 		if req.GetWithRelations() {
 			{
 				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc2.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -222,7 +223,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest)
 			}
 			{
 				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc2.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -247,8 +248,8 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest)
 }
 
 // relation methods.
-func (s *Writer) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
-	resp := &dsw.SetRelationResponse{}
+func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) (*dsw2.SetRelationResponse, error) {
+	resp := &dsw2.SetRelationResponse{}
 
 	if ok, err := ds.Relation(req.Relation).Validate(); !ok {
 		return resp, err
@@ -281,8 +282,8 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (
 	return resp, err
 }
 
-func (s *Writer) DeleteRelation(ctx context.Context, req *dsw.DeleteRelationRequest) (*dsw.DeleteRelationResponse, error) {
-	resp := &dsw.DeleteRelationResponse{}
+func (s *Writer) DeleteRelation(ctx context.Context, req *dsw2.DeleteRelationRequest) (*dsw2.DeleteRelationResponse, error) {
+	resp := &dsw2.DeleteRelationResponse{}
 
 	if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {
 		return resp, err

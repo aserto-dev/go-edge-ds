@@ -11,6 +11,7 @@ import (
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 )
 
@@ -18,18 +19,25 @@ type Reader struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 	r2     dsr2.ReaderServer
+	v      *protovalidate.Validator
 }
 
 func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, r *v2.Reader) *Reader {
+	v, _ := protovalidate.New()
 	return &Reader{
 		logger: logger,
 		store:  store,
 		r2:     r,
+		v:      v,
 	}
 }
 
 // object methods.
 func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*dsr3.GetObjectResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetObjectResponse{}, err
+	}
+
 	resp, err := s.r2.GetObject(ctx, &dsr2.GetObjectRequest{
 		Param: &dsc2.ObjectIdentifier{
 			Type: &req.ObjectType,
@@ -72,6 +80,10 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 }
 
 func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyRequest) (*dsr3.GetObjectManyResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetObjectManyResponse{}, err
+	}
+
 	param := make([]*dsc2.ObjectIdentifier, len(req.Param))
 	for i, p := range req.Param {
 		param[i] = &dsc2.ObjectIdentifier{
@@ -107,6 +119,10 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 }
 
 func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*dsr3.GetObjectsResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetObjectsResponse{}, err
+	}
+
 	resp, err := s.r2.GetObjects(ctx, &dsr2.GetObjectsRequest{
 		Param: &dsc2.ObjectTypeIdentifier{
 			Name: &req.ObjectType,
@@ -139,6 +155,10 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 
 // relation methods.
 func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) (*dsr3.GetRelationResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetRelationResponse{}, err
+	}
+
 	resp, err := s.r2.GetRelation(ctx, &dsr2.GetRelationRequest{
 		Param: &dsc2.RelationIdentifier{
 			Object: &dsc2.ObjectIdentifier{
@@ -196,6 +216,9 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 }
 
 func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest) (*dsr3.GetRelationsResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetRelationsResponse{}, err
+	}
 
 	resp, err := s.r2.GetRelations(ctx, &dsr2.GetRelationsRequest{
 		Param: &dsc2.RelationIdentifier{
@@ -242,6 +265,10 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 
 // check permission method.
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.CheckPermissionResponse{}, err
+	}
+
 	resp, err := s.r2.CheckPermission(ctx, &dsr2.CheckPermissionRequest{
 		Object: &dsc2.ObjectIdentifier{
 			Type: &req.ObjectType,
@@ -268,6 +295,10 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 
 // check relation method.
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.CheckRelationResponse{}, err
+	}
+
 	resp, err := s.r2.CheckRelation(ctx, &dsr2.CheckRelationRequest{
 		Object: &dsc2.ObjectIdentifier{
 			Type: &req.ObjectType,
@@ -295,6 +326,10 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 
 // graph methods.
 func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3.GetGraphResponse, error) {
+	if err := s.v.Validate(req); err != nil {
+		return &dsr3.GetGraphResponse{}, err
+	}
+
 	resp, err := s.r2.GetGraph(ctx, &dsr2.GetGraphRequest{
 		Anchor: &dsc2.ObjectIdentifier{
 			Type: &req.AnchorType,

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	"github.com/pkg/errors"
@@ -19,7 +19,7 @@ func ResolvePermission(ctx context.Context, tx *bolt.Tx, objectType, permission 
 	filter := fmt.Sprintf("%s:", objectType)
 
 	// relTypes contains the collection of relations for a the object_type.
-	relTypes, err := bdb.Scan[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, filter)
+	relTypes, err := bdb.Scan[dsc2.RelationType](ctx, tx, bdb.RelationTypesPath, filter)
 	if err != nil {
 		return relations, err
 	}
@@ -40,7 +40,7 @@ func ResolvePermission(ctx context.Context, tx *bolt.Tx, objectType, permission 
 }
 
 // ExpandRelation, expand relation to include covering relation within the object_type.
-func ExpandRelation(relTypes []*dsc.RelationType, relation string) []string {
+func ExpandRelation(relTypes []*dsc2.RelationType, relation string) []string {
 	res := []string{}
 
 	for i := range relTypes {
@@ -63,7 +63,7 @@ func ResolveRelation(ctx context.Context, tx *bolt.Tx, objectType, relation stri
 	relations := []string{relation}
 
 	filter := fmt.Sprintf("%s:", objectType)
-	relTypes, err := bdb.Scan[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, filter)
+	relTypes, err := bdb.Scan[dsc2.RelationType](ctx, tx, bdb.RelationTypesPath, filter)
 	if err != nil {
 		return relations, err
 	}
@@ -88,11 +88,11 @@ func ResolveRelation(ctx context.Context, tx *bolt.Tx, objectType, relation stri
 }
 
 // CreateUserSet, create the computed user set of a subject.
-func CreateUserSet(ctx context.Context, tx *bolt.Tx, subject *dsc.ObjectIdentifier) ([]*dsc.ObjectIdentifier, error) {
-	result := []*dsc.ObjectIdentifier{subject}
+func CreateUserSet(ctx context.Context, tx *bolt.Tx, subject *dsc2.ObjectIdentifier) ([]*dsc2.ObjectIdentifier, error) {
+	result := []*dsc2.ObjectIdentifier{subject}
 
 	filter := ObjectIdentifier(subject).Key() + InstanceSeparator + "member"
-	relations, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsSubPath, filter)
+	relations, err := bdb.Scan[dsc2.Relation](ctx, tx, bdb.RelationsSubPath, filter)
 	if err != nil {
 		return nil, err
 	}
