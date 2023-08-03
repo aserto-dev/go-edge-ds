@@ -14,6 +14,8 @@ github.com/aserto-dev/go-directory v0.21.7-0.20230731175128-38d662e6385f h1:w6fl
 github.com/aserto-dev/go-directory v0.21.7-0.20230731175128-38d662e6385f/go.mod h1:ZsHSXALiP6F49/+zKDZP6GIcAWyYX95lkSVxM+8Jwno=
 github.com/aserto-dev/go-directory v0.21.7-0.20230803181948-a340eae335ad h1:Eh6IOJmpHzo3iaqXRmmavbntucHblJ4sDKmEYz8BPgI=
 github.com/aserto-dev/go-directory v0.21.7-0.20230803181948-a340eae335ad/go.mod h1:ZsHSXALiP6F49/+zKDZP6GIcAWyYX95lkSVxM+8Jwno=
+github.com/aserto-dev/go-directory v0.21.7-0.20230803183618-1cd37bba996a h1:dJurfTmGFFWwcHxjGd6LEKeMWwkXUgt5u2e8mveibvA=
+github.com/aserto-dev/go-directory v0.21.7-0.20230803183618-1cd37bba996a/go.mod h1:ZsHSXALiP6F49/+zKDZP6GIcAWyYX95lkSVxM+8Jwno=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/bufbuild/protovalidate-go v0.2.1 h1:pJr07sYhliyfj/STAM7hU4J3FKpVeLVKvOBmOTN8j+s=
 github.com/bufbuild/protovalidate-go v0.2.1/go.mod h1:e7XXDtlxj5vlEyAgsrxpzayp4cEMKCSSb8ZCkin+MVA=
