@@ -12,6 +12,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Error codes returned by failures to parse an expression.
@@ -185,6 +186,22 @@ func BucketExists(tx *bolt.Tx, path Path) (bool, error) {
 	}
 }
 
+// ListBuckets, returns the bucket name underneath the path.
+func ListBuckets(tx *bolt.Tx, path Path) ([]string, error) {
+	results := []string{}
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return results, err
+	}
+
+	iErr := b.ForEachBucket(func(k []byte) error {
+		results = append(results, string(k))
+		return nil
+	})
+
+	return results, iErr
+}
+
 // SetKey, set key and value in the path specified bucket.
 func SetKey(tx *bolt.Tx, path Path, key string, value []byte) error {
 	b, err := SetBucket(tx, path)
@@ -245,4 +262,11 @@ func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func ErrIsNotFound(err error) bool {
+	if s, ok := status.FromError(err); ok {
+		return s.Code() == codes.NotFound
+	}
+	return false
 }

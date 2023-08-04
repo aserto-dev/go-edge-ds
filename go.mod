@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/errors v0.0.5
 	github.com/aserto-dev/go-aserto v0.20.3
-	github.com/aserto-dev/go-directory v0.21.7-0.20230803211840-7fcbbdb25139
+	github.com/aserto-dev/go-directory v0.21.7-0.20230804235215-9b1386c7a067
 	github.com/bufbuild/protovalidate-go v0.2.1
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0

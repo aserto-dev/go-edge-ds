@@ -10,6 +10,7 @@ import (
 
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
+	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 
@@ -44,6 +45,7 @@ type Directory struct {
 	writer2   dsw2.WriterServer
 	exporter3 dse3.ExporterServer
 	importer3 dsi3.ImporterServer
+	model3    dsm3.ModelServer
 	reader3   dsr3.ReaderServer
 	writer3   dsw3.WriterServer
 }
@@ -77,6 +79,7 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		writer2:   writer2,
 		exporter3: v3.NewExporter(logger, store),
 		importer3: v3.NewImporter(logger, store),
+		model3:    v3.NewModel(logger, store),
 		reader3:   v3.NewReader(logger, store, reader2),
 		writer3:   v3.NewWriter(logger, store, writer2),
 	}
@@ -121,6 +124,10 @@ func (s *Directory) Exporter3() dse3.ExporterServer {
 
 func (s *Directory) Importer3() dsi3.ImporterServer {
 	return s.importer3
+}
+
+func (s *Directory) Model3() dsm3.ModelServer {
+	return s.model3
 }
 
 func (s *Directory) Reader3() dsr3.ReaderServer {
