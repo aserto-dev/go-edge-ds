@@ -41,7 +41,7 @@ func (i *relation) SubKey() string {
 		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
 }
 
-func (i *relation) Validate() (bool, error) {
+func (i *relation) Validate(mc *bdb.ModelCache) (bool, error) {
 
 	if i == nil {
 		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
@@ -61,6 +61,22 @@ func (i *relation) Validate() (bool, error) {
 
 	if ok, err := ObjectIdentifier(i.Relation.Subject).Validate(); !ok {
 		return ok, err
+	}
+
+	if mc == nil {
+		return true, nil
+	}
+
+	if !mc.ObjectTypeExists(*i.Relation.Object.Type) {
+		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Object.Type)
+	}
+
+	if !mc.ObjectTypeExists(*i.Relation.Subject.Type) {
+		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Subject.Type)
+	}
+
+	if !mc.RelationTypeExists(*i.Relation.Object.Type, i.Relation.Relation) {
+		return false, derr.ErrRelationTypeNotFound.Msg(*i.Relation.Object.Type + ":" + i.Relation.Relation)
 	}
 
 	return true, nil

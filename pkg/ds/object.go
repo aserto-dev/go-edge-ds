@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/mitchellh/hashstructure/v2"
 	"google.golang.org/protobuf/proto"
@@ -28,7 +30,7 @@ func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *object) Validate() (bool, error) {
+func (i *object) Validate(mc *bdb.ModelCache) (bool, error) {
 	if i.Object == nil {
 		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
 	}
@@ -45,6 +47,14 @@ func (i *object) Validate() (bool, error) {
 
 	if i.Properties == nil {
 		i.Properties = pb.NewStruct()
+	}
+
+	if mc == nil {
+		return true, nil
+	}
+
+	if !mc.ObjectTypeExists(i.Object.Type) {
+		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
 	}
 
 	return true, nil

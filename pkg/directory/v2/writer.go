@@ -5,6 +5,7 @@ import (
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/rs/zerolog"
@@ -74,7 +75,7 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectType
 func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
 	resp := &dsw.SetRelationTypeResponse{}
 
-	if ok, err := ds.RelationType(req.RelationType).Validate(); !ok {
+	if ok, err := ds.RelationType(req.RelationType).Validate(s.store.Model()); !ok {
 		return resp, err
 	}
 
@@ -166,8 +167,12 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermission
 func (s *Writer) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
 	resp := &dsw.SetObjectResponse{}
 
-	if ok, err := ds.Object(req.Object).Validate(); !ok {
+	if ok, err := ds.Object(req.Object).Validate(s.store.Model()); !ok {
 		return resp, err
+	}
+
+	if !s.store.Model().ObjectTypeExists(req.Object.Type) {
+		return resp, derr.ErrObjectTypeNotFound.Msg(req.Object.Type)
 	}
 
 	req.Object.Hash = ds.Object(req.Object).Hash()
@@ -250,7 +255,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest)
 func (s *Writer) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
 	resp := &dsw.SetRelationResponse{}
 
-	if ok, err := ds.Relation(req.Relation).Validate(); !ok {
+	if ok, err := ds.Relation(req.Relation).Validate(s.store.Model()); !ok {
 		return resp, err
 	}
 

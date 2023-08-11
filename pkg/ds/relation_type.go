@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 )
 
 // RelationType.
@@ -20,7 +22,7 @@ func (i *relationType) Key() string {
 	return i.ObjectType + TypeIDSeparator + i.Name
 }
 
-func (i *relationType) Validate() (bool, error) {
+func (i *relationType) Validate(mc *bdb.ModelCache) (bool, error) {
 	if i == nil {
 		return false, ErrInvalidArgumentRelationType.Msg("relation type not set (nil)")
 	}
@@ -31,6 +33,14 @@ func (i *relationType) Validate() (bool, error) {
 
 	if IsNotSet(i.GetObjectType()) {
 		return false, ErrInvalidArgumentRelationType.Msg("object_type")
+	}
+
+	if mc == nil {
+		return true, nil
+	}
+
+	if !mc.ObjectTypeExists(i.ObjectType) {
+		return false, derr.ErrObjectTypeNotFound.Msg(i.ObjectType)
 	}
 
 	return true, nil
