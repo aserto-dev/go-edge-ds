@@ -32,11 +32,16 @@ func (i *checkRelation) Validate() (bool, error) {
 		return ok, err
 	}
 
-	if ok, err := RelationTypeIdentifier(i.CheckRelationRequest.Relation).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.CheckRelationRequest.Subject).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := ObjectIdentifier(i.CheckRelationRequest.Subject).Validate(); !ok {
+RECHECK:
+	if ok, err := RelationTypeIdentifier(i.CheckRelationRequest.Relation).Validate(); !ok {
+		if i.CheckRelationRequest.Relation.GetObjectType() == "" {
+			i.CheckRelationRequest.Relation.ObjectType = i.CheckRelationRequest.Object.Type
+			goto RECHECK
+		}
 		return ok, err
 	}
 
