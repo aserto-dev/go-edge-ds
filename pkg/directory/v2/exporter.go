@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -11,12 +12,14 @@ import (
 type Exporter struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	model  *azm.Model
 }
 
-func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB) *Exporter {
+func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB, model *azm.Model) *Exporter {
 	return &Exporter{
 		logger: logger,
 		store:  store,
+		model:  model,
 	}
 }
 

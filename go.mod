@@ -2,10 +2,13 @@ module github.com/aserto-dev/go-edge-ds
 
 go 1.19
 
+replace github.com/aserto-dev/azm => ../azm
+
 // replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
+	github.com/aserto-dev/azm v0.0.0-00010101000000-000000000000
 	github.com/aserto-dev/errors v0.0.5
 	github.com/aserto-dev/go-aserto v0.20.3
 	github.com/aserto-dev/go-directory v0.21.7
@@ -29,7 +32,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	golang.org/x/exp v0.0.0-20230811145659-89c5cff77bcb // indirect
 	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect

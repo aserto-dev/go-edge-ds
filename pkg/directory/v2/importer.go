@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
@@ -18,12 +19,14 @@ import (
 type Importer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	model  *azm.Model
 }
 
-func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
+func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB, model *azm.Model) *Importer {
 	return &Importer{
 		logger: logger,
 		store:  store,
+		model:  model,
 	}
 }
 
@@ -55,6 +58,18 @@ func (s *Importer) Import(stream dsi.Importer_ImportServer) error {
 			}
 		}
 	})
+
+	if res.ObjectType.Set != 0 || res.ObjectType.Delete != 0 ||
+		res.RelationType.Set != 0 || res.RelationType.Delete != 0 ||
+		res.Permission.Set != 0 || res.Permission.Delete != 0 {
+			if model, err := s.store.LoadModel(); err ==nil {
+				s.
+			}
+		if err := s.model.Load(s.store); err != nil {
+			s.logger.Error().Err(err).Msg("model reload")
+		}
+	}
+
 	return importErr
 }
 
@@ -123,7 +138,7 @@ func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *ds
 		return derr.ErrInvalidRelationType.Msg("nil")
 	}
 
-	if ok, err := ds.RelationType(req).Validate(s.store.Model()); !ok {
+	if ok, err := ds.RelationType(req).Validate(s.model); !ok {
 		return err
 	}
 
@@ -141,7 +156,7 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Obje
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if ok, err := ds.Object(req).Validate(s.store.Model()); !ok {
+	if ok, err := ds.Object(req).Validate(s.model); !ok {
 		return err
 	}
 
@@ -159,7 +174,7 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Re
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if ok, err := ds.Relation(req).Validate(s.store.Model()); !ok {
+	if ok, err := ds.Relation(req).Validate(s.model); !ok {
 		return err
 	}
 

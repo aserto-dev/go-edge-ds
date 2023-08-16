@@ -43,10 +43,10 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *bdb.ModelCache) (*dsr.CheckRelationResponse, error) {
 	resp := &dsr.CheckRelationResponse{Check: false, Trace: []string{}}
 
-	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath)
+	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
 	if err != nil {
 		return resp, err
 	}
@@ -56,11 +56,8 @@ func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckRelati
 	return &dsr.CheckRelationResponse{Check: match}, err
 }
 
-func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string) (*relationChecker, error) {
-	relations, err := ResolveRelation(ctx, tx, i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
-	if err != nil {
-		return nil, err
-	}
+func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *bdb.ModelCache) (*relationChecker, error) {
+	relations := mc.ExpandRelation(i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)
 	if err != nil {

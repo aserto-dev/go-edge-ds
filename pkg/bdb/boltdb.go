@@ -32,7 +32,6 @@ type BoltDB struct {
 	logger *zerolog.Logger
 	config *Config
 	db     *bolt.DB
-	mc     *ModelCache
 }
 
 func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
@@ -40,7 +39,6 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 	db := BoltDB{
 		config: config,
 		logger: &newLogger,
-		mc:     NewModelCache(),
 	}
 	return &db, nil
 }
@@ -72,11 +70,6 @@ func (s *BoltDB) Open() error {
 
 	s.db = db
 
-	if err := s.mc.Load(s); err != nil {
-		return err
-	}
-	s.mc.Dump("./model.json")
-
 	return nil
 }
 
@@ -105,10 +98,6 @@ func (s *BoltDB) DB() *bolt.DB {
 
 func (s *BoltDB) Config() *Config {
 	return s.config
-}
-
-func (s *BoltDB) Model() *ModelCache {
-	return s.mc
 }
 
 // SetBucket, set bucket context to path.

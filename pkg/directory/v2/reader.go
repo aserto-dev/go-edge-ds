@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -14,12 +15,14 @@ import (
 type Reader struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	model  *azm.Model
 }
 
-func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, model *azm.Model) *Reader {
 	return &Reader{
 		logger: logger,
 		store:  store,
+		model:  model,
 	}
 }
 
@@ -417,7 +420,7 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr.CheckPermissionRe
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckPermission(req).Exec(ctx, tx)
+		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.model)
 		return err
 	})
 
@@ -434,7 +437,7 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr.CheckRelationReques
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckRelation(req).Exec(ctx, tx)
+		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.model)
 		return err
 	})
 
