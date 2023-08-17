@@ -7,7 +7,6 @@ import (
 	"io"
 	"strconv"
 
-	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
@@ -46,15 +45,15 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		return err
 	}
 
-	metadata := &dsm3.Metadata{Name: req.Name, Version: req.Version}
+	metadata := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
 		manifest, err := ds.Manifest(metadata).Get(stream.Context(), tx)
 		switch {
 		case bdb.ErrIsNotFound(err):
-			return derr.ErrNotFound.Msgf("manifest %s:%s", metadata.GetName(), metadata.GetVersion())
+			return derr.ErrNotFound.Msgf("manifest")
 		case err != nil:
-			return errors.Errorf("failed to get manifest %s:%s", metadata.GetName(), metadata.GetVersion())
+			return errors.Errorf("failed to get manifest")
 		}
 
 		if err := stream.Send(&dsm3.GetManifestResponse{
@@ -109,12 +108,12 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 			return errors.Wrap(err, "failed to receive manifest")
 		}
 
-		if md, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Metadata); ok {
-			if err := s.v.Validate(md.Metadata); err != nil {
-				return err
-			}
-			metadata = md.Metadata
-		}
+		// if md, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Metadata); ok {
+		// 	if err := s.v.Validate(md.Metadata); err != nil {
+		// 		return err
+		// 	}
+		// 	metadata = md.Metadata
+		// }
 
 		if body, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Body); ok {
 			if err := s.v.Validate(body.Body); err != nil {
@@ -129,11 +128,6 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 		return errors.Wrap(err, "failed to send manifest response")
 	}
 
-	if metadata.CreatedAt == nil {
-		metadata.CreatedAt = timestamppb.Now()
-		metadata.UpdatedAt = metadata.CreatedAt
-	}
-
 	if metadata.UpdatedAt == nil {
 		metadata.UpdatedAt = timestamppb.Now()
 	}
@@ -146,12 +140,12 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 
 	modelErr := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(metadata).Set(stream.Context(), tx, data); err != nil {
-			return errors.Errorf("failed to set manifest %s:%s", metadata.GetName(), metadata.GetVersion())
+			return errors.Errorf("failed to set manifest")
 		}
 		return nil
 	})
 
-	logger.Info().Str("name", metadata.Name).Str("version", metadata.Version).Msg("manifest updated")
+	logger.Info().Msg("manifest updated")
 
 	return modelErr
 }
@@ -161,34 +155,14 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 		return &dsm3.DeleteManifestResponse{}, err
 	}
 
-	metadata := &dsm3.Metadata{Name: req.Name, Version: req.Version}
+	metadata := &dsm3.Metadata{}
 
 	modelErr := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(metadata).Delete(ctx, tx); err != nil {
-			return errors.Errorf("failed to delete manifest %s:%s", metadata.GetName(), metadata.GetVersion())
+			return errors.Errorf("failed to delete manifest")
 		}
 		return nil
 	})
 
 	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, modelErr
-}
-
-func (s *Model) ListManifests(ctx context.Context, req *dsm3.ListManifestsRequest) (*dsm3.ListManifestsResponse, error) {
-	if err := s.v.Validate(req); err != nil {
-		return &dsm3.ListManifestsResponse{}, err
-	}
-
-	resp := &dsm3.ListManifestsResponse{}
-
-	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
-		manifests, err := ds.Manifest(&dsm3.Metadata{}).List(ctx, tx)
-		if err != nil {
-			return errors.New("failed to list manifests")
-		}
-		resp.Manifests = append(resp.Manifests, manifests...)
-		return nil
-	})
-	resp.Page = &dsc3.PaginationResponse{NextToken: ""}
-
-	return resp, modelErr
 }

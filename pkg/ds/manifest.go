@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	metadataKey string = "metadata"
-	bodyKey     string = "body"
+	manifestName    string = "default"
+	manifestVersion string = "0"
+	metadataKey     string = "metadata"
+	bodyKey         string = "body"
 )
 
 type manifest struct {
@@ -112,7 +114,7 @@ func (m *manifest) List(ctx context.Context, tx *bolt.Tx) ([]*dsm3.Metadata, err
 }
 
 func (m *manifest) Path() bdb.Path {
-	return append(bdb.ManifestPath, m.Metadata.Name, m.Metadata.Version)
+	return append(bdb.ManifestPath, manifestName, manifestVersion)
 }
 
 func (m *manifest) Hash() string {
