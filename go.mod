@@ -8,8 +8,8 @@ replace github.com/aserto-dev/azm => ../azm
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.0-00010101000000-000000000000
-	github.com/aserto-dev/errors v0.0.5
+	github.com/aserto-dev/azm v0.0.1
+	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-aserto v0.20.3
 	github.com/aserto-dev/go-directory v0.21.7
 	github.com/google/uuid v1.3.0
@@ -17,7 +17,7 @@ require (
 	github.com/magefile/mage v1.15.0
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
-	github.com/rs/zerolog v1.29.1
+	github.com/rs/zerolog v1.30.0
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.7
