@@ -2,6 +2,8 @@ cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
+github.com/aserto-dev/azm v0.0.1 h1:UHfEJ17j360u/TpXcZW8v2xAG1rtPmJwT+Hqo4nw1PA=
+github.com/aserto-dev/azm v0.0.1/go.mod h1:Or/PY6xSLOfY6AeW1UaKqJ85TnFnqzj1qNiQxO+E2OI=
 github.com/aserto-dev/errors v0.0.6 h1:iH5fkJwBGFPbcdS4B8mwvNdwODlhDEXXPduZtjLh6vo=
 github.com/aserto-dev/errors v0.0.6/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-aserto v0.20.3 h1:yUhMIENFIdKA6TxE36E+99N3baEIuzfj7Y+onsOuLyg=
