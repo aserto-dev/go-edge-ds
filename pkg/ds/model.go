@@ -73,7 +73,12 @@ func ResolveRelation(ctx context.Context, tx *bolt.Tx, objectType, relation stri
 		relTypeIndex[r.Name] = i
 	}
 
-	rt := relTypes[relTypeIndex[relation]]
+	index, ok := relTypeIndex[relation]
+	if !ok {
+		return relations, errors.Wrapf(ErrRelationTypeNotFound, "%s#%s", objectType, relation)
+	}
+
+	rt := relTypes[index]
 	if rt.ObjectType != objectType && !lo.Contains(rt.Unions, relation) {
 		return relations, errors.Wrapf(ErrRelationTypeNotFound, "%s#%s", objectType, relation)
 	}
