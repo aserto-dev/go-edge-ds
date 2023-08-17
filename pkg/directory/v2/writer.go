@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 
-	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -16,14 +15,12 @@ import (
 type Writer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
-	model  *azm.Model
 }
 
-func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, model *azm.Model) *Writer {
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
 	return &Writer{
 		logger: logger,
 		store:  store,
-		model:  model,
 	}
 }
 
@@ -52,7 +49,7 @@ func (s *Writer) SetObjectType(ctx context.Context, req *dsw.SetObjectTypeReques
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -74,7 +71,7 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectType
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -85,7 +82,7 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw.DeleteObjectType
 func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRequest) (*dsw.SetRelationTypeResponse, error) {
 	resp := &dsw.SetRelationTypeResponse{}
 
-	if ok, err := ds.RelationType(req.RelationType).Validate(s.model); !ok {
+	if ok, err := ds.RelationType(req.RelationType).Validate(s.store.Model()); !ok {
 		return resp, err
 	}
 
@@ -106,7 +103,7 @@ func (s *Writer) SetRelationType(ctx context.Context, req *dsw.SetRelationTypeRe
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -128,7 +125,7 @@ func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw.DeleteRelation
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -160,7 +157,7 @@ func (s *Writer) SetPermission(ctx context.Context, req *dsw.SetPermissionReques
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -182,7 +179,7 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermission
 		return nil
 	})
 
-	if err := s.model.Load(s.store); err != nil {
+	if err := s.store.LoadModel(); err != nil {
 		s.logger.Error().Err(err).Msg("model reload")
 	}
 
@@ -193,7 +190,7 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw.DeletePermission
 func (s *Writer) SetObject(ctx context.Context, req *dsw.SetObjectRequest) (*dsw.SetObjectResponse, error) {
 	resp := &dsw.SetObjectResponse{}
 
-	if ok, err := ds.Object(req.Object).Validate(s.model); !ok {
+	if ok, err := ds.Object(req.Object).Validate(s.store.Model()); !ok {
 		return resp, err
 	}
 
@@ -277,7 +274,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw.DeleteObjectRequest)
 func (s *Writer) SetRelation(ctx context.Context, req *dsw.SetRelationRequest) (*dsw.SetRelationResponse, error) {
 	resp := &dsw.SetRelationResponse{}
 
-	if ok, err := ds.Relation(req.Relation).Validate(s.model); !ok {
+	if ok, err := ds.Relation(req.Relation).Validate(s.store.Model()); !ok {
 		return resp, err
 	}
 

@@ -3,7 +3,6 @@ package v2
 import (
 	"context"
 
-	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -15,14 +14,12 @@ import (
 type Reader struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
-	model  *azm.Model
 }
 
-func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, model *azm.Model) *Reader {
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
 	return &Reader{
 		logger: logger,
 		store:  store,
-		model:  model,
 	}
 }
 
@@ -34,15 +31,12 @@ func (s *Reader) GetObjectType(ctx context.Context, req *dsr.GetObjectTypeReques
 		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := bdb.Get[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key())
-		if err != nil {
-			return err
-		}
+	objectType, err := s.store.Model().GetObjectType(req.Param.GetName())
+	if err != nil {
+		return resp, err
+	}
 
-		resp.Result = objType
-		return nil
-	})
+	resp.Result = objectType
 
 	return resp, err
 }
@@ -55,27 +49,13 @@ func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr.GetObjectTypesRequ
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
-	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
-		bdb.WithPageToken(req.Page.Token),
+	objectTypes, err := s.store.Model().GetObjectTypes()
+
+	resp.Results = objectTypes
+	resp.Page = &dsc.PaginationResponse{
+		NextToken:  "",
+		ResultSize: int32(len(resp.Results)),
 	}
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewPageIterator[dsc.ObjectType](ctx, tx, bdb.ObjectTypesPath, opts...)
-		if err != nil {
-			return err
-		}
-
-		iter.Next()
-
-		resp.Results = iter.Value()
-		resp.Page = &dsc.PaginationResponse{
-			NextToken:  iter.NextToken(),
-			ResultSize: int32(len(resp.Results)),
-		}
-
-		return nil
-	})
 
 	return resp, err
 }
@@ -88,15 +68,12 @@ func (s *Reader) GetRelationType(ctx context.Context, req *dsr.GetRelationTypeRe
 		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		relType, err := bdb.Get[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key())
-		if err != nil {
-			return err
-		}
+	relationType, err := s.store.Model().GetRelationType(req.Param.GetObjectType(), req.Param.GetName())
+	if err != nil {
+		return resp, err
+	}
 
-		resp.Result = relType
-		return nil
-	})
+	resp.Result = relationType
 
 	return resp, err
 }
@@ -117,28 +94,16 @@ func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr.GetRelationTypes
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
-	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
-		bdb.WithPageToken(req.Page.Token),
-		bdb.WithKeyFilter(req.Param.GetName()),
+	relationTypes, err := s.store.Model().GetRelationTypes(req.Param.GetName())
+	if err != nil {
+		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewPageIterator[dsc.RelationType](ctx, tx, bdb.RelationTypesPath, opts...)
-		if err != nil {
-			return err
-		}
-
-		iter.Next()
-
-		resp.Results = iter.Value()
-		resp.Page = &dsc.PaginationResponse{
-			NextToken:  iter.NextToken(),
-			ResultSize: int32(len(resp.Results)),
-		}
-
-		return nil
-	})
+	resp.Results = relationTypes
+	resp.Page = &dsc.PaginationResponse{
+		NextToken:  "",
+		ResultSize: int32(len(resp.Results)),
+	}
 
 	return resp, err
 }
@@ -151,15 +116,12 @@ func (s *Reader) GetPermission(ctx context.Context, req *dsr.GetPermissionReques
 		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objType, err := bdb.Get[dsc.Permission](ctx, tx, bdb.PermissionsPath, ds.PermissionIdentifier(req.Param).Key())
-		if err != nil {
-			return err
-		}
+	permission, err := s.store.Model().GetPermission(req.Param.GetName())
+	if err != nil {
+		return resp, err
+	}
 
-		resp.Result = objType
-		return nil
-	})
+	resp.Result = permission
 
 	return resp, err
 }
@@ -172,27 +134,16 @@ func (s *Reader) GetPermissions(ctx context.Context, req *dsr.GetPermissionsRequ
 		req.Page = &dsc.PaginationRequest{Size: 100}
 	}
 
-	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
-		bdb.WithPageToken(req.Page.Token),
+	permissions, err := s.store.Model().GetPermissions()
+	if err != nil {
+		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewPageIterator[dsc.Permission](ctx, tx, bdb.PermissionsPath, opts...)
-		if err != nil {
-			return err
-		}
-
-		iter.Next()
-
-		resp.Results = iter.Value()
-		resp.Page = &dsc.PaginationResponse{
-			NextToken:  iter.NextToken(),
-			ResultSize: int32(len(resp.Results)),
-		}
-
-		return nil
-	})
+	resp.Results = permissions
+	resp.Page = &dsc.PaginationResponse{
+		NextToken:  "",
+		ResultSize: int32(len(resp.Results)),
+	}
 
 	return resp, err
 }
@@ -316,19 +267,19 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		rels, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
+		relations, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
 		if err != nil {
 			return err
 		}
 
-		if len(rels) == 0 {
+		if len(relations) == 0 {
 			return bdb.ErrKeyNotFound
 		}
-		if len(rels) != 1 {
+		if len(relations) != 1 {
 			return bdb.ErrMultipleResults
 		}
 
-		rel := rels[0]
+		rel := relations[0]
 		resp.Results = append(resp.Results, rel)
 
 		if req.GetWithObjects() {
@@ -420,7 +371,7 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr.CheckPermissionRe
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.model)
+		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.store.Model())
 		return err
 	})
 
@@ -437,7 +388,7 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr.CheckRelationReques
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.model)
+		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.store.Model())
 		return err
 	})
 

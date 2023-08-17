@@ -3,6 +3,7 @@ package ds
 import (
 	"context"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -44,7 +45,7 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *bdb.ModelCache) (*dsr.CheckPermissionResponse, error) {
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) (*dsr.CheckPermissionResponse, error) {
 	resp := &dsr.CheckPermissionResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
@@ -57,7 +58,7 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *bdb.ModelCa
 	return &dsr.CheckPermissionResponse{Check: match}, err
 }
 
-func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *bdb.ModelCache) (*permissionChecker, error) {
+func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *azm.Model) (*permissionChecker, error) {
 	relations := mc.ExpandPermission(i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)

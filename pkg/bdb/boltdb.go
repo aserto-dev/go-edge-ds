@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aserto-dev/azm"
 	cerr "github.com/aserto-dev/errors"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -32,6 +33,7 @@ type BoltDB struct {
 	logger *zerolog.Logger
 	config *Config
 	db     *bolt.DB
+	model  *azm.Model
 }
 
 func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
@@ -39,6 +41,7 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 	db := BoltDB{
 		config: config,
 		logger: &newLogger,
+		model:  azm.NewModel(),
 	}
 	return &db, nil
 }
@@ -98,6 +101,10 @@ func (s *BoltDB) DB() *bolt.DB {
 
 func (s *BoltDB) Config() *Config {
 	return s.config
+}
+
+func (s *BoltDB) Model() *azm.Model {
+	return s.model
 }
 
 // SetBucket, set bucket context to path.

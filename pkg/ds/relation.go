@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -41,7 +42,7 @@ func (i *relation) SubKey() string {
 		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
 }
 
-func (i *relation) Validate(mc *bdb.ModelCache) (bool, error) {
+func (i *relation) Validate(mc *azm.Model) (bool, error) {
 
 	if i == nil {
 		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")

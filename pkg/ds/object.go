@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/mitchellh/hashstructure/v2"
 	"google.golang.org/protobuf/proto"
@@ -30,7 +30,7 @@ func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *object) Validate(mc *bdb.ModelCache) (bool, error) {
+func (i *object) Validate(mc *azm.Model) (bool, error) {
 	if i.Object == nil {
 		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
 	}

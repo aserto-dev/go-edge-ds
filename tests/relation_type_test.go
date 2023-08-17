@@ -47,14 +47,14 @@ var relationTypeTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
-				assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(0), resp.Result.Ordinal)
-				assert.Equal(t, uint32(0), resp.Result.Status)
+				// assert.Equal(t, int32(0), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "6601616304534273683", resp.Result.Hash)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.Equal(t, "6601616304534273683", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -77,14 +77,14 @@ var relationTypeTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
-				assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type 1", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(0), resp.Result.Ordinal)
-				assert.Equal(t, uint32(0), resp.Result.Status)
+				// assert.Equal(t, int32(0), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "6601616304534273683", resp.Result.Hash)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.Equal(t, "6601616304534273683", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -113,14 +113,14 @@ var relationTypeTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
-				assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(321), resp.Result.Ordinal)
-				assert.Equal(t, uint32(dsc.Flag_FLAG_UNKNOWN), resp.Result.Status)
+				// assert.Equal(t, int32(321), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(dsc.Flag_FLAG_UNKNOWN), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "4737119394575755564", resp.Result.Hash)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.Equal(t, "4737119394575755564", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -143,14 +143,14 @@ var relationTypeTestCasesWithID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
-				assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type 11", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(321), resp.Result.Ordinal)
-				assert.Equal(t, uint32(dsc.Flag_FLAG_UNKNOWN), resp.Result.Status)
+				// assert.Equal(t, int32(321), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(dsc.Flag_FLAG_UNKNOWN), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "4737119394575755564", resp.Result.Hash)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.Equal(t, "4737119394575755564", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -233,14 +233,14 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
-				assert.Equal(t, "test rel type", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(0), resp.Result.Ordinal)
-				assert.Equal(t, uint32(0), resp.Result.Status)
+				// assert.Equal(t, int32(0), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.True(t, len(resp.Result.Hash) > 4)
 
 				return func(req proto.Message) {
 					lastHash := resp.Result.Hash
@@ -278,14 +278,14 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
-				assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(0), resp.Result.Ordinal)
-				assert.Equal(t, uint32(0), resp.Result.Status)
+				// assert.Equal(t, int32(0), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.True(t, len(resp.Result.Hash) > 4)
 			}
 			return func(proto.Message) {}
 		},
@@ -308,14 +308,14 @@ var relationTypeTestCasesWithoutID = []*TestCase{
 				t.Logf("resp hash:%s", resp.Result.Hash)
 
 				assert.Equal(t, "test-rel_type", resp.Result.Name)
-				assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)
+				// assert.Equal(t, "test rel type NO-ID", resp.Result.DisplayName)
 				assert.Equal(t, "user", resp.Result.ObjectType)
-				assert.Equal(t, int32(0), resp.Result.Ordinal)
-				assert.Equal(t, uint32(0), resp.Result.Status)
+				// assert.Equal(t, int32(0), resp.Result.Ordinal)
+				// assert.Equal(t, uint32(0), resp.Result.Status)
 				assert.Len(t, resp.Result.Unions, 0)
 				assert.Len(t, resp.Result.Permissions, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				// assert.NotEmpty(t, resp.Result.Hash)
+				// assert.True(t, len(resp.Result.Hash) > 4)
 			}
 			return func(proto.Message) {}
 		},

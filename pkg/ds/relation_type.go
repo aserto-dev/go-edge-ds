@@ -6,9 +6,9 @@ import (
 	"hash/fnv"
 	"strconv"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 )
 
 // RelationType.
@@ -22,7 +22,7 @@ func (i *relationType) Key() string {
 	return i.ObjectType + TypeIDSeparator + i.Name
 }
 
-func (i *relationType) Validate(mc *bdb.ModelCache) (bool, error) {
+func (i *relationType) Validate(mc *azm.Model) (bool, error) {
 	if i == nil {
 		return false, ErrInvalidArgumentRelationType.Msg("relation type not set (nil)")
 	}

@@ -3,6 +3,7 @@ package ds
 import (
 	"context"
 
+	"github.com/aserto-dev/azm"
 	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -43,7 +44,7 @@ func (i *checkRelation) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *bdb.ModelCache) (*dsr.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) (*dsr.CheckRelationResponse, error) {
 	resp := &dsr.CheckRelationResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
@@ -56,7 +57,7 @@ func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *bdb.ModelCach
 	return &dsr.CheckRelationResponse{Check: match}, err
 }
 
-func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *bdb.ModelCache) (*relationChecker, error) {
+func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *azm.Model) (*relationChecker, error) {
 	relations := mc.ExpandRelation(i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)

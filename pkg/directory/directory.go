@@ -3,7 +3,6 @@ package directory
 import (
 	"time"
 
-	azm "github.com/aserto-dev/azm"
 	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
@@ -32,7 +31,6 @@ type Directory struct {
 	config    *Config
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
-	model     *azm.Model
 	exporter2 dse2.ExporterServer
 	importer2 dsi2.ImporterServer
 	reader2   dsr2.ReaderServer
@@ -55,35 +53,23 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
-	model, err := store.LoadModel()
-	if err != nil {
-		return nil, err
-	}
-
-	reader2 := v2.NewReader(logger, store, model)
-	writer2 := v2.NewWriter(logger, store, model)
-
 	dir := &Directory{
 		config:    config,
 		logger:    &newLogger,
 		store:     store,
-		model:     model,
-		exporter2: v2.NewExporter(logger, store, model),
-		importer2: v2.NewImporter(logger, store, model),
-		reader2:   reader2,
-		writer2:   writer2,
+		reader2:   v2.NewReader(logger, store),
+		writer2:   v2.NewWriter(logger, store),
+		exporter2: v2.NewExporter(logger, store),
+		importer2: v2.NewImporter(logger, store),
 	}
 
 	if err := dir.Migrate(schemaVersion); err != nil {
 		return nil, err
 	}
 
-	model, err := store.LoadModel()
-	if err != nil {
+	if err := store.LoadModel(); err != nil {
 		return nil, err
 	}
-
-	dir.model.Dump("./model.json")
 
 	return dir, nil
 }
