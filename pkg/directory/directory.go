@@ -7,6 +7,7 @@ import (
 	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"

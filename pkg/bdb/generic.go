@@ -7,13 +7,11 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Message[T any] interface {
 	proto.Message
 	*T
-	GetCreatedAt() *timestamppb.Timestamp
 }
 
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {

@@ -8,10 +8,17 @@ import (
 	"time"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func UpdateMetadata[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path []string, key string, msg *T) (M, error) {
+type MessageM[T any] interface {
+	proto.Message
+	*T
+	GetCreatedAt() *timestamppb.Timestamp
+}
+
+func UpdateMetadata[T any, M MessageM[T]](ctx context.Context, tx *bolt.Tx, path []string, key string, msg *T) (M, error) {
 	// get timestamp once for transaction.
 	ts := timestamppb.New(time.Now().UTC())
 

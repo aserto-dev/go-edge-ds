@@ -3,9 +3,9 @@ package tests_test
 import (
 	"testing"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +25,8 @@ func TestPermissions(t *testing.T) {
 var permissionTestCasesWithID = []*TestCase{
 	{
 		Name: "create test-perm-1",
-		Req: &dsw.SetPermissionRequest{
-			Permission: &dsc.Permission{
+		Req: &dsw2.SetPermissionRequest{
+			Permission: &dsc2.Permission{
 				Name:        "permission-1",
 				DisplayName: "Permission 1",
 				Hash:        "",
@@ -35,7 +35,7 @@ var permissionTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetPermissionResponse:
+			case *dsw2.SetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -50,15 +50,15 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get test-perm-1",
-		Req: &dsr.GetPermissionRequest{
-			Param: &dsc.PermissionIdentifier{
+		Req: &dsr2.GetPermissionRequest{
+			Param: &dsc2.PermissionIdentifier{
 				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetPermissionResponse:
+			case *dsr2.GetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 
@@ -75,8 +75,8 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "update test-perm-1",
-		Req: &dsw.SetPermissionRequest{
-			Permission: &dsc.Permission{
+		Req: &dsw2.SetPermissionRequest{
+			Permission: &dsc2.Permission{
 				Name:        "permission-1",
 				DisplayName: "Permission 11",
 				Hash:        "7685029755427542192",
@@ -85,7 +85,7 @@ var permissionTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetPermissionResponse:
+			case *dsw2.SetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 
@@ -102,15 +102,15 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get updated test-perm-11",
-		Req: &dsr.GetPermissionRequest{
-			Param: &dsc.PermissionIdentifier{
+		Req: &dsr2.GetPermissionRequest{
+			Param: &dsc2.PermissionIdentifier{
 				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetPermissionResponse:
+			case *dsr2.GetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 
@@ -127,15 +127,15 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete test-perm-1",
-		Req: &dsw.DeletePermissionRequest{
-			Param: &dsc.PermissionIdentifier{
+		Req: &dsw2.DeletePermissionRequest{
+			Param: &dsc2.PermissionIdentifier{
 				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeletePermissionResponse:
+			case *dsw2.DeletePermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 			}
@@ -144,8 +144,8 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-perm-1",
-		Req: &dsr.GetPermissionRequest{
-			Param: &dsc.PermissionIdentifier{
+		Req: &dsr2.GetPermissionRequest{
+			Param: &dsc2.PermissionIdentifier{
 				Name: proto.String("permission-1"),
 			},
 		},
@@ -157,15 +157,15 @@ var permissionTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete deleted test-perm-1 by id",
-		Req: &dsw.DeletePermissionRequest{
-			Param: &dsc.PermissionIdentifier{
+		Req: &dsw2.DeletePermissionRequest{
+			Param: &dsc2.PermissionIdentifier{
 				Name: proto.String("permission-1"),
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeletePermissionResponse:
+			case *dsw2.DeletePermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 			}
@@ -177,8 +177,8 @@ var permissionTestCasesWithID = []*TestCase{
 var permissionTestCasesWithoutID = []*TestCase{
 	{
 		Name: "create test-perm with no-id",
-		Req: &dsw.SetPermissionRequest{
-			Permission: &dsc.Permission{
+		Req: &dsw2.SetPermissionRequest{
+			Permission: &dsc2.Permission{
 				Name:        "permission",
 				DisplayName: "Permission",
 				Hash:        "",
@@ -187,7 +187,7 @@ var permissionTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetPermissionResponse:
+			case *dsw2.SetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -202,7 +202,7 @@ var permissionTestCasesWithoutID = []*TestCase{
 					lastHash := resp.Result.Hash
 
 					switch r := req.(type) {
-					case *dsw.SetPermissionRequest:
+					case *dsw2.SetPermissionRequest:
 						r.Permission.Hash = lastHash
 					}
 				}
@@ -212,8 +212,8 @@ var permissionTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "update test-perm with no-id",
-		Req: &dsw.SetPermissionRequest{
-			Permission: &dsc.Permission{
+		Req: &dsw2.SetPermissionRequest{
+			Permission: &dsc2.Permission{
 				Name:        "permission",
 				DisplayName: "Permission NO-ID",
 			},
@@ -221,7 +221,7 @@ var permissionTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetPermissionResponse:
+			case *dsw2.SetPermissionResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)

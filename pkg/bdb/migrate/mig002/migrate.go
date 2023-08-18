@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
@@ -35,13 +35,13 @@ func MigrationVersion() *semver.Version {
 }
 
 type modelType interface {
-	*dsc.ObjectType | *dsc.RelationType | *dsc.Permission
+	*dsc2.ObjectType | *dsc2.RelationType | *dsc2.Permission
 	proto.Message
 	GetName() string
 }
 
 type objectType interface {
-	*dsc.Object
+	*dsc2.Object
 	proto.Message
 	GetType() string
 	GetKey() string
@@ -49,11 +49,11 @@ type objectType interface {
 }
 
 type relationType interface {
-	*dsc.Relation
+	*dsc2.Relation
 	proto.Message
-	GetSubject() *dsc.ObjectIdentifier
+	GetSubject() *dsc2.ObjectIdentifier
 	GetRelation() string
-	GetObject() *dsc.ObjectIdentifier
+	GetObject() *dsc2.ObjectIdentifier
 }
 
 type direction int
@@ -67,29 +67,29 @@ var fnMap = []func(*bolt.DB, *bolt.DB) error{
 	mig.DeleteBucket(bdb.ObjectTypesPath),
 	mig.DeleteBucket(ObjectTypesNamePath),
 	mig.CreateBucket(bdb.ObjectTypesPath),
-	updateModelTypes(bdb.ObjectTypesPath, &dsc.ObjectType{}),
+	updateModelTypes(bdb.ObjectTypesPath, &dsc2.ObjectType{}),
 
 	mig.DeleteBucket(bdb.RelationTypesPath),
 	mig.DeleteBucket(RelationTypesNamePath),
 	mig.CreateBucket(bdb.RelationTypesPath),
-	updateModelTypes(bdb.RelationTypesPath, &dsc.RelationType{}),
+	updateModelTypes(bdb.RelationTypesPath, &dsc2.RelationType{}),
 
 	mig.DeleteBucket(bdb.PermissionsPath),
 	mig.DeleteBucket(PermissionsNamePath),
 	mig.CreateBucket(bdb.PermissionsPath),
-	updateModelTypes(bdb.PermissionsPath, &dsc.Permission{}),
+	updateModelTypes(bdb.PermissionsPath, &dsc2.Permission{}),
 
 	mig.DeleteBucket(bdb.ObjectsPath),
 	mig.DeleteBucket(ObjectsKeyPath),
 	mig.CreateBucket(bdb.ObjectsPath),
-	updateObjects(bdb.ObjectsPath, &dsc.Object{}),
+	updateObjects(bdb.ObjectsPath, &dsc2.Object{}),
 
 	mig.DeleteBucket(bdb.RelationsObjPath),
 	mig.DeleteBucket(bdb.RelationsSubPath),
 	mig.CreateBucket(bdb.RelationsObjPath),
 	mig.CreateBucket(bdb.RelationsSubPath),
-	updateRelations(bdb.RelationsObjPath, &dsc.Relation{}, ObjectToSubject),
-	updateRelations(bdb.RelationsSubPath, &dsc.Relation{}, SubjectToObject),
+	updateRelations(bdb.RelationsObjPath, &dsc2.Relation{}, ObjectToSubject),
+	updateRelations(bdb.RelationsSubPath, &dsc2.Relation{}, SubjectToObject),
 }
 
 func Migrate(roDB, rwDB *bolt.DB) error {
@@ -145,11 +145,11 @@ func updateModelTypes[T modelType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) 
 func keyModelType[T modelType](v T) []byte {
 	var i interface{} = v
 	switch msg := i.(type) {
-	case *dsc.ObjectType:
+	case *dsc2.ObjectType:
 		return []byte(msg.GetName())
-	case *dsc.Permission:
+	case *dsc2.Permission:
 		return []byte(msg.GetName())
-	case *dsc.RelationType:
+	case *dsc2.RelationType:
 		return []byte(msg.GetObjectType() + ds.TypeIDSeparator + msg.GetName())
 	}
 	return []byte{}

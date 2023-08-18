@@ -3,9 +3,9 @@ package tests_test
 import (
 	"testing"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-directory/pkg/pb"
 
 	"github.com/stretchr/testify/assert"
@@ -26,8 +26,8 @@ func TestObjects(t *testing.T) {
 var objectTestCasesWithID = []*TestCase{
 	{
 		Name: "create test-obj-1",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user@acmecorp.com",
 				DisplayName: "test obj 1",
@@ -38,7 +38,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -57,8 +57,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get test-obj-1",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user@acmecorp.com"),
 			},
@@ -66,7 +66,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetObjectResponse:
+			case *dsr2.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -85,8 +85,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "update test-obj-1",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user-11@acmecorp.com",
 				DisplayName: "test obj 11",
@@ -96,7 +96,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -115,8 +115,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get updated test-obj-11",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
@@ -124,7 +124,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetObjectResponse:
+			case *dsr2.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -143,8 +143,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete test-obj-11",
-		Req: &dsw.DeleteObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsw2.DeleteObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
@@ -152,7 +152,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeleteObjectResponse:
+			case *dsw2.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -162,8 +162,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-obj-11",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
@@ -177,8 +177,8 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete deleted test-obj-11 by id",
-		Req: &dsw.DeleteObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsw2.DeleteObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-11@acmecorp.com"),
 			},
@@ -186,7 +186,7 @@ var objectTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeleteObjectResponse:
+			case *dsw2.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -200,8 +200,8 @@ var objectTestCasesWithID = []*TestCase{
 var objectTestCasesWithoutID = []*TestCase{
 	{
 		Name: "create test-obj-2 with no-id",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user-2@acmecorp.com",
 				DisplayName: "test obj 2",
@@ -212,7 +212,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -230,7 +230,7 @@ var objectTestCasesWithoutID = []*TestCase{
 					lastHash := resp.Result.Hash
 
 					switch r := req.(type) {
-					case *dsw.SetObjectRequest:
+					case *dsw2.SetObjectRequest:
 						r.Object.Hash = lastHash
 					}
 				}
@@ -240,8 +240,8 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "get test-obj-2",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-2@acmecorp.com"),
 			},
@@ -249,7 +249,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetObjectResponse:
+			case *dsr2.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -267,7 +267,7 @@ var objectTestCasesWithoutID = []*TestCase{
 					lastHash := resp.Result.Hash
 
 					switch r := req.(type) {
-					case *dsw.SetObjectRequest:
+					case *dsw2.SetObjectRequest:
 						r.Object.Hash = lastHash
 					}
 				}
@@ -277,8 +277,8 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "update test-obj-2",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user-2@acmecorp.com",
 				DisplayName: "test obj 22",
@@ -287,7 +287,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -306,8 +306,8 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "get updated test-obj-2",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-2@acmecorp.com"),
 			},
@@ -315,7 +315,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetObjectResponse:
+			case *dsr2.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -334,8 +334,8 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "delete test-obj-2",
-		Req: &dsw.DeleteObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsw2.DeleteObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-2@acmecorp.com"),
 			},
@@ -343,7 +343,7 @@ var objectTestCasesWithoutID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeleteObjectResponse:
+			case *dsw2.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -353,8 +353,8 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-obj-2",
-		Req: &dsr.GetObjectRequest{
-			Param: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetObjectRequest{
+			Param: &dsc2.ObjectIdentifier{
 				Type: proto.String("user"),
 				Key:  proto.String("test-user-2@acmecorp.com"),
 			},

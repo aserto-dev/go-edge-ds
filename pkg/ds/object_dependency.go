@@ -1,11 +1,11 @@
 package ds
 
 import (
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
 type objectDependency struct {
-	*dsc.ObjectDependency
+	*dsc2.ObjectDependency
 }
 
-func ObjectDependency(i *dsc.ObjectDependency) *objectDependency { return &objectDependency{i} }
+func ObjectDependency(i *dsc2.ObjectDependency) *objectDependency { return &objectDependency{i} }
