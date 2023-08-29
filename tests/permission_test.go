@@ -49,6 +49,37 @@ var permissionTestCasesWithID = []*TestCase{
 		},
 	},
 	{
+		Name: "create test-perm-1b",
+		Req: &dsw2.SetRelationTypeRequest{
+			RelationType: &dsc2.RelationType{
+				Name:        "test-rel_type-1",
+				DisplayName: "test rel type 1",
+				ObjectType:  "user",
+				Ordinal:     0,
+				Unions:      []string{},
+				Permissions: []string{"permission-1"},
+				Status:      uint32(dsc2.Flag_FLAG_UNKNOWN),
+				Hash:        "",
+			},
+		},
+		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
+			require.NotNil(t, msg)
+			switch resp := msg.(type) {
+			case *dsw2.SetRelationTypeResponse:
+				assert.NoError(t, tErr)
+				assert.NotNil(t, resp)
+				assert.NotNil(t, resp.Result)
+				t.Logf("resp hash:%s", resp.Result.Hash)
+
+				assert.Equal(t, "test-rel_type-1", resp.Result.Name)
+				assert.Equal(t, "user", resp.Result.ObjectType)
+				assert.Len(t, resp.Result.Unions, 0)
+				assert.Len(t, resp.Result.Permissions, 1)
+			}
+			return func(proto.Message) {}
+		},
+	},
+	{
 		Name: "get test-perm-1",
 		Req: &dsr2.GetPermissionRequest{
 			Param: &dsc2.PermissionIdentifier{
@@ -136,6 +167,24 @@ var permissionTestCasesWithID = []*TestCase{
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
 			case *dsw2.DeletePermissionResponse:
+				assert.NoError(t, tErr)
+				assert.NotNil(t, resp)
+			}
+			return func(proto.Message) {}
+		},
+	},
+	{
+		Name: "delete test-perm-1b",
+		Req: &dsw2.DeleteRelationTypeRequest{
+			Param: &dsc2.RelationTypeIdentifier{
+				ObjectType: proto.String("user"),
+				Name:       proto.String("test-rel_type-1"),
+			},
+		},
+		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
+			require.NotNil(t, msg)
+			switch resp := msg.(type) {
+			case *dsw2.DeleteRelationTypeResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 			}
