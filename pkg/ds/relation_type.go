@@ -6,7 +6,8 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 )
@@ -22,7 +23,7 @@ func (i *relationType) Key() string {
 	return i.ObjectType + TypeIDSeparator + i.Name
 }
 
-func (i *relationType) Validate(mc *azm.Model) (bool, error) {
+func (i *relationType) Validate(mc *cache.Cache) (bool, error) {
 	if i == nil {
 		return false, ErrInvalidArgumentRelationType.Msg("relation type not set (nil)")
 	}
@@ -39,7 +40,7 @@ func (i *relationType) Validate(mc *azm.Model) (bool, error) {
 		return true, nil
 	}
 
-	if !mc.ObjectTypeExists(i.ObjectType) {
+	if !mc.ObjectExists(model.ObjectName(i.ObjectType)) {
 		return false, derr.ErrObjectTypeNotFound.Msg(i.ObjectType)
 	}
 

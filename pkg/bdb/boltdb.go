@@ -6,7 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	cerr "github.com/aserto-dev/errors"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -34,7 +35,7 @@ type BoltDB struct {
 	logger *zerolog.Logger
 	config *Config
 	db     *bolt.DB
-	model  *azm.Model
+	model  *cache.Cache
 }
 
 func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
@@ -42,7 +43,7 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 	db := BoltDB{
 		config: config,
 		logger: &newLogger,
-		model:  azm.NewModel(),
+		model:  cache.New(&model.Model{}),
 	}
 	return &db, nil
 }
@@ -104,7 +105,7 @@ func (s *BoltDB) Config() *Config {
 	return s.config
 }
 
-func (s *BoltDB) Model() *azm.Model {
+func (s *BoltDB) Model() *cache.Cache {
 	return s.model
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/model"
+	v2 "github.com/aserto-dev/azm/v2"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 
 	bolt "go.etcd.io/bbolt"
@@ -13,8 +15,12 @@ func (s *BoltDB) LoadModel() error {
 	ctx := context.Background()
 	opts := []ScanOption{}
 
-	objectTypes := map[string]*azm.ObjectType{}
-	permissions := map[string]struct{}{}
+	m := &model.Model{
+		Version: model.ModelVersion,
+		Objects: map[model.ObjectName]*model.Object{},
+	}
+
+	relationTypes := []*dsc2.RelationType{}
 
 	err := s.db.View(func(tx *bolt.Tx) error {
 
@@ -24,13 +30,15 @@ func (s *BoltDB) LoadModel() error {
 		}
 
 		for objectTypeIter.Next() {
-
 			objectType := objectTypeIter.Value()
 
-			if _, ok := objectTypes[objectType.Name]; !ok {
-				objectTypes[objectType.Name] = &azm.ObjectType{
-					RelationTypes: map[string]*azm.RelationType{},
-					Permissions:   map[string]*azm.RelationType{},
+			on := model.ObjectName(objectType.Name)
+
+			// create object type if not exists
+			if _, ok := m.Objects[on]; !ok {
+				m.Objects[on] = &model.Object{
+					Relations:   map[model.RelationName][]*model.Relation{},
+					Permissions: map[model.PermissionName]*model.Permission{},
 				}
 			}
 		}
@@ -41,45 +49,21 @@ func (s *BoltDB) LoadModel() error {
 		}
 
 		for relationTypeIter.Next() {
-
 			relationType := relationTypeIter.Value()
+			relationTypes = append(relationTypes, relationType)
 
-			if ot, ok := objectTypes[relationType.ObjectType]; ok {
-				if _, ok := ot.RelationTypes[relationType.Name]; !ok {
-					rt := &azm.RelationType{Union: map[string]struct{}{}}
-					for _, union := range relationType.Unions {
-						if _, ok := rt.Union[union]; !ok {
-							rt.Union[union] = struct{}{}
-						}
-					}
-					ot.RelationTypes[relationType.Name] = rt
+			on := model.ObjectName(relationType.ObjectType)
+			rn := model.RelationName(relationType.Name)
 
-					for _, permission := range relationType.Permissions {
-						if p, ok := ot.Permissions[permission]; !ok {
-							p = &azm.RelationType{Union: map[string]struct{}{}}
-							p.Union[relationType.Name] = struct{}{}
-							ot.Permissions[permission] = p
-						} else {
-							if _, ok := p.Union[relationType.Name]; !ok {
-								p.Union[relationType.Name] = struct{}{}
-								ot.Permissions[permission] = p
-							}
-						}
-					}
+			if _, ok := m.Objects[on]; !ok {
+				m.Objects[on] = &model.Object{
+					Relations:   map[model.RelationName][]*model.Relation{},
+					Permissions: map[model.PermissionName]*model.Permission{},
 				}
 			}
-		}
 
-		permissionIter, err := NewScanIterator[dsc2.Permission](ctx, tx, PermissionsPath, opts...)
-		if err != nil {
-			return err
-		}
-
-		for permissionIter.Next() {
-			permission := permissionIter.Value()
-
-			if _, ok := permissions[permission.Name]; !ok {
-				permissions[permission.Name] = struct{}{}
+			if _, ok := m.Objects[on].Relations[rn]; !ok {
+				m.Objects[on].Relations[rn] = []*model.Relation{}
 			}
 		}
 
@@ -89,8 +73,42 @@ func (s *BoltDB) LoadModel() error {
 		return err
 	}
 
-	s.model.SetObjectTypes(objectTypes)
-	s.model.SetPermissions(permissions)
+	for _, relationType := range relationTypes {
+		on := model.ObjectName(relationType.ObjectType)
+		rn := model.RelationName(relationType.Name)
 
-	return nil
+		// get object type instance.
+		o := m.Objects[on]
+
+		for _, v := range relationType.Unions {
+			rs, ok := o.Relations[model.RelationName(v)]
+			if !ok {
+				return azm.ErrRelationNotFound.Msg(v)
+			}
+
+			rs = append(rs, &model.Relation{Subject: &model.SubjectRelation{
+				Object:   on,
+				Relation: rn,
+			}})
+
+			o.Relations[model.RelationName(v)] = rs
+		}
+
+		for _, v := range relationType.Permissions {
+			pn := model.PermissionName(v2.NormalizePermission(v))
+
+			// if permission does not exist, create permission definition.
+			if pd, ok := o.Permissions[pn]; !ok {
+				p := &model.Permission{
+					Union: []string{string(rn)},
+				}
+				o.Permissions[pn] = p
+			} else {
+				pd.Union = append(pd.Union, string(rn))
+				o.Permissions[pn] = pd
+			}
+		}
+	}
+
+	return s.model.UpdateModel(m)
 }

@@ -3,7 +3,8 @@ package ds
 import (
 	"context"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -45,7 +46,7 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) (*dsr2.CheckPermissionResponse, error) {
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr2.CheckPermissionResponse, error) {
 	resp := &dsr2.CheckPermissionResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
@@ -58,8 +59,8 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) 
 	return &dsr2.CheckPermissionResponse{Check: match}, err
 }
 
-func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *azm.Model) (*permissionChecker, error) {
-	relations := mc.ExpandPermission(i.CheckPermissionRequest.Object.GetType(), i.CheckPermissionRequest.Permission.GetName())
+func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*permissionChecker, error) {
+	relations := mc.ExpandPermission(model.ObjectName(i.CheckPermissionRequest.Object.GetType()), model.PermissionName(i.CheckPermissionRequest.Permission.GetName()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)
 	if err != nil {
@@ -83,7 +84,7 @@ type permissionChecker struct {
 	path    []string
 	anchor  *checkPermission
 	userSet []*dsc2.ObjectIdentifier
-	filter  []string
+	filter  []model.RelationName
 	trace   [][]*dsc2.Relation
 }
 
@@ -102,7 +103,7 @@ func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, r.Relation) || r.Relation == "parent" {
+		if lo.Contains(c.filter, model.RelationName(r.Relation)) || r.Relation == "parent" {
 			match, err := c.check(r.Subject)
 			if err != nil {
 				return false, err
@@ -118,7 +119,7 @@ func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 }
 
 func (c *permissionChecker) isMatch(relation *dsc2.Relation) bool {
-	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
+	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
 		return true
 	}
 	return false

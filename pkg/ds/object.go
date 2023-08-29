@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
@@ -31,7 +32,7 @@ func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *object) Validate(mc *azm.Model) (bool, error) {
+func (i *object) Validate(mc *cache.Cache) (bool, error) {
 	if i.Object == nil {
 		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
 	}
@@ -54,7 +55,7 @@ func (i *object) Validate(mc *azm.Model) (bool, error) {
 		return true, nil
 	}
 
-	if !mc.ObjectTypeExists(i.Object.Type) {
+	if !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
 		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
 	}
 

@@ -3,7 +3,8 @@ package ds
 import (
 	"context"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -50,7 +51,7 @@ RECHECK:
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) (*dsr2.CheckRelationResponse, error) {
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr2.CheckRelationResponse, error) {
 	resp := &dsr2.CheckRelationResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
@@ -63,8 +64,8 @@ func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *azm.Model) (*
 	return &dsr2.CheckRelationResponse{Check: match}, err
 }
 
-func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *azm.Model) (*relationChecker, error) {
-	relations := mc.ExpandRelation(i.CheckRelationRequest.Object.GetType(), i.CheckRelationRequest.Relation.GetName())
+func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*relationChecker, error) {
+	relations := mc.ExpandRelation(model.ObjectName(i.CheckRelationRequest.Object.GetType()), model.RelationName(i.CheckRelationRequest.Relation.GetName()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)
 	if err != nil {
@@ -88,7 +89,7 @@ type relationChecker struct {
 	path    []string
 	anchor  *checkRelation
 	userSet []*dsc2.ObjectIdentifier
-	filter  []string
+	filter  []model.RelationName
 	trace   [][]*dsc2.Relation
 }
 
@@ -108,7 +109,7 @@ func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, r.Relation) {
+		if lo.Contains(c.filter, model.RelationName(r.Relation)) {
 			match, err := c.check(r.Subject)
 			if err != nil {
 				return false, err
@@ -124,7 +125,7 @@ func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 }
 
 func (c *relationChecker) isMatch(relation *dsc2.Relation) bool {
-	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
+	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
 		return true
 	}
 	return false

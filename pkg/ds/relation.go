@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/aserto-dev/azm"
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -43,7 +44,7 @@ func (i *relation) SubKey() string {
 		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
 }
 
-func (i *relation) Validate(mc *azm.Model) (bool, error) {
+func (i *relation) Validate(mc *cache.Cache) (bool, error) {
 
 	if i == nil {
 		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
@@ -69,15 +70,15 @@ func (i *relation) Validate(mc *azm.Model) (bool, error) {
 		return true, nil
 	}
 
-	if !mc.ObjectTypeExists(*i.Relation.Object.Type) {
+	if !mc.ObjectExists(model.ObjectName(*i.Relation.Object.Type)) {
 		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Object.Type)
 	}
 
-	if !mc.ObjectTypeExists(*i.Relation.Subject.Type) {
+	if !mc.ObjectExists(model.ObjectName(*i.Relation.Subject.Type)) {
 		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Subject.Type)
 	}
 
-	if !mc.RelationTypeExists(*i.Relation.Object.Type, i.Relation.Relation) {
+	if !mc.RelationExists(model.ObjectName(*i.Relation.Object.Type), model.RelationName(i.Relation.Relation)) {
 		return false, derr.ErrRelationTypeNotFound.Msg(*i.Relation.Object.Type + ":" + i.Relation.Relation)
 	}
 
