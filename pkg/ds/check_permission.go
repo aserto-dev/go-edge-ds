@@ -60,7 +60,9 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache
 }
 
 func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*permissionChecker, error) {
-	relations := mc.ExpandPermission(model.ObjectName(i.CheckPermissionRequest.Object.GetType()), model.PermissionName(i.CheckPermissionRequest.Permission.GetName()))
+	relations := mc.ExpandPermission(
+		model.ObjectName(i.CheckPermissionRequest.Object.GetType()),
+		model.PermissionName(i.CheckPermissionRequest.Permission.GetName()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)
 	if err != nil {

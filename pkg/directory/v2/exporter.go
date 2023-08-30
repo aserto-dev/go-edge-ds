@@ -3,7 +3,6 @@ package v2
 import (
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	"github.com/rs/zerolog"

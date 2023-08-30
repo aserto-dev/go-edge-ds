@@ -65,7 +65,9 @@ func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) 
 }
 
 func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*relationChecker, error) {
-	relations := mc.ExpandRelation(model.ObjectName(i.CheckRelationRequest.Object.GetType()), model.RelationName(i.CheckRelationRequest.Relation.GetName()))
+	relations := mc.ExpandRelation(
+		model.ObjectName(i.CheckRelationRequest.Object.GetType()),
+		model.RelationName(i.CheckRelationRequest.Relation.GetName()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject)
 	if err != nil {
