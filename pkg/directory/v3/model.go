@@ -7,18 +7,20 @@ import (
 	"io"
 	"strconv"
 
+	mod "github.com/aserto-dev/azm/model"
+	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
+	model "github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/rs/zerolog"
 )
 
 type Model struct {
@@ -27,7 +29,9 @@ type Model struct {
 	v      *protovalidate.Validator
 }
 
-// store layout: _metadata/{name}/{version}/[metadata|manifest]
+// store layout: _metadata/{name}/{version}/[metadata|manifest|model]
+// current single manifest implementation uses a constant name and version
+// defined in pkg/ds/manifest.go
 
 func NewModel(logger *zerolog.Logger, store *bdb.BoltDB) *Model {
 	v, _ := protovalidate.New()
@@ -51,7 +55,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		manifest, err := ds.Manifest(metadata).Get(stream.Context(), tx)
 		switch {
 		case bdb.ErrIsNotFound(err):
-			return derr.ErrNotFound.Msgf("manifest")
+			return derr.ErrNotFound.Msg("manifest")
 		case err != nil:
 			return errors.Errorf("failed to get manifest")
 		}
@@ -95,7 +99,6 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	h := fnv.New64a()
 	h.Reset()
 
-	metadata := &dsm3.Metadata{}
 	data := bytes.NewBuffer([]byte{})
 
 	for {
@@ -108,13 +111,6 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 			return errors.Wrap(err, "failed to receive manifest")
 		}
 
-		// if md, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Metadata); ok {
-		// 	if err := s.v.Validate(md.Metadata); err != nil {
-		// 		return err
-		// 	}
-		// 	metadata = md.Metadata
-		// }
-
 		if body, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Body); ok {
 			if err := s.v.Validate(body.Body); err != nil {
 				return err
@@ -124,45 +120,65 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 		}
 	}
 
-	if err := stream.SendAndClose(&dsm3.SetManifestResponse{}); err != nil {
-		return errors.Wrap(err, "failed to send manifest response")
+	if err := stream.SendAndClose(&dsm3.SetManifestResponse{
+		Result: &emptypb.Empty{},
+	}); err != nil {
+		return err
 	}
 
-	if metadata.UpdatedAt == nil {
-		metadata.UpdatedAt = timestamppb.Now()
+	metadata := &dsm3.Metadata{
+		UpdatedAt: timestamppb.Now(),
+		Etag:      strconv.FormatUint(h.Sum64(), 10),
 	}
-
-	metadata.Etag = strconv.FormatUint(h.Sum64(), 10)
 
 	if err := s.v.Validate(metadata); err != nil {
 		return err
 	}
 
-	modelErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+	m, err := manifest.Load(bytes.NewReader(data.Bytes()))
+	if err != nil {
+		return err
+	}
+
+	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(metadata).Set(stream.Context(), tx, data); err != nil {
 			return errors.Errorf("failed to set manifest")
 		}
+
+		if err := ds.Manifest(metadata).SetModel(stream.Context(), tx, m); err != nil {
+			return errors.Errorf("failed to set manifest")
+		}
+
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
 
 	logger.Info().Msg("manifest updated")
 
-	return modelErr
+	return s.store.MC().UpdateModel(m)
 }
 
 func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequest) (*dsm3.DeleteManifestResponse, error) {
+	resp := &dsm3.DeleteManifestResponse{}
 	if err := s.v.Validate(req); err != nil {
-		return &dsm3.DeleteManifestResponse{}, err
+		return resp, err
 	}
 
 	metadata := &dsm3.Metadata{}
 
-	modelErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(metadata).Delete(ctx, tx); err != nil {
 			return errors.Errorf("failed to delete manifest")
 		}
 		return nil
-	})
+	}); err != nil {
+		return resp, err
+	}
 
-	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, modelErr
+	if err := s.store.MC().UpdateModel(&mod.Model{}); err != nil {
+		return resp, err
+	}
+
+	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, nil
 }

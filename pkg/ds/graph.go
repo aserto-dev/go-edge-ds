@@ -72,7 +72,7 @@ func (i *getGraph) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *azm.Model*/) ([]*dsc2.ObjectDependency, error) {
+func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *cache.Cache*/) ([]*dsc2.ObjectDependency, error) {
 	resp := []*dsc2.ObjectDependency{}
 
 	// determine graph walk directionality.

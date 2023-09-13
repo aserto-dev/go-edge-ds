@@ -5,7 +5,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aserto-dev/azm/cache"
+	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	"github.com/mitchellh/hashstructure/v2"
@@ -29,7 +32,7 @@ func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *object) Validate() (bool, error) {
+func (i *object) Validate(mc *cache.Cache) (bool, error) {
 	if i.Object == nil {
 		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
 	}
@@ -46,6 +49,14 @@ func (i *object) Validate() (bool, error) {
 
 	if i.Properties == nil {
 		i.Properties = pb.NewStruct()
+	}
+
+	if mc == nil {
+		return true, nil
+	}
+
+	if !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
+		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
 	}
 
 	return true, nil

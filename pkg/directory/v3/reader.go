@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
@@ -87,8 +88,8 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 	param := make([]*dsc2.ObjectIdentifier, len(req.Param))
 	for i, p := range req.Param {
 		param[i] = &dsc2.ObjectIdentifier{
-			Type: &p.ObjectType,
-			Key:  &p.ObjectId,
+			Type: proto.String(p.ObjectType),
+			Key:  proto.String(p.ObjectId),
 		}
 	}
 

@@ -88,6 +88,10 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
+	if err := store.LoadModel(); err != nil {
+		return nil, err
+	}
+
 	return dir, nil
 }
 

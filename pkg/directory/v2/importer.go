@@ -56,6 +56,15 @@ func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
 			}
 		}
 	})
+
+	if res.ObjectType.Set != 0 || res.ObjectType.Delete != 0 ||
+		res.RelationType.Set != 0 || res.RelationType.Delete != 0 ||
+		res.Permission.Set != 0 || res.Permission.Delete != 0 {
+		if err := s.store.LoadModel(); err != nil {
+			s.logger.Error().Err(err).Msg("model reload")
+		}
+	}
+
 	return importErr
 }
 
@@ -88,6 +97,10 @@ func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2
 		return derr.ErrInvalidObjectType.Msg("nil")
 	}
 
+	if ok, err := ds.ObjectType(req).Validate(); !ok {
+		return err
+	}
+
 	if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
 		return derr.ErrInvalidObjectType.Msg("set")
 	}
@@ -100,6 +113,10 @@ func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc2
 
 	if req == nil {
 		return derr.ErrInvalidPermission.Msg("nil")
+	}
+
+	if ok, err := ds.Permission(req).Validate(); !ok {
+		return err
 	}
 
 	if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
@@ -116,6 +133,10 @@ func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *ds
 		return derr.ErrInvalidRelationType.Msg("nil")
 	}
 
+	if ok, err := ds.RelationType(req).Validate(s.store.MC()); !ok {
+		return err
+	}
+
 	if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
 		return derr.ErrInvalidRelationType.Msg("set")
 	}
@@ -130,6 +151,10 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Obj
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
+	if ok, err := ds.Object(req).Validate(s.store.MC()); !ok {
+		return err
+	}
+
 	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
@@ -142,6 +167,10 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.R
 
 	if req == nil {
 		return derr.ErrInvalidRelation.Msg("nil")
+	}
+
+	if ok, err := ds.Relation(req).Validate(s.store.MC()); !ok {
+		return err
 	}
 
 	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {

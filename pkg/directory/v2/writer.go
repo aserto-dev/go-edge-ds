@@ -50,6 +50,10 @@ func (s *Writer) SetObjectType(ctx context.Context, req *dsw2.SetObjectTypeReque
 		return nil
 	})
 
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
+
 	return resp, err
 }
 
@@ -68,6 +72,10 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw2.DeleteObjectTyp
 		return nil
 	})
 
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
+
 	return resp, err
 }
 
@@ -75,7 +83,7 @@ func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw2.DeleteObjectTyp
 func (s *Writer) SetRelationType(ctx context.Context, req *dsw2.SetRelationTypeRequest) (*dsw2.SetRelationTypeResponse, error) {
 	resp := &dsw2.SetRelationTypeResponse{}
 
-	if ok, err := ds.RelationType(req.RelationType).Validate(); !ok {
+	if ok, err := ds.RelationType(req.RelationType).Validate(s.store.MC()); !ok {
 		return resp, err
 	}
 
@@ -96,6 +104,10 @@ func (s *Writer) SetRelationType(ctx context.Context, req *dsw2.SetRelationTypeR
 		return nil
 	})
 
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
+
 	return resp, err
 }
 
@@ -113,6 +125,10 @@ func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw2.DeleteRelatio
 		resp.Result = &emptypb.Empty{}
 		return nil
 	})
+
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
 
 	return resp, err
 }
@@ -142,6 +158,10 @@ func (s *Writer) SetPermission(ctx context.Context, req *dsw2.SetPermissionReque
 		return nil
 	})
 
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
+
 	return resp, err
 }
 
@@ -160,6 +180,10 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw2.DeletePermissio
 		return nil
 	})
 
+	if err := s.store.LoadModel(); err != nil {
+		s.logger.Error().Err(err).Msg("model reload")
+	}
+
 	return resp, err
 }
 
@@ -167,7 +191,7 @@ func (s *Writer) DeletePermission(ctx context.Context, req *dsw2.DeletePermissio
 func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*dsw2.SetObjectResponse, error) {
 	resp := &dsw2.SetObjectResponse{}
 
-	if ok, err := ds.Object(req.Object).Validate(); !ok {
+	if ok, err := ds.Object(req.Object).Validate(s.store.MC()); !ok {
 		return resp, err
 	}
 
@@ -251,7 +275,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest
 func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) (*dsw2.SetRelationResponse, error) {
 	resp := &dsw2.SetRelationResponse{}
 
-	if ok, err := ds.Relation(req.Relation).Validate(); !ok {
+	if ok, err := ds.Relation(req.Relation).Validate(s.store.MC()); !ok {
 		return resp, err
 	}
 
