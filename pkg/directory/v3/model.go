@@ -29,9 +29,15 @@ type Model struct {
 	v      *protovalidate.Validator
 }
 
-// store layout: _metadata/{name}/{version}/[metadata|manifest|model]
-// current single manifest implementation uses a constant name and version
-// defined in pkg/ds/manifest.go
+// NOTES:
+//
+// store layout: _manifest/{name}/{version}/[metadata|manifest|model]
+// The current single manifest implementation uses a constant name and version, defined in pkg/bdb/path.go.
+//
+// examples:
+// _manifest/default/0.0.1/metadata		-- contains the model.Metadata message
+// _manifest/default/0.0.1/manifest		-- contains the manifest raw byte stream
+// _manifest/default/0.0.1/model		-- contains the serialized model representation of the manifest byte stream
 
 func NewModel(logger *zerolog.Logger, store *bdb.BoltDB) *Model {
 	v, _ := protovalidate.New()
