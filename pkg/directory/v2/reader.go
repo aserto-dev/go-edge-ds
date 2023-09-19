@@ -312,8 +312,13 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (
 		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		rels, err := bdb.Scan[dsc.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
+	path, filter, err := ds.RelationIdentifier(req.Param).PathAndFilter()
+	if err != nil {
+		return resp, err
+	}
+
+	err = s.store.DB().View(func(tx *bolt.Tx) error {
+		rels, err := bdb.Scan[dsc.Relation](ctx, tx, path, filter)
 		if err != nil {
 			return err
 		}
