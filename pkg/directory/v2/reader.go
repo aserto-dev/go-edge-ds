@@ -318,24 +318,24 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr.GetRelationRequest) (
 	}
 
 	err = s.store.DB().View(func(tx *bolt.Tx) error {
-		rels, err := bdb.Scan[dsc.Relation](ctx, tx, path, filter)
+		relations, err := bdb.Scan[dsc.Relation](ctx, tx, path, filter)
 		if err != nil {
 			return err
 		}
 
-		if len(rels) == 0 {
+		if len(relations) == 0 {
 			return bdb.ErrKeyNotFound
 		}
-		if len(rels) != 1 {
+		if len(relations) != 1 {
 			return bdb.ErrMultipleResults
 		}
 
-		rel := rels[0]
-		resp.Results = append(resp.Results, rel)
+		resp.Results = append(resp.Results, relations...)
 
 		if req.GetWithObjects() {
 			objects := map[string]*dsc.Object{}
 			for i := 0; i < len(resp.Results); i++ {
+				rel := resp.Results[i]
 				sub, err := bdb.Get[dsc.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
 				if err != nil {
 					return err
