@@ -4,15 +4,15 @@ import (
 	"hash/fnv"
 	"strconv"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
 // Permission.
 type permission struct {
-	*dsc.Permission
+	*dsc2.Permission
 }
 
-func Permission(i *dsc.Permission) *permission { return &permission{i} }
+func Permission(i *dsc2.Permission) *permission { return &permission{i} }
 
 func (i *permission) Key() string {
 	return i.GetName()
@@ -46,10 +46,10 @@ func (i *permission) Hash() string {
 
 // PermissionIdentifier.
 type permissionIdentifier struct {
-	*dsc.PermissionIdentifier
+	*dsc2.PermissionIdentifier
 }
 
-func PermissionIdentifier(i *dsc.PermissionIdentifier) *permissionIdentifier {
+func PermissionIdentifier(i *dsc2.PermissionIdentifier) *permissionIdentifier {
 	return &permissionIdentifier{i}
 }
 

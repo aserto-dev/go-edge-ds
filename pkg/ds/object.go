@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/mitchellh/hashstructure/v2"
 	"google.golang.org/protobuf/proto"
@@ -19,10 +19,10 @@ const (
 )
 
 type object struct {
-	*dsc.Object
+	*dsc2.Object
 }
 
-func Object(i *dsc.Object) *object { return &object{i} }
+func Object(i *dsc2.Object) *object { return &object{i} }
 
 func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
@@ -84,10 +84,10 @@ func (i *object) Hash() string {
 }
 
 type objectIdentifier struct {
-	*dsc.ObjectIdentifier
+	*dsc2.ObjectIdentifier
 }
 
-func ObjectIdentifier(i *dsc.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
+func ObjectIdentifier(i *dsc2.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
 
 // TODO not used, integrated into validate or set.
 func (i *objectIdentifier) Normalize() {
@@ -120,7 +120,7 @@ func (i *objectIdentifier) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetKey()
 }
 
-func (i *objectIdentifier) Equal(n *dsc.ObjectIdentifier) bool {
+func (i *objectIdentifier) Equal(n *dsc2.ObjectIdentifier) bool {
 	return strings.EqualFold(i.ObjectIdentifier.GetKey(), n.GetKey()) && strings.EqualFold(i.ObjectIdentifier.GetType(), n.GetType())
 }
 
@@ -129,10 +129,10 @@ func (i *objectIdentifier) IsComplete() bool {
 }
 
 type objectSelector struct {
-	*dsc.ObjectIdentifier
+	*dsc2.ObjectIdentifier
 }
 
-func ObjectSelector(i *dsc.ObjectIdentifier) *objectSelector { return &objectSelector{i} }
+func ObjectSelector(i *dsc2.ObjectIdentifier) *objectSelector { return &objectSelector{i} }
 
 func (i *objectSelector) Normalize() {
 	i.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))

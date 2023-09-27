@@ -25,6 +25,8 @@ var (
 type Config struct {
 	DBPath         string
 	RequestTimeout time.Duration
+	MaxBatchSize   int
+	MaxBatchDelay  time.Duration
 }
 
 // BoltDB based key-value store.
@@ -63,7 +65,10 @@ func (s *BoltDB) Open() error {
 		}
 	}
 
-	db, err := bolt.Open(s.config.DBPath, 0600, &bolt.Options{Timeout: s.config.RequestTimeout})
+	db, err := bolt.Open(s.config.DBPath, 0600, &bolt.Options{
+		Timeout:      s.config.RequestTimeout,
+		FreelistType: bolt.FreelistMapType,
+	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to open directory '%s'", s.config.DBPath)
 	}

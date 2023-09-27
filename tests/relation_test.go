@@ -3,9 +3,9 @@ package tests_test
 import (
 	"testing"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 
 	"github.com/aserto-dev/go-directory/pkg/pb"
 
@@ -27,8 +27,8 @@ func TestRelations(t *testing.T) {
 var relationTestCasesWithID = []*TestCase{
 	{
 		Name: "create test-user-1",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user-1@acmecorp.com",
 				DisplayName: "test user 1",
@@ -39,7 +39,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -49,8 +49,8 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "create test-user-2",
-		Req: &dsw.SetObjectRequest{
-			Object: &dsc.Object{
+		Req: &dsw2.SetObjectRequest{
+			Object: &dsc2.Object{
 				Type:        "user",
 				Key:         "test-user-2@acmecorp.com",
 				DisplayName: "test user 2",
@@ -61,7 +61,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetObjectResponse:
+			case *dsw2.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -71,14 +71,14 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "create test-rel-1",
-		Req: &dsw.SetRelationRequest{
-			Relation: &dsc.Relation{
-				Subject: &dsc.ObjectIdentifier{
+		Req: &dsw2.SetRelationRequest{
+			Relation: &dsc2.Relation{
+				Subject: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
 				Relation: "manager",
-				Object: &dsc.ObjectIdentifier{
+				Object: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
@@ -87,7 +87,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.SetRelationResponse:
+			case *dsw2.SetRelationResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 
@@ -110,16 +110,16 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get test-rel-1",
-		Req: &dsr.GetRelationRequest{
-			Param: &dsc.RelationIdentifier{
-				Subject: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetRelationRequest{
+			Param: &dsc2.RelationIdentifier{
+				Subject: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
-				Relation: &dsc.RelationTypeIdentifier{
+				Relation: &dsc2.RelationTypeIdentifier{
 					Name: proto.String("manager"),
 				},
-				Object: &dsc.ObjectIdentifier{
+				Object: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
@@ -128,7 +128,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr.GetRelationResponse:
+			case *dsr2.GetRelationResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 
@@ -153,16 +153,16 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete test-rel-1",
-		Req: &dsw.DeleteRelationRequest{
-			Param: &dsc.RelationIdentifier{
-				Subject: &dsc.ObjectIdentifier{
+		Req: &dsw2.DeleteRelationRequest{
+			Param: &dsc2.RelationIdentifier{
+				Subject: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
-				Relation: &dsc.RelationTypeIdentifier{
+				Relation: &dsc2.RelationTypeIdentifier{
 					Name: proto.String("manager"),
 				},
-				Object: &dsc.ObjectIdentifier{
+				Object: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
@@ -171,7 +171,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeleteRelationResponse:
+			case *dsw2.DeleteRelationResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 			}
@@ -180,16 +180,16 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-rel-1",
-		Req: &dsr.GetRelationRequest{
-			Param: &dsc.RelationIdentifier{
-				Subject: &dsc.ObjectIdentifier{
+		Req: &dsr2.GetRelationRequest{
+			Param: &dsc2.RelationIdentifier{
+				Subject: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
-				Relation: &dsc.RelationTypeIdentifier{
+				Relation: &dsc2.RelationTypeIdentifier{
 					Name: proto.String("manager"),
 				},
-				Object: &dsc.ObjectIdentifier{
+				Object: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
@@ -204,16 +204,16 @@ var relationTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete deleted test-rel-1",
-		Req: &dsw.DeleteRelationRequest{
-			Param: &dsc.RelationIdentifier{
-				Subject: &dsc.ObjectIdentifier{
+		Req: &dsw2.DeleteRelationRequest{
+			Param: &dsc2.RelationIdentifier{
+				Subject: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-1@acmecorp.com"),
 				},
-				Relation: &dsc.RelationTypeIdentifier{
+				Relation: &dsc2.RelationTypeIdentifier{
 					Name: proto.String("manager"),
 				},
-				Object: &dsc.ObjectIdentifier{
+				Object: &dsc2.ObjectIdentifier{
 					Type: proto.String("user"),
 					Key:  proto.String("test-user-2@acmecorp.com"),
 				},
@@ -222,7 +222,7 @@ var relationTestCasesWithID = []*TestCase{
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw.DeleteRelationResponse:
+			case *dsw2.DeleteRelationResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 			}

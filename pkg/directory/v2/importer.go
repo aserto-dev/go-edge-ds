@@ -4,8 +4,8 @@ import (
 	"context"
 	"io"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsi "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
@@ -27,18 +27,21 @@ func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
 	}
 }
 
-func (s *Importer) Import(stream dsi.Importer_ImportServer) error {
-	res := &dsi.ImportResponse{
-		ObjectType:   &dsi.ImportCounter{},
-		Permission:   &dsi.ImportCounter{},
-		RelationType: &dsi.ImportCounter{},
-		Object:       &dsi.ImportCounter{},
-		Relation:     &dsi.ImportCounter{},
+func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
+	res := &dsi2.ImportResponse{
+		ObjectType:   &dsi2.ImportCounter{},
+		Permission:   &dsi2.ImportCounter{},
+		RelationType: &dsi2.ImportCounter{},
+		Object:       &dsi2.ImportCounter{},
+		Relation:     &dsi2.ImportCounter{},
 	}
 
 	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
 
-	importErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
+	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
+
+	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 		for {
 			req, err := stream.Recv()
 			if err == io.EOF {
@@ -58,7 +61,7 @@ func (s *Importer) Import(stream dsi.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi.ImportRequest, res *dsi.ImportResponse) (err error) {
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi2.ImportRequest, res *dsi2.ImportResponse) (err error) {
 
 	if objType := req.GetObjectType(); objType != nil {
 		err = s.objectTypeHandler(ctx, tx, objType)
@@ -80,7 +83,7 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 	return err
 }
 
-func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.ObjectType) error {
+func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.ObjectType) error {
 	s.logger.Debug().Interface("objectType", req).Msg("import_object_type")
 
 	if req == nil {
@@ -94,7 +97,7 @@ func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.
 	return nil
 }
 
-func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Permission) error {
+func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Permission) error {
 	s.logger.Debug().Interface("permission", req).Msg("import_permission")
 
 	if req == nil {
@@ -108,7 +111,7 @@ func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc.
 	return nil
 }
 
-func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc.RelationType) error {
+func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.RelationType) error {
 	s.logger.Debug().Interface("relationType", req).Msg("import_relation_type")
 
 	if req == nil {
@@ -122,7 +125,7 @@ func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *ds
 	return nil
 }
 
-func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Object) error {
+func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("import_object")
 
 	if req == nil {
@@ -136,7 +139,7 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Obje
 	return nil
 }
 
-func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Relation) error {
+func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
 	if req == nil {
@@ -154,11 +157,11 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc.Re
 	return nil
 }
 
-func updateCounter(c *dsi.ImportCounter, opCode dsi.Opcode, err error) *dsi.ImportCounter {
+func updateCounter(c *dsi2.ImportCounter, opCode dsi2.Opcode, err error) *dsi2.ImportCounter {
 	c.Recv++
-	if opCode == dsi.Opcode_OPCODE_SET {
+	if opCode == dsi2.Opcode_OPCODE_SET {
 		c.Set++
-	} else if opCode == dsi.Opcode_OPCODE_DELETE {
+	} else if opCode == dsi2.Opcode_OPCODE_DELETE {
 		c.Delete++
 	}
 	if err != nil {
