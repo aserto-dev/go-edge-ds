@@ -26,6 +26,8 @@ type Config struct {
 	DBPath         string        `json:"db_path"`
 	RequestTimeout time.Duration `json:"request_timeout"`
 	Seed           bool          `json:"seed_metadata"`
+	MaxBatchSize   int           `json:"max_batch_size"`
+	MaxBatchDelay  time.Duration `json:"max_batch_delay"`
 }
 
 type Directory struct {
@@ -41,11 +43,18 @@ type Directory struct {
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 	newLogger := logger.With().Str("component", "directory").Logger()
 
+	if config.MaxBatchSize == 0 {
+		config.MaxBatchSize = bolt.DefaultMaxBatchSize
+	}
+	if config.MaxBatchDelay == 0 {
+		config.MaxBatchDelay = bolt.DefaultMaxBatchDelay
+	}
+
 	store, err := bdb.New(&bdb.Config{
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout,
-		MaxBatchSize:   bolt.DefaultMaxBatchSize,
-		MaxBatchDelay:  bolt.DefaultMaxBatchDelay},
+		MaxBatchSize:   config.MaxBatchSize,
+		MaxBatchDelay:  config.MaxBatchDelay},
 		&newLogger,
 	)
 	if err != nil {
