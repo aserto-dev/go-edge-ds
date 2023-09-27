@@ -4,8 +4,8 @@ import (
 	"context"
 	"strings"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/samber/lo"
@@ -14,10 +14,10 @@ import (
 )
 
 type getGraph struct {
-	*dsr.GetGraphRequest
+	*dsr2.GetGraphRequest
 }
 
-func GetGraph(i *dsr.GetGraphRequest) *getGraph {
+func GetGraph(i *dsr2.GetGraphRequest) *getGraph {
 	return &getGraph{i}
 }
 
@@ -33,7 +33,7 @@ func (i *getGraph) Validate() (bool, error) {
 
 	// ensure object param block is initialized.
 	if i.GetGraphRequest.Object == nil {
-		i.GetGraphRequest.Object = &dsc.ObjectIdentifier{}
+		i.GetGraphRequest.Object = &dsc2.ObjectIdentifier{}
 	}
 
 	// Object can be optional, hence the use of an ObjectSelector.
@@ -43,7 +43,7 @@ func (i *getGraph) Validate() (bool, error) {
 
 	// ensure the relation param block is initialized.
 	if i.GetGraphRequest.Relation == nil {
-		i.GetGraphRequest.Relation = &dsc.RelationTypeIdentifier{}
+		i.GetGraphRequest.Relation = &dsc2.RelationTypeIdentifier{}
 	}
 
 	// Relation can be optional, hence the use of a RelationTypeSelector.
@@ -53,7 +53,7 @@ func (i *getGraph) Validate() (bool, error) {
 
 	// ensure the subject param block is initialized.
 	if i.GetGraphRequest.Subject == nil {
-		i.GetGraphRequest.Subject = &dsc.ObjectIdentifier{}
+		i.GetGraphRequest.Subject = &dsc2.ObjectIdentifier{}
 	}
 
 	// Subject can be option, hence the use of an ObjectSelector.
@@ -72,8 +72,8 @@ func (i *getGraph) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *azm.Model*/) ([]*dsc.ObjectDependency, error) {
-	resp := []*dsc.ObjectDependency{}
+func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *azm.Model*/) ([]*dsc2.ObjectDependency, error) {
+	resp := []*dsc2.ObjectDependency{}
 
 	// determine graph walk directionality.
 	// Anchor == Subject ==> subject -> object
@@ -113,8 +113,8 @@ type GraphWalker struct {
 	bucketPath []string
 	direction  Direction
 	err        error
-	req        *dsr.GetGraphRequest
-	results    []*dsc.ObjectDependency
+	req        *dsr2.GetGraphRequest
+	results    []*dsc2.ObjectDependency
 }
 
 func (i *getGraph) newGraphWalker(ctx context.Context, tx *bolt.Tx, direction Direction) *GraphWalker {
@@ -123,7 +123,7 @@ func (i *getGraph) newGraphWalker(ctx context.Context, tx *bolt.Tx, direction Di
 		tx:        tx,
 		direction: direction,
 		req:       i.GetGraphRequest,
-		results:   []*dsc.ObjectDependency{},
+		results:   []*dsc2.ObjectDependency{},
 	}
 }
 
@@ -144,24 +144,24 @@ func (w *GraphWalker) Fetch() error {
 }
 
 func (w *GraphWalker) Filter() error {
-	filters := []func(item *dsc.ObjectDependency) bool{}
+	filters := []func(item *dsc2.ObjectDependency) bool{}
 
 	// SubjectToObject: subject == anchor => filter on object & relation.
 	if w.direction == SubjectToObject {
 		if w.req.Object.GetType() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetObjectType(), w.req.Object.GetType())
 			})
 		}
 
 		if w.req.Object.GetKey() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetObjectKey(), w.req.Object.GetKey())
 			})
 		}
 
 		if w.req.Relation.GetName() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetRelation(), w.req.Relation.GetName())
 			})
 		}
@@ -170,25 +170,25 @@ func (w *GraphWalker) Filter() error {
 	// ObjectToSubject: object == anchor => filter on subject & relation.
 	if w.direction == ObjectToSubject {
 		if w.req.Subject.GetType() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetSubjectType(), w.req.Subject.GetType())
 			})
 		}
 
 		if w.req.Subject.GetKey() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetSubjectKey(), w.req.Subject.GetKey())
 			})
 		}
 
 		if w.req.Relation.GetName() != "" {
-			filters = append(filters, func(item *dsc.ObjectDependency) bool {
+			filters = append(filters, func(item *dsc2.ObjectDependency) bool {
 				return strings.EqualFold(item.GetRelation(), w.req.Relation.GetName())
 			})
 		}
 	}
 
-	w.results = lo.Filter[*dsc.ObjectDependency](w.results, func(item *dsc.ObjectDependency, index int) bool {
+	w.results = lo.Filter[*dsc2.ObjectDependency](w.results, func(item *dsc2.ObjectDependency, index int) bool {
 		for _, filter := range filters {
 			if !filter(item) {
 				return false
@@ -200,22 +200,22 @@ func (w *GraphWalker) Filter() error {
 	return nil
 }
 
-func (w *GraphWalker) Results() ([]*dsc.ObjectDependency, error) {
+func (w *GraphWalker) Results() ([]*dsc2.ObjectDependency, error) {
 	return w.results, w.err
 }
 
-func (w *GraphWalker) walk(anchor *dsc.ObjectIdentifier, depth int32, path []string) error {
+func (w *GraphWalker) walk(anchor *dsc2.ObjectIdentifier, depth int32, path []string) error {
 	depth++
 
 	if depth > maxDepth {
-		w.results = []*dsc.ObjectDependency{}
+		w.results = []*dsc2.ObjectDependency{}
 		w.err = derr.ErrMaxDepthExceeded
 		return w.err
 	}
 
 	filter := ObjectIdentifier(anchor).Key() + InstanceSeparator
 
-	relations, err := bdb.Scan[dsc.Relation](w.ctx, w.tx, w.bucketPath, filter)
+	relations, err := bdb.Scan[dsc2.Relation](w.ctx, w.tx, w.bucketPath, filter)
 	if err != nil {
 		return err
 	}
@@ -235,7 +235,7 @@ func (w *GraphWalker) walk(anchor *dsc.ObjectIdentifier, depth int32, path []str
 			TypeIDSeparator+
 			rel.GetSubject().GetKey())
 
-		dep := dsc.ObjectDependency{
+		dep := dsc2.ObjectDependency{
 			ObjectType:  rel.GetObject().GetType(),
 			ObjectKey:   rel.GetObject().GetKey(),
 			Relation:    rel.Relation,
@@ -255,7 +255,7 @@ func (w *GraphWalker) walk(anchor *dsc.ObjectIdentifier, depth int32, path []str
 	return nil
 }
 
-func (w *GraphWalker) next(r *dsc.Relation) *dsc.ObjectIdentifier {
+func (w *GraphWalker) next(r *dsc2.Relation) *dsc2.ObjectIdentifier {
 	if w.direction == ObjectToSubject {
 		return r.GetSubject()
 	}

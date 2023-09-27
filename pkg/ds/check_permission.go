@@ -3,8 +3,8 @@ package ds
 import (
 	"context"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/samber/lo"
@@ -13,10 +13,10 @@ import (
 )
 
 type checkPermission struct {
-	*dsr.CheckPermissionRequest
+	*dsr2.CheckPermissionRequest
 }
 
-func CheckPermission(i *dsr.CheckPermissionRequest) *checkPermission {
+func CheckPermission(i *dsr2.CheckPermissionRequest) *checkPermission {
 	return &checkPermission{i}
 }
 
@@ -44,8 +44,8 @@ func (i *checkPermission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckPermissionResponse, error) {
-	resp := &dsr.CheckPermissionResponse{Check: false, Trace: []string{}}
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx) (*dsr2.CheckPermissionResponse, error) {
+	resp := &dsr2.CheckPermissionResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath)
 	if err != nil {
@@ -54,7 +54,7 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx) (*dsr.CheckPerm
 
 	match, err := check.check(i.Object)
 
-	return &dsr.CheckPermissionResponse{Check: match}, err
+	return &dsr2.CheckPermissionResponse{Check: match}, err
 }
 
 func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string) (*permissionChecker, error) {
@@ -75,7 +75,7 @@ func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []st
 		anchor:  i,
 		userSet: userSet,
 		filter:  relations,
-		trace:   [][]*dsc.Relation{},
+		trace:   [][]*dsc2.Relation{},
 	}, nil
 }
 
@@ -84,15 +84,15 @@ type permissionChecker struct {
 	tx      *bolt.Tx
 	path    []string
 	anchor  *checkPermission
-	userSet []*dsc.ObjectIdentifier
+	userSet []*dsc2.ObjectIdentifier
 	filter  []string
-	trace   [][]*dsc.Relation
+	trace   [][]*dsc2.Relation
 }
 
-func (c *permissionChecker) check(root *dsc.ObjectIdentifier) (bool, error) {
+func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	// relations associated to object instance.
 	filter := ObjectIdentifier(root).Key() + InstanceSeparator
-	relations, err := bdb.Scan[dsc.Relation](c.ctx, c.tx, c.path, filter)
+	relations, err := bdb.Scan[dsc2.Relation](c.ctx, c.tx, c.path, filter)
 	if err != nil {
 		return false, err
 	}
@@ -119,8 +119,8 @@ func (c *permissionChecker) check(root *dsc.ObjectIdentifier) (bool, error) {
 	return false, nil
 }
 
-func (c *permissionChecker) isMatch(relation *dsc.Relation) bool {
-	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc.ObjectIdentifier](c.userSet, relation.Subject) {
+func (c *permissionChecker) isMatch(relation *dsc2.Relation) bool {
+	if lo.Contains(c.filter, relation.Relation) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
 		return true
 	}
 	return false

@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
 
@@ -58,7 +58,7 @@ func TestGetObjectTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.V2.Reader.GetObjectTypes(context.Background(), &dsr.GetObjectTypesRequest{})
+	resp, err := client.V2.Reader.GetObjectTypes(context.Background(), &dsr2.GetObjectTypesRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("object_type: %s", v.Name)
@@ -69,9 +69,9 @@ func TestGetRelationTypes(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.V2.Reader.GetRelationTypes(context.Background(), &dsr.GetRelationTypesRequest{
-		Param: &dsc.ObjectTypeIdentifier{},
-		Page:  &dsc.PaginationRequest{},
+	resp, err := client.V2.Reader.GetRelationTypes(context.Background(), &dsr2.GetRelationTypesRequest{
+		Param: &dsc2.ObjectTypeIdentifier{},
+		Page:  &dsc2.PaginationRequest{},
 	})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
@@ -83,7 +83,7 @@ func TestGetPermissions(t *testing.T) {
 	client, closer := testInit(t)
 	t.Cleanup(closer)
 
-	resp, err := client.V2.Reader.GetPermissions(context.Background(), &dsr.GetPermissionsRequest{})
+	resp, err := client.V2.Reader.GetPermissions(context.Background(), &dsr2.GetPermissionsRequest{})
 	assert.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("permission: %s", v.Name)
@@ -106,7 +106,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 		t.Logf("%s", tc.Name)
 
 		switch req := tc.Req.(type) {
-		case *dsr.GetObjectRequest:
+		case *dsr2.GetObjectRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -114,7 +114,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Reader.GetObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.SetObjectRequest:
+		case *dsw2.SetObjectRequest:
 			if apply != nil {
 				apply(req)
 				t.Logf("propagated hash:%s", req.Object.Hash)
@@ -123,7 +123,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.SetObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.DeleteObjectRequest:
+		case *dsw2.DeleteObjectRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -131,7 +131,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.DeleteObject(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsr.GetObjectTypeRequest:
+		case *dsr2.GetObjectTypeRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -139,7 +139,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Reader.GetObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.SetObjectTypeRequest:
+		case *dsw2.SetObjectTypeRequest:
 			if apply != nil {
 				apply(req)
 				t.Logf("propagated hash:%s", req.ObjectType.Hash)
@@ -148,7 +148,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.SetObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.DeleteObjectTypeRequest:
+		case *dsw2.DeleteObjectTypeRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -156,7 +156,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.DeleteObjectType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsr.GetPermissionRequest:
+		case *dsr2.GetPermissionRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -164,7 +164,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Reader.GetPermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.SetPermissionRequest:
+		case *dsw2.SetPermissionRequest:
 			if apply != nil {
 				apply(req)
 				t.Logf("propagated hash:%s", req.Permission.Hash)
@@ -173,7 +173,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.SetPermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.DeletePermissionRequest:
+		case *dsw2.DeletePermissionRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -181,7 +181,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.DeletePermission(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsr.GetRelationRequest:
+		case *dsr2.GetRelationRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -189,7 +189,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Reader.GetRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.SetRelationRequest:
+		case *dsw2.SetRelationRequest:
 			if apply != nil {
 				apply(req)
 				t.Logf("propagated hash:%s", req.Relation.Hash)
@@ -198,7 +198,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.SetRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.DeleteRelationRequest:
+		case *dsw2.DeleteRelationRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -206,7 +206,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.DeleteRelation(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsr.GetRelationTypeRequest:
+		case *dsr2.GetRelationTypeRequest:
 			if apply != nil {
 				apply(req)
 			}
@@ -214,7 +214,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Reader.GetRelationType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.SetRelationTypeRequest:
+		case *dsw2.SetRelationTypeRequest:
 			if apply != nil {
 				apply(req)
 				t.Logf("propagated hash:%s", req.RelationType.Hash)
@@ -223,7 +223,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			resp, err := client.V2.Writer.SetRelationType(ctx, req)
 			apply = tc.Checks(t, resp, err)
 
-		case *dsw.DeleteRelationTypeRequest:
+		case *dsw2.DeleteRelationTypeRequest:
 			if apply != nil {
 				apply(req)
 			}

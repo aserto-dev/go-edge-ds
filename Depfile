@@ -20,4 +20,4 @@ go:
     version: "v1.9.0"
   golangci-lint:
     importPath: "github.com/golangci/golangci-lint/cmd/golangci-lint"
-    version: "v1.52.2"
+    version: "v1.53.3"
