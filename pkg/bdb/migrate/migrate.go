@@ -8,6 +8,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig003"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
@@ -18,6 +19,7 @@ type Migration func(*bolt.DB, *bolt.DB) error
 var migMap = map[string]Migration{
 	mig001.Version: mig001.Migrate,
 	mig002.Version: mig002.Migrate,
+	mig003.Version: mig003.Migrate,
 }
 
 func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {

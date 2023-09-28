@@ -10,6 +10,9 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"google.golang.org/protobuf/proto"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -262,6 +265,11 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		Results: results,
 		Page:    ds.PaginationResponse3(resp.Page),
 	}, nil
+}
+
+// check method.
+func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "check function is not implemented")
 }
 
 // check permission method.

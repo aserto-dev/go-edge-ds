@@ -3,18 +3,21 @@ package tests_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path"
 	"testing"
 
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
 
 	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -35,6 +38,7 @@ func TestManifestV3(t *testing.T) {
 
 	t.Run("set-manifest", testSetManifest(client, "./manifest_v3_test.yaml"))
 	t.Run("get-manifest", testGetManifest(client, "./manifest_v3_test.yaml"))
+	t.Run("get-model", testGetModel(client))
 	t.Run("delete-manifest", testDeleteManifest(client))
 }
 
@@ -123,6 +127,52 @@ func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testi
 
 		for _, diff := range report.Diffs {
 			t.Logf(diff.Path.ToDotStyle())
+		}
+	}
+}
+
+func testGetModel(client *server.TestEdgeClient) func(*testing.T) {
+	return func(t *testing.T) {
+		ctx := context.Background()
+		hdr := metadata.New(map[string]string{"aserto-model-request": "model-only"})
+		ctx = metadata.NewOutgoingContext(ctx, hdr)
+
+		stream, err := client.V3.Model.GetManifest(ctx, &dsm3.GetManifestRequest{Empty: &emptypb.Empty{}})
+		if err != nil {
+			require.NoError(t, err)
+		}
+
+		for {
+			resp, err := stream.Recv()
+			if err == io.EOF {
+				break
+			}
+
+			if err != nil {
+				assert.NoError(t, err)
+			}
+
+			if md, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Metadata); ok {
+				_ = md.Metadata
+			}
+
+			if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
+				_ = body
+			}
+
+			if model, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Model); ok {
+				buf := new(bytes.Buffer)
+				if err := pb.ProtoToBuf(buf, model.Model); err != nil {
+					assert.NoError(t, err)
+				}
+
+				tempModel := path.Join(os.TempDir(), "model.json")
+				if err := os.WriteFile(tempModel, buf.Bytes(), 0600); err != nil {
+					require.NoError(t, err)
+				}
+
+				fmt.Println(tempModel)
+			}
 		}
 	}
 }
