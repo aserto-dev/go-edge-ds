@@ -9,7 +9,7 @@ require (
 	github.com/aserto-dev/azm v0.0.3
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-aserto v0.20.3
-	github.com/aserto-dev/go-directory v0.21.8-0.20230928042520-537c620e1822
+	github.com/aserto-dev/go-directory v0.21.8-0.20230928155853-8b1ea7613972
 	github.com/bufbuild/protovalidate-go v0.3.2
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.3.1
