@@ -11,14 +11,18 @@ import (
 	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	model "github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
+	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -55,10 +59,20 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		return err
 	}
 
-	metadata := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
+	hdr, ok := metadata.FromIncomingContext(stream.Context())
+	if !ok {
+		return status.Errorf(codes.DataLoss, "failed to get metadata")
+	}
+	amr, ok := hdr["aserto-model-request"]
+	getModel := false
+	if ok && amr[0] == "model-only" {
+		getModel = true
+	}
+
+	md := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
-		manifest, err := ds.Manifest(metadata).Get(stream.Context(), tx)
+		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
 		switch {
 		case bdb.ErrIsNotFound(err):
 			return derr.ErrNotFound.Msg("manifest")
@@ -90,6 +104,36 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 			}); err != nil {
 				return err
 			}
+		}
+
+		if !getModel {
+			return nil
+		}
+
+		model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
+		switch {
+		case bdb.ErrIsNotFound(err):
+			return derr.ErrNotFound.Msg("model")
+		case err != nil:
+			return errors.Errorf("failed to get model")
+		}
+
+		m := pb.NewStruct()
+		r, err := model.Reader()
+		if err != nil {
+			return err
+		}
+
+		if err := pb.BufToProto(r, m); err != nil {
+			return err
+		}
+
+		if err := stream.Send(&dsm3.GetManifestResponse{
+			Msg: &dsm3.GetManifestResponse_Model{
+				Model: m,
+			},
+		}); err != nil {
+			return err
 		}
 
 		return nil
@@ -132,12 +176,12 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 		return err
 	}
 
-	metadata := &dsm3.Metadata{
+	md := &dsm3.Metadata{
 		UpdatedAt: timestamppb.Now(),
 		Etag:      strconv.FormatUint(h.Sum64(), 10),
 	}
 
-	if err := s.v.Validate(metadata); err != nil {
+	if err := s.v.Validate(md); err != nil {
 		return err
 	}
 
@@ -147,11 +191,11 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Manifest(metadata).Set(stream.Context(), tx, data); err != nil {
+		if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
 			return errors.Errorf("failed to set manifest")
 		}
 
-		if err := ds.Manifest(metadata).SetModel(stream.Context(), tx, m); err != nil {
+		if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
 			return errors.Errorf("failed to set manifest")
 		}
 
@@ -171,10 +215,10 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 		return resp, err
 	}
 
-	metadata := &dsm3.Metadata{}
+	md := &dsm3.Metadata{}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Manifest(metadata).Delete(ctx, tx); err != nil {
+		if err := ds.Manifest(md).Delete(ctx, tx); err != nil {
 			return errors.Errorf("failed to delete manifest")
 		}
 		return nil
