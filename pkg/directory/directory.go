@@ -20,6 +20,7 @@ import (
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/rs/zerolog"
+	bolt "go.etcd.io/bbolt"
 )
 
 // required minimum schema version, when the current version is lower, migration will be invoked to update to the minimum schema version required.
@@ -55,7 +56,9 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 
 	store, err := bdb.New(&bdb.Config{
 		DBPath:         config.DBPath,
-		RequestTimeout: config.RequestTimeout},
+		RequestTimeout: config.RequestTimeout,
+		MaxBatchSize:   bolt.DefaultMaxBatchSize,
+		MaxBatchDelay:  bolt.DefaultMaxBatchDelay},
 		&newLogger,
 	)
 	if err != nil {

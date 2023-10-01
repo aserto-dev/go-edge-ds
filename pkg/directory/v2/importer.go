@@ -39,7 +39,10 @@ func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
 
 	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
 
-	importErr := s.store.DB().Update(func(tx *bolt.Tx) error {
+	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
+	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
+
+	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 		for {
 			req, err := stream.Recv()
 			if err == io.EOF {
