@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
@@ -77,17 +76,7 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obj
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	o2 := &dsc2.Object{
-		Type:        req.Type,
-		Key:         req.Id,
-		DisplayName: req.DisplayName,
-		Properties:  req.Properties,
-		CreatedAt:   req.CreatedAt,
-		UpdatedAt:   req.UpdatedAt,
-		Hash:        req.Etag,
-	}
-
-	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(o2).Key(), o2); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -101,26 +90,11 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.R
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	r2 := &dsc2.Relation{
-		Object: &dsc2.ObjectIdentifier{
-			Type: &req.ObjectType,
-			Key:  &req.ObjectId,
-		},
-		Relation: req.Relation,
-		Subject: &dsc2.ObjectIdentifier{
-			Type: &req.SubjectType,
-			Key:  &req.SubjectId,
-		},
-		CreatedAt: req.CreatedAt,
-		UpdatedAt: req.UpdatedAt,
-		Hash:      req.Etag,
-	}
-
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(r2).ObjKey(), r2); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(r2).SubKey(), r2); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

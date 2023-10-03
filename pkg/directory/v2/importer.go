@@ -6,9 +6,7 @@ import (
 
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 
 	"github.com/google/uuid"
@@ -96,17 +94,17 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.ObjectType) error {
 	s.logger.Debug().Interface("objectType", req).Msg("import_object_type")
 
-	if req == nil {
-		return derr.ErrInvalidObjectType.Msg("nil")
-	}
+	// if req == nil {
+	// 	return derr.ErrInvalidObjectType.Msg("nil")
+	// }
 
-	if ok, err := ds.ObjectType(req).Validate(); !ok {
-		return err
-	}
+	// if ok, err := ds.ObjectType(req).Validate(); !ok {
+	// 	return err
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
-		return derr.ErrInvalidObjectType.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
+	// 	return derr.ErrInvalidObjectType.Msg("set")
+	// }
 
 	return nil
 }
@@ -114,17 +112,17 @@ func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2
 func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Permission) error {
 	s.logger.Debug().Interface("permission", req).Msg("import_permission")
 
-	if req == nil {
-		return derr.ErrInvalidPermission.Msg("nil")
-	}
+	// if req == nil {
+	// 	return derr.ErrInvalidPermission.Msg("nil")
+	// }
 
-	if ok, err := ds.Permission(req).Validate(); !ok {
-		return err
-	}
+	// if ok, err := ds.Permission(req).Validate(); !ok {
+	// 	return err
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
-		return derr.ErrInvalidPermission.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
+	// 	return derr.ErrInvalidPermission.Msg("set")
+	// }
 
 	return nil
 }
@@ -132,17 +130,17 @@ func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc2
 func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.RelationType) error {
 	s.logger.Debug().Interface("relationType", req).Msg("import_relation_type")
 
-	if req == nil {
-		return derr.ErrInvalidRelationType.Msg("nil")
-	}
+	// if req == nil {
+	// 	return derr.ErrInvalidRelationType.Msg("nil")
+	// }
 
-	if ok, err := ds.RelationType(req).Validate(s.store.MC()); !ok {
-		return err
-	}
+	// if ok, err := ds.RelationType(req).Validate(s.store.MC()); !ok {
+	// 	return err
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
-		return derr.ErrInvalidRelationType.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
+	// 	return derr.ErrInvalidRelationType.Msg("set")
+	// }
 
 	return nil
 }
@@ -150,17 +148,17 @@ func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *ds
 func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("import_object")
 
-	if req == nil {
-		return derr.ErrInvalidObject.Msg("nil")
-	}
+	// if req == nil {
+	// 	return derr.ErrInvalidObject.Msg("nil")
+	// }
 
-	if ok, err := ds.Object(req).Validate(s.store.MC()); !ok {
-		return err
-	}
+	// if ok, err := ds.Object(req).Validate(s.store.MC()); !ok {
+	// 	return err
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
-		return derr.ErrInvalidObject.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
+	// 	return derr.ErrInvalidObject.Msg("set")
+	// }
 
 	return nil
 }
@@ -168,21 +166,21 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Obj
 func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
-	if req == nil {
-		return derr.ErrInvalidRelation.Msg("nil")
-	}
+	// if req == nil {
+	// 	return derr.ErrInvalidRelation.Msg("nil")
+	// }
 
-	if ok, err := ds.Relation(req).Validate(s.store.MC()); !ok {
-		return err
-	}
+	// if ok, err := ds.Relation(req).Validate(s.store.MC()); !ok {
+	// 	return err
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
-		return derr.ErrInvalidRelation.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
+	// 	return derr.ErrInvalidRelation.Msg("set")
+	// }
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
-		return derr.ErrInvalidRelation.Msg("set")
-	}
+	// if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
+	// 	return derr.ErrInvalidRelation.Msg("set")
+	// }
 
 	return nil
 }

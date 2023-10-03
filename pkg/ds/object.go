@@ -7,12 +7,11 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	"github.com/mitchellh/hashstructure/v2"
-	"google.golang.org/protobuf/proto"
 )
 
 // model contains object related items.
@@ -23,13 +22,13 @@ const (
 )
 
 type object struct {
-	*dsc2.Object
+	*dsc3.Object
 }
 
-func Object(i *dsc2.Object) *object { return &object{i} }
+func Object(i *dsc3.Object) *object { return &object{i} }
 
 func (i *object) Key() string {
-	return i.GetType() + TypeIDSeparator + i.GetKey()
+	return i.GetType() + TypeIDSeparator + i.GetId()
 }
 
 func (i *object) Validate(mc *cache.Cache) (bool, error) {
@@ -42,8 +41,8 @@ func (i *object) Validate(mc *cache.Cache) (bool, error) {
 		return false, ErrInvalidArgumentObject.Msg(objectIdentifierType)
 	}
 
-	// #2 check if key field is set.
-	if IsNotSet(i.GetKey()) {
+	// #2 check if id field is set.
+	if IsNotSet(i.GetId()) {
 		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierKey)
 	}
 
@@ -84,7 +83,7 @@ func (i *object) Hash() string {
 	if _, err := h.Write([]byte(i.GetType())); err != nil {
 		return DefaultHash
 	}
-	if _, err := h.Write([]byte(i.GetKey())); err != nil {
+	if _, err := h.Write([]byte(i.GetId())); err != nil {
 		return DefaultHash
 	}
 
@@ -96,16 +95,16 @@ func (i *object) Hash() string {
 }
 
 type objectIdentifier struct {
-	*dsc2.ObjectIdentifier
+	*dsc3.ObjectIdentifier
 }
 
-func ObjectIdentifier(i *dsc2.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
+func ObjectIdentifier(i *dsc3.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
 
 // TODO not used, integrated into validate or set.
-func (i *objectIdentifier) Normalize() {
-	i.ObjectIdentifier.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
-	i.ObjectIdentifier.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
-}
+// func (i *objectIdentifier) Normalize() {
+// 	i.ObjectIdentifier.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
+// 	i.ObjectIdentifier.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
+// }
 
 func (i *objectIdentifier) Validate() (bool, error) {
 	if i.ObjectIdentifier == nil {
@@ -113,12 +112,12 @@ func (i *objectIdentifier) Validate() (bool, error) {
 	}
 
 	// #1 check is type field is set.
-	if IsNotSet(i.GetType()) {
+	if IsNotSet(i.GetObjectType()) {
 		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierType)
 	}
 
-	// #2 check if key field is set.
-	if IsNotSet(i.GetKey()) {
+	// #2 check if id field is set.
+	if IsNotSet(i.GetObjectId()) {
 		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierKey)
 	}
 
@@ -129,27 +128,27 @@ func (i *objectIdentifier) Validate() (bool, error) {
 }
 
 func (i *objectIdentifier) Key() string {
-	return i.GetType() + TypeIDSeparator + i.GetKey()
+	return i.GetObjectType() + TypeIDSeparator + i.GetObjectId()
 }
 
-func (i *objectIdentifier) Equal(n *dsc2.ObjectIdentifier) bool {
-	return strings.EqualFold(i.ObjectIdentifier.GetKey(), n.GetKey()) && strings.EqualFold(i.ObjectIdentifier.GetType(), n.GetType())
+func (i *objectIdentifier) Equal(n *dsc3.ObjectIdentifier) bool {
+	return strings.EqualFold(i.ObjectIdentifier.GetObjectId(), n.GetObjectId()) && strings.EqualFold(i.ObjectIdentifier.GetObjectType(), n.GetObjectType())
 }
 
 func (i *objectIdentifier) IsComplete() bool {
-	return i != nil && i.GetType() != "" && i.GetKey() != ""
+	return i != nil && i.GetObjectType() != "" && i.GetObjectId() != ""
 }
 
 type objectSelector struct {
-	*dsc2.ObjectIdentifier
+	*dsc3.ObjectIdentifier
 }
 
-func ObjectSelector(i *dsc2.ObjectIdentifier) *objectSelector { return &objectSelector{i} }
+func ObjectSelector(i *dsc3.ObjectIdentifier) *objectSelector { return &objectSelector{i} }
 
-func (i *objectSelector) Normalize() {
-	i.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
-	i.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
-}
+// func (i *objectSelector) Normalize() {
+// 	i.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
+// 	i.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
+// }
 
 // Validate rules:
 // valid states
@@ -163,17 +162,17 @@ func (i *objectSelector) Validate() (bool, error) {
 	}
 
 	// empty object
-	if IsNotSet(i.GetType()) && IsNotSet(i.GetKey()) {
+	if IsNotSet(i.GetObjectType()) && IsNotSet(i.GetObjectId()) {
 		return true, nil
 	}
 
 	// type only
-	if IsSet(i.GetType()) && IsNotSet(i.GetKey()) {
+	if IsSet(i.GetObjectType()) && IsNotSet(i.GetObjectId()) {
 		return true, nil
 	}
 
 	// type + key
-	if IsSet(i.GetType()) && IsSet(i.GetKey()) {
+	if IsSet(i.GetObjectType()) && IsSet(i.GetObjectId()) {
 		return true, nil
 	}
 
@@ -181,5 +180,5 @@ func (i *objectSelector) Validate() (bool, error) {
 }
 
 func (i *objectSelector) IsComplete() bool {
-	return IsSet(i.GetType()) && IsSet(i.GetKey())
+	return IsSet(i.GetObjectType()) && IsSet(i.GetObjectId())
 }
