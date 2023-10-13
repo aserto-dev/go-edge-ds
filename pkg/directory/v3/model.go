@@ -75,7 +75,9 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
 		switch {
 		case bdb.ErrIsNotFound(err):
-			return derr.ErrNotFound.Msg("manifest")
+			if manifest == nil {
+				manifest = ds.Manifest(&dsm3.Metadata{})
+			}
 		case err != nil:
 			return errors.Errorf("failed to get manifest")
 		}

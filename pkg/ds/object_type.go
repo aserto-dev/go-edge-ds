@@ -1,9 +1,6 @@
 package ds
 
 import (
-	"hash/fnv"
-	"strconv"
-
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
@@ -29,28 +26,28 @@ func (i *objectType) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *objectType) Hash() string {
-	h := fnv.New64a()
-	h.Reset()
+// func (i *objectType) Hash() string {
+// 	h := fnv.New64a()
+// 	h.Reset()
 
-	if _, err := h.Write([]byte(i.GetName())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write(BoolToByte(i.GetIsSubject())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write(Int32ToByte(i.GetOrdinal())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write(Uint32ToByte(i.GetStatus())); err != nil {
-		return DefaultHash
-	}
+// 	if _, err := h.Write([]byte(i.GetName())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write(BoolToByte(i.GetIsSubject())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write(Int32ToByte(i.GetOrdinal())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write(Uint32ToByte(i.GetStatus())); err != nil {
+// 		return DefaultHash
+// 	}
 
-	return strconv.FormatUint(h.Sum64(), 10)
-}
+// 	return strconv.FormatUint(h.Sum64(), 10)
+// }
 
 type objectTypeIdentifier struct {
 	*dsc2.ObjectTypeIdentifier

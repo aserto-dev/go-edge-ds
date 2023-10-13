@@ -1,19 +1,23 @@
 package migrate
 
 import (
+	"net/http"
 	"os"
 
-	"github.com/Masterminds/semver"
+	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig003"
+
+	"github.com/Masterminds/semver"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
 )
 
-type Migration func(*bolt.DB, *bolt.DB) error
+type Migration func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 // list of migration steps, keyed by version.
 var migMap = map[string]Migration{
@@ -22,7 +26,46 @@ var migMap = map[string]Migration{
 	mig003.Version: mig003.Migrate,
 }
 
-func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {
+var (
+	ErrDirectorySchemaVersionHigher  = cerr.NewAsertoError("E20054", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema version is higher than supported by engine")
+	ErrDirectorySchemaUpdateRequired = cerr.NewAsertoError("E20055", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema update required")
+	ErrrUnknown                      = cerr.NewAsertoError("E99999", codes.Unknown, http.StatusInternalServerError, "unexpected error occured")
+)
+
+// CheckSchemaVersion, validate schema version of the database file
+// errors: returns false, error
+// equal:  returns  true, nil
+// lower:  returns false, nil
+// higher  returns false, error
+func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *semver.Version) (bool, error) {
+	boltdb, err := bdb.New(config, logger)
+	if err != nil {
+		return false, err
+	}
+	if err := boltdb.Open(); err != nil {
+		return false, err
+	}
+	defer boltdb.Close()
+
+	curVersion, err := mig.GetVersion(boltdb.DB())
+	if err != nil {
+		return false, err
+	}
+	logger.Info().Str("current", curVersion.String()).Msg("schema_version")
+
+	switch {
+	case curVersion.Equal(reqVersion):
+		return true, nil
+	case curVersion.LessThan(reqVersion):
+		return false, ErrDirectorySchemaUpdateRequired
+	case curVersion.GreaterThan(reqVersion):
+		return false, ErrDirectorySchemaVersionHigher.Msg(curVersion.String())
+	default:
+		return false, ErrrUnknown
+	}
+}
+
+func Migrate(config *bdb.Config, logger *zerolog.Logger, reqVersion *semver.Version) error {
 	log := logger.With().Str("component", "migrate").Logger()
 
 	defer func() {
@@ -31,12 +74,7 @@ func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {
 		}
 	}()
 
-	reqVersion, err := semver.NewVersion(version)
-	if err != nil {
-		return err
-	}
-
-	curVersion, err := mig.GetVersion(store.DB())
+	curVersion, err := getCurrent(config, &log)
 	if err != nil {
 		return err
 	}
@@ -52,14 +90,14 @@ func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {
 		nextVersion := curVersion.IncPatch()
 		log.Info().Str("next", nextVersion.String()).Msg("starting")
 
-		if err := migrate(store, curVersion, &nextVersion); err != nil {
+		if err := migrate(config, &log, curVersion, &nextVersion); err != nil {
 			log.Error().Err(err).Msg("migrate")
 			return err
 		}
 
 		log.Info().Str("next", nextVersion.String()).Msg("finished")
 
-		curVersion, err = mig.GetVersion(store.DB())
+		curVersion, err = getCurrent(config, logger)
 		if err != nil {
 			return err
 		}
@@ -76,31 +114,66 @@ func Store(logger *zerolog.Logger, store *bdb.BoltDB, version string) error {
 	return nil
 }
 
-func migrate(store *bdb.BoltDB, curVersion, nextVersion *semver.Version) error {
-	if err := mig.Backup(store.DB(), curVersion); err != nil {
-		return err
+func getCurrent(config *bdb.Config, logger *zerolog.Logger) (*semver.Version, error) {
+	boltdb, err := bdb.New(config, logger)
+	if err != nil {
+		return nil, err
 	}
+	if err := boltdb.Open(); err != nil {
+		return nil, err
+	}
+	defer boltdb.Close()
 
-	roDB, err := mig.OpenReadOnlyDB(store.Config().DBPath, curVersion)
+	return mig.GetVersion(boltdb.DB())
+}
+
+func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *semver.Version) error {
+	rwDB, err := mig.OpenDB(config)
 	if err != nil {
 		return err
 	}
-	defer func() { _ = roDB.Close() }()
+	defer func() {
+		log.Debug().Msg("close rwDB")
+		if err := rwDB.Close(); err != nil {
+			log.Error().Err(err).Msg("close rwDB")
+		}
+		rwDB = nil
+	}()
 
-	if err := execute(roDB, store.DB(), nextVersion); err != nil {
+	if err := mig.Backup(rwDB, curVersion); err != nil {
 		return err
 	}
 
-	if err := mig.SetVersion(store.DB(), nextVersion); err != nil {
+	roDB, err := mig.OpenReadOnlyDB(config, curVersion)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		log.Debug().Msg("close roDB")
+		if err := roDB.Close(); err != nil {
+			log.Error().Err(err).Msg("close roDB")
+		}
+		roDB = nil
+	}()
+
+	if err := execute(log, roDB, rwDB, nextVersion); err != nil {
+		return err
+	}
+
+	if err := mig.SetVersion(rwDB, nextVersion); err != nil {
+		return err
+	}
+
+	if err := rwDB.Sync(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func execute(roDB, rwDB *bolt.DB, newVersion *semver.Version) error {
+func execute(logger *zerolog.Logger, roDB, rwDB *bolt.DB, newVersion *semver.Version) error {
 	if fnMigrate, ok := migMap[newVersion.String()]; ok {
-		return fnMigrate(roDB, rwDB)
+		return fnMigrate(logger, roDB, rwDB)
 	}
 	return os.ErrNotExist
 }

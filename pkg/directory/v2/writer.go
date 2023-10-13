@@ -3,327 +3,170 @@ package v2
 import (
 	"context"
 
+	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/rs/zerolog"
-	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/proto"
+)
+
+const (
+	errMetaDataMethodObsolete string = "method %s is obsolete, use set manifest to manipulate metadata"
 )
 
 type Writer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	w3     dsw3.WriterServer
 }
 
-func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, w3 *v3.Writer) *Writer {
 	return &Writer{
 		logger: logger,
 		store:  store,
+		w3:     w3,
 	}
 }
 
-// object type metadata methods.
-func (s *Writer) SetObjectType(ctx context.Context, req *dsw2.SetObjectTypeRequest) (*dsw2.SetObjectTypeResponse, error) {
-	resp := &dsw2.SetObjectTypeResponse{}
-
-	if ok, err := ds.ObjectType(req.ObjectType).Validate(); !ok {
-		return resp, err
-	}
-
-	req.ObjectType.Hash = ds.ObjectType(req.ObjectType).Hash()
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), req.ObjectType)
-		if err != nil {
-			return err
-		}
-
-		objType, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req.ObjectType).Key(), updReq)
-		if err != nil {
-			return err
-		}
-
-		resp.Result = objType
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// SetObjectType, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) SetObjectType(_ context.Context, _ *dsw2.SetObjectTypeRequest) (*dsw2.SetObjectTypeResponse, error) {
+	return &dsw2.SetObjectTypeResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "SetObjectType")
 }
 
-func (s *Writer) DeleteObjectType(ctx context.Context, req *dsw2.DeleteObjectTypeRequest) (*dsw2.DeleteObjectTypeResponse, error) {
-	resp := &dsw2.DeleteObjectTypeResponse{}
-
-	if ok, err := ds.ObjectTypeIdentifier(req.Param).Validate(); !ok {
-		return resp, err
-	}
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := bdb.Delete(ctx, tx, bdb.ObjectTypesPath, ds.ObjectTypeIdentifier(req.Param).Key()); err != nil {
-			return err
-		}
-		resp.Result = &emptypb.Empty{}
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// DeleteObjectType, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) DeleteObjectType(_ context.Context, _ *dsw2.DeleteObjectTypeRequest) (*dsw2.DeleteObjectTypeResponse, error) {
+	return &dsw2.DeleteObjectTypeResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "DeleteObjectType")
 }
 
-// relation type metadata methods.
-func (s *Writer) SetRelationType(ctx context.Context, req *dsw2.SetRelationTypeRequest) (*dsw2.SetRelationTypeResponse, error) {
-	resp := &dsw2.SetRelationTypeResponse{}
-
-	if ok, err := ds.RelationType(req.RelationType).Validate(s.store.MC()); !ok {
-		return resp, err
-	}
-
-	req.RelationType.Hash = ds.RelationType(req.RelationType).Hash()
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req.RelationType).Key(), req.RelationType)
-		if err != nil {
-			return err
-		}
-
-		relType, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req.RelationType).Key(), updReq)
-		if err != nil {
-			return err
-		}
-
-		resp.Result = relType
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// SetRelationType, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) SetRelationType(_ context.Context, _ *dsw2.SetRelationTypeRequest) (*dsw2.SetRelationTypeResponse, error) {
+	return &dsw2.SetRelationTypeResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "SetRelationType")
 }
 
-func (s *Writer) DeleteRelationType(ctx context.Context, req *dsw2.DeleteRelationTypeRequest) (*dsw2.DeleteRelationTypeResponse, error) {
-	resp := &dsw2.DeleteRelationTypeResponse{}
-
-	if ok, err := ds.RelationTypeIdentifier(req.Param).Validate(); !ok {
-		return resp, err
-	}
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := bdb.Delete(ctx, tx, bdb.RelationTypesPath, ds.RelationTypeIdentifier(req.Param).Key()); err != nil {
-			return err
-		}
-		resp.Result = &emptypb.Empty{}
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// DeleteRelationType, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) DeleteRelationType(_ context.Context, _ *dsw2.DeleteRelationTypeRequest) (*dsw2.DeleteRelationTypeResponse, error) {
+	return &dsw2.DeleteRelationTypeResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "DeleteRelationType")
 }
 
-// permission metadata methods.
-func (s *Writer) SetPermission(ctx context.Context, req *dsw2.SetPermissionRequest) (*dsw2.SetPermissionResponse, error) {
-	resp := &dsw2.SetPermissionResponse{}
-
-	if ok, err := ds.Permission(req.Permission).Validate(); !ok {
-		return resp, err
-	}
-
-	req.Permission.Hash = ds.Permission(req.Permission).Hash()
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.PermissionsPath, ds.Permission(req.Permission).Key(), req.Permission)
-		if err != nil {
-			return err
-		}
-
-		objType, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req.Permission).Key(), updReq)
-		if err != nil {
-			return err
-		}
-
-		resp.Result = objType
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// SetPermission, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) SetPermission(_ context.Context, _ *dsw2.SetPermissionRequest) (*dsw2.SetPermissionResponse, error) {
+	return &dsw2.SetPermissionResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "SetPermission")
 }
 
-func (s *Writer) DeletePermission(ctx context.Context, req *dsw2.DeletePermissionRequest) (*dsw2.DeletePermissionResponse, error) {
-	resp := &dsw2.DeletePermissionResponse{}
-
-	if ok, err := ds.PermissionIdentifier(req.Param).Validate(); !ok {
-		return resp, err
-	}
-
-	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := bdb.Delete(ctx, tx, bdb.PermissionsPath, ds.PermissionIdentifier(req.Param).Key()); err != nil {
-			return err
-		}
-		resp.Result = &emptypb.Empty{}
-		return nil
-	})
-
-	if err := s.store.LoadModel(); err != nil {
-		s.logger.Error().Err(err).Msg("model reload")
-	}
-
-	return resp, err
+// DeletePermission, obsolete, use set manifest to manipulate metadata.
+func (s *Writer) DeletePermission(_ context.Context, _ *dsw2.DeletePermissionRequest) (*dsw2.DeletePermissionResponse, error) {
+	return &dsw2.DeletePermissionResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "DeletePermission")
 }
 
-// object methods.
+// SetObject.
 func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*dsw2.SetObjectResponse, error) {
-	resp := &dsw2.SetObjectResponse{}
+	r3, err := s.w3.SetObject(ctx, &dsw3.SetObjectRequest{
+		Object: &dsc3.Object{
+			Type:        req.GetObject().GetType(),
+			Id:          req.GetObject().GetKey(),
+			DisplayName: req.GetObject().GetDisplayName(),
+			Properties:  req.GetObject().GetProperties(),
+			CreatedAt:   req.GetObject().GetCreatedAt(),
+			UpdatedAt:   req.GetObject().GetUpdatedAt(),
+			Etag:        req.GetObject().GetHash(),
+		},
+	})
+	if err != nil {
+		return &dsw2.SetObjectResponse{}, err
+	}
 
-	// if ok, err := ds.Object(req.Object).Validate(s.store.MC()); !ok {
-	// 	return resp, err
-	// }
+	r2 := &dsw2.SetObjectResponse{
+		Result: &dsc2.Object{
+			Type:        r3.GetResult().GetType(),
+			Key:         r3.GetResult().GetId(),
+			DisplayName: r3.GetResult().GetDisplayName(),
+			Properties:  r3.GetResult().GetProperties(),
+			CreatedAt:   r3.GetResult().GetCreatedAt(),
+			UpdatedAt:   r3.GetResult().GetUpdatedAt(),
+			Hash:        r3.GetResult().GetEtag(),
+		},
+	}
 
-	// req.Object.Hash = ds.Object(req.Object).Hash()
-
-	// err := s.store.DB().Update(func(tx *bolt.Tx) error {
-	// 	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), updReq)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	resp.Result = objType
-	// 	return nil
-	// })
-
-	return resp, status.Error(codes.Unimplemented, "SetObject")
+	return r2, err
 }
 
+// DeleteObject.
 func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest) (*dsw2.DeleteObjectResponse, error) {
-	resp := &dsw2.DeleteObjectResponse{}
+	r3, err := s.w3.DeleteObject(ctx, &dsw3.DeleteObjectRequest{
+		ObjectType:    req.GetParam().GetType(),
+		ObjectId:      req.GetParam().GetKey(),
+		WithRelations: proto.Bool(req.GetWithRelations()),
+	})
+	if err != nil {
+		return &dsw2.DeleteObjectResponse{}, err
+	}
 
-	// if ok, err := ds.ObjectIdentifier(req.Param).Validate(); !ok {
-	// 	return resp, err
-	// }
+	r2 := &dsw2.DeleteObjectResponse{
+		Result: r3.Result,
+	}
 
-	// err := s.store.DB().Update(func(tx *bolt.Tx) error {
-	// 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key()); err != nil {
-	// 		return err
-	// 	}
-
-	// 	if req.GetWithRelations() {
-	// 		{
-	// 			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-	// 			iter, err := bdb.NewScanIterator[dsc2.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
-	// 			if err != nil {
-	// 				return err
-	// 			}
-
-	// 			for iter.Next() {
-	// 				if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(iter.Value()).ObjKey()); err != nil {
-	// 					return err
-	// 				}
-
-	// 				if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(iter.Value()).SubKey()); err != nil {
-	// 					return err
-	// 				}
-	// 			}
-	// 		}
-	// 		{
-	// 			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-	// 			iter, err := bdb.NewScanIterator[dsc2.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(req.Param).Key()+ds.InstanceSeparator))
-	// 			if err != nil {
-	// 				return err
-	// 			}
-
-	// 			for iter.Next() {
-	// 				if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(iter.Value()).ObjKey()); err != nil {
-	// 					return err
-	// 				}
-
-	// 				if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(iter.Value()).SubKey()); err != nil {
-	// 					return err
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-
-	// 	resp.Result = &emptypb.Empty{}
-	// 	return nil
-	// })
-
-	return resp, status.Error(codes.Unimplemented, "DeleteObject")
+	return r2, err
 }
 
-// relation methods.
+// SetRelation.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) (*dsw2.SetRelationResponse, error) {
-	resp := &dsw2.SetRelationResponse{}
+	r3, err := s.w3.SetRelation(ctx, &dsw3.SetRelationRequest{
+		Relation: &dsc3.Relation{
+			ObjectType:      req.GetRelation().GetObject().GetType(),
+			ObjectId:        req.GetRelation().GetObject().GetKey(),
+			Relation:        req.GetRelation().GetRelation(),
+			SubjectType:     req.GetRelation().GetSubject().GetType(),
+			SubjectId:       req.GetRelation().GetSubject().GetKey(),
+			SubjectRelation: "",
+		},
+	})
+	if err != nil {
+		return &dsw2.SetRelationResponse{}, err
+	}
 
-	// if ok, err := ds.Relation(req.Relation).Validate(s.store.MC()); !ok {
-	// 	return resp, err
-	// }
+	r2 := &dsw2.SetRelationResponse{
+		Result: &dsc2.Relation{
+			Object: &dsc2.ObjectIdentifier{
+				Type: proto.String(r3.GetResult().GetObjectType()),
+				Key:  proto.String(r3.GetResult().GetObjectId()),
+			},
+			Relation: r3.GetResult().GetRelation(),
+			Subject: &dsc2.ObjectIdentifier{
+				Type: proto.String(r3.GetResult().GetSubjectType()),
+				Key:  proto.String(r3.GetResult().GetSubjectId()),
+			},
+			CreatedAt: r3.GetResult().GetCreatedAt(),
+			UpdatedAt: r3.GetResult().GetUpdatedAt(),
+			Hash:      r3.GetResult().GetEtag(),
+		},
+	}
 
-	// req.Relation.Hash = ds.Relation(req.Relation).Hash()
-
-	// err := s.store.DB().Update(func(tx *bolt.Tx) error {
-	// 	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	subRel, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), req.Relation)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-
-	// 	resp.Result = objRel
-	// 	_ = subRel
-
-	// 	return nil
-	// })
-
-	return resp, status.Error(codes.Unimplemented, "SetRelation")
+	return r2, err
 }
 
+// DeleteRelation.
 func (s *Writer) DeleteRelation(ctx context.Context, req *dsw2.DeleteRelationRequest) (*dsw2.DeleteRelationResponse, error) {
-	resp := &dsw2.DeleteRelationResponse{}
+	r3, err := s.w3.DeleteRelation(ctx, &dsw3.DeleteRelationRequest{
+		ObjectType:      req.GetParam().GetObject().GetType(),
+		ObjectId:        req.GetParam().GetObject().GetKey(),
+		Relation:        req.GetParam().GetRelation().GetName(),
+		SubjectType:     req.GetParam().GetSubject().GetType(),
+		SubjectId:       req.GetParam().GetSubject().GetKey(),
+		SubjectRelation: "",
+	})
+	if err != nil {
+		return &dsw2.DeleteRelationResponse{}, err
+	}
 
-	// if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {
-	// 	return resp, err
-	// }
+	r2 := &dsw2.DeleteRelationResponse{
+		Result: r3.Result,
+	}
 
-	// err := s.store.DB().Update(func(tx *bolt.Tx) error {
-	// 	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey()); err != nil {
-	// 		return err
-	// 	}
-	// 	if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.RelationIdentifier(req.Param).SubKey()); err != nil {
-	// 		return err
-	// 	}
-	// 	resp.Result = &emptypb.Empty{}
-	// 	return nil
-	// })
-
-	return resp, status.Error(codes.Unimplemented, "DeleteRelation")
+	return r2, err
 }

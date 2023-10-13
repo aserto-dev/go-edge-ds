@@ -69,9 +69,10 @@ func (i *relation) ObjKey() string {
 		InstanceSeparator +
 		i.GetRelation() +
 		InstanceSeparator +
-		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
-		RelationSeparator +
-		i.GetSubjectRelation()
+		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId()
+	//  +
+	// RelationSeparator +
+	// i.GetSubjectRelation()
 }
 
 // TODO verify correct position of subject_relation in the key string
@@ -80,9 +81,10 @@ func (i *relation) SubKey() string {
 		InstanceSeparator +
 		i.GetRelation() +
 		InstanceSeparator +
-		i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
-		RelationSeparator +
-		i.GetSubjectRelation()
+		i.GetObjectType() + TypeIDSeparator + i.GetObjectId()
+	// +
+	// RelationSeparator +
+	// i.GetSubjectRelation()
 }
 
 func (i *relation) Validate(mc *cache.Cache) (bool, error) {

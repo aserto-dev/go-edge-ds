@@ -3,9 +3,6 @@ package ds
 // model contains relation type related items.
 
 import (
-	"hash/fnv"
-	"strconv"
-
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
@@ -47,40 +44,40 @@ func (i *relationType) Validate(mc *cache.Cache) (bool, error) {
 	return true, nil
 }
 
-func (i *relationType) Hash() string {
-	h := fnv.New64a()
-	h.Reset()
+// func (i *relationType) Hash() string {
+// 	h := fnv.New64a()
+// 	h.Reset()
 
-	if _, err := h.Write([]byte(i.GetObjectType())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write([]byte(i.GetName())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write(Int32ToByte(i.GetOrdinal())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write(Uint32ToByte(i.GetStatus())); err != nil {
-		return DefaultHash
-	}
+// 	if _, err := h.Write([]byte(i.GetObjectType())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write([]byte(i.GetName())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write(Int32ToByte(i.GetOrdinal())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write(Uint32ToByte(i.GetStatus())); err != nil {
+// 		return DefaultHash
+// 	}
 
-	for _, u := range i.Unions {
-		if _, err := h.Write([]byte(u)); err != nil {
-			return DefaultHash
-		}
-	}
+// 	for _, u := range i.Unions {
+// 		if _, err := h.Write([]byte(u)); err != nil {
+// 			return DefaultHash
+// 		}
+// 	}
 
-	for _, p := range i.Permissions {
-		if _, err := h.Write([]byte(p)); err != nil {
-			return DefaultHash
-		}
-	}
+// 	for _, p := range i.Permissions {
+// 		if _, err := h.Write([]byte(p)); err != nil {
+// 			return DefaultHash
+// 		}
+// 	}
 
-	return strconv.FormatUint(h.Sum64(), 10)
-}
+// 	return strconv.FormatUint(h.Sum64(), 10)
+// }
 
 // RelationTypeIdentifier.
 type relationTypeIdentifier struct {

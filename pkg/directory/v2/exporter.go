@@ -3,7 +3,9 @@ package v2
 import (
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
+	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
@@ -12,12 +14,14 @@ import (
 type Exporter struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	e3     dse3.ExporterServer
 }
 
-func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB) *Exporter {
+func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB, e3 *v3.Exporter) *Exporter {
 	return &Exporter{
 		logger: logger,
 		store:  store,
+		e3:     e3,
 	}
 }
 

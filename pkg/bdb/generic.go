@@ -21,11 +21,11 @@ func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key s
 		return nil, err
 	}
 
-	return unmarshal[T, M](buf)
+	return Unmarshal[T, M](buf)
 }
 
 func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string, t M) (M, error) {
-	buf, err := marshal(t)
+	buf, err := Marshal(t)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
 	return DeleteKey(tx, path, key)
 }
 
-func marshal[T any, M Message[T]](t M) ([]byte, error) {
+func Marshal[T any, M Message[T]](t M) ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := pb.ProtoToBuf(buf, any(t).(proto.Message)); err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func marshal[T any, M Message[T]](t M) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func unmarshal[T any, M Message[T]](b []byte) (M, error) {
+func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 	if err := pb.BufToProto(bytes.NewReader(b), any(&t).(proto.Message)); err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/rs/zerolog"
 
 	"github.com/Masterminds/semver"
 	"github.com/pkg/errors"
@@ -56,14 +57,7 @@ type relationType interface {
 	GetObject() *dsc2.ObjectIdentifier
 }
 
-type direction int
-
-const (
-	ObjectToSubject direction = iota
-	SubjectToObject
-)
-
-var fnMap = []func(*bolt.DB, *bolt.DB) error{
+var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	mig.DeleteBucket(bdb.ObjectTypesPath),
 	mig.DeleteBucket(ObjectTypesNamePath),
 	mig.CreateBucket(bdb.ObjectTypesPath),
@@ -88,25 +82,34 @@ var fnMap = []func(*bolt.DB, *bolt.DB) error{
 	mig.DeleteBucket(bdb.RelationsSubPath),
 	mig.CreateBucket(bdb.RelationsObjPath),
 	mig.CreateBucket(bdb.RelationsSubPath),
-	updateRelations(bdb.RelationsObjPath, &dsc2.Relation{}, ObjectToSubject),
-	updateRelations(bdb.RelationsSubPath, &dsc2.Relation{}, SubjectToObject),
+	updateRelations(bdb.RelationsObjPath, &dsc2.Relation{}, ds.ObjectToSubject),
+	updateRelations(bdb.RelationsSubPath, &dsc2.Relation{}, ds.SubjectToObject),
 }
 
-func Migrate(roDB, rwDB *bolt.DB) error {
+func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
+	log.Info().Str("version", Version).Msg("StartMigration")
 	for _, fn := range fnMap {
-		if err := fn(roDB, rwDB); err != nil {
+		if err := fn(log, roDB, rwDB); err != nil {
 			return err
 		}
 	}
+	log.Info().Str("version", Version).Msg("FinishedMigration")
 	return nil
 }
 
 // updateModelTypes, read values from read-only backup, write to new bucket.
-func updateModelTypes[T modelType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) error {
-	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
+func updateModelTypes[T modelType](path bdb.Path, v T) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		log.Info().Str("version", Version).Msg("UpdateModelTypes")
 
-		if err := roDB.View(func(tx *bolt.Tx) error {
-			b, err := mig.SetBucket(tx, path)
+		if err := roDB.View(func(rtx *bolt.Tx) error {
+			wtx, err := rwDB.Begin(true)
+			if err != nil {
+				return err
+			}
+			defer wtx.Rollback()
+
+			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
 				return err
 			}
@@ -126,14 +129,12 @@ func updateModelTypes[T modelType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) 
 					return err
 				}
 
-				if err := rwDB.Update(func(tx *bolt.Tx) error {
-					return mig.SetKey(tx, path, keyModelType(v), buf.Bytes())
-				}); err != nil {
+				if err := mig.SetKey(wtx, path, keyModelType(v), buf.Bytes()); err != nil {
 					return err
 				}
 			}
 
-			return nil
+			return wtx.Commit()
 		}); err != nil {
 			return err
 		}
@@ -156,11 +157,18 @@ func keyModelType[T modelType](v T) []byte {
 }
 
 // updateObjects, read values from read-only backup, write to new bucket.
-func updateObjects[T objectType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) error {
-	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
+func updateObjects[T objectType](path bdb.Path, v T) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		log.Info().Str("version", Version).Msg("UpdateObjects")
 
-		if err := roDB.View(func(tx *bolt.Tx) error {
-			b, err := mig.SetBucket(tx, path)
+		if err := roDB.View(func(rtx *bolt.Tx) error {
+			wtx, err := rwDB.Begin(true)
+			if err != nil {
+				return err
+			}
+			defer wtx.Rollback()
+
+			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
 				return err
 			}
@@ -182,28 +190,32 @@ func updateObjects[T objectType](path bdb.Path, v T) func(*bolt.DB, *bolt.DB) er
 
 				newKey := v.GetType() + ds.TypeIDSeparator + v.GetKey()
 
-				if err := rwDB.Update(func(tx *bolt.Tx) error {
-					return mig.SetKey(tx, path, []byte(newKey), buf.Bytes())
-				}); err != nil {
+				if err := mig.SetKey(wtx, path, []byte(newKey), buf.Bytes()); err != nil {
 					return err
 				}
 			}
 
-			return nil
+			return wtx.Commit()
 		}); err != nil {
 			return err
 		}
-
 		return nil
 	}
 }
 
 // updateRelations, read values from read-only backup, write to new bucket.
-func updateRelations[T relationType](path bdb.Path, v T, d direction) func(*bolt.DB, *bolt.DB) error {
-	return func(roDB *bolt.DB, rwDB *bolt.DB) error {
+func updateRelations[T relationType](path bdb.Path, v T, d ds.Direction) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		log.Info().Str("version", Version).Msg("UpdateRelations")
 
-		if err := roDB.View(func(tx *bolt.Tx) error {
-			b, err := mig.SetBucket(tx, path)
+		if err := roDB.View(func(rtx *bolt.Tx) error {
+			wtx, err := rwDB.Begin(true)
+			if err != nil {
+				return err
+			}
+			defer wtx.Rollback()
+
+			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
 				return err
 			}
@@ -229,29 +241,26 @@ func updateRelations[T relationType](path bdb.Path, v T, d direction) func(*bolt
 
 				newKey := relKey(v, d)
 
-				if err := rwDB.Update(func(tx *bolt.Tx) error {
-					return mig.SetKey(tx, path, []byte(newKey), buf.Bytes())
-				}); err != nil {
+				if err := mig.SetKey(wtx, path, []byte(newKey), buf.Bytes()); err != nil {
 					return err
 				}
 			}
 
-			return nil
+			return wtx.Commit()
 		}); err != nil {
 			return err
 		}
-
 		return nil
 	}
 }
 
 // relKey, generates the new relation key using the object type and key instead of object id.
-func relKey[T relationType](v T, d direction) string {
+func relKey[T relationType](v T, d ds.Direction) string {
 	switch d {
 	// obj_type : obj_id | relation | sub_type : sub_id
 	// when subject_relation is added this will become
 	// obj_type : obj_id | relation | sub_type : sub_id (# sub_rel)
-	case ObjectToSubject:
+	case ds.ObjectToSubject:
 		return fmt.Sprintf("%s:%s|%s|%s:%s",
 			v.GetObject().GetType(),
 			v.GetObject().GetKey(),
@@ -262,7 +271,7 @@ func relKey[T relationType](v T, d direction) string {
 	// sub_type : sub_id | relation | obj_type : obj_id
 	// when subject_relation is added this will become
 	// sub_type : sub_id (# sub_rel) | relation | obj_type : obj_id
-	case SubjectToObject:
+	case ds.SubjectToObject:
 		return fmt.Sprintf("%s:%s|%s|%s:%s",
 			v.GetSubject().GetType(),
 			v.GetSubject().GetKey(),

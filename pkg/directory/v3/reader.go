@@ -6,7 +6,6 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -22,7 +21,7 @@ type Reader struct {
 	v      *protovalidate.Validator
 }
 
-func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, r *v2.Reader) *Reader {
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
 	v, _ := protovalidate.New()
 	return &Reader{
 		logger: logger,
@@ -39,6 +38,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		return resp, err
 	}
 
+	// TODO handle pagination request.
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
 		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
@@ -65,6 +65,10 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		}
 
 		resp.Result = obj
+
+		// TODO set pagination response.
+		resp.Page = &dsc3.PaginationResponse{}
+
 		return nil
 	})
 
@@ -143,8 +147,13 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		return resp, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.GetRelation(req).ObjKey())
+	path, filter, err := ds.GetRelation(req).PathAndFilter()
+	if err != nil {
+		return resp, err
+	}
+
+	err = s.store.DB().View(func(tx *bolt.Tx) error {
+		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter)
 		if err != nil {
 			return err
 		}
@@ -240,7 +249,7 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 	return nil, status.Error(codes.Unimplemented, "check function is not implemented")
 }
 
-// CheckPermission, check is subject granted permission on object.
+// CheckPermission, check if subject granted permission on object.
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
 	resp := &dsr3.CheckPermissionResponse{}
 
@@ -257,12 +266,12 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 	return resp, err
 }
 
-// CheckRelation check is subject has relation with object.
+// CheckRelation check if subject has relation with object.
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
 	resp := &dsr3.CheckRelationResponse{}
 
 	if err := s.v.Validate(req); err != nil {
-		return &dsr3.CheckRelationResponse{}, err
+		return resp, err
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {

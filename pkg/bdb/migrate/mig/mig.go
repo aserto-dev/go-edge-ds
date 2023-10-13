@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Masterminds/semver"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/rs/zerolog"
+
+	"github.com/Masterminds/semver"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -49,8 +51,9 @@ func SetKey(tx *bolt.Tx, path bdb.Path, key, value []byte) error {
 	return b.Put(key, value)
 }
 
-func CreateBucket(path bdb.Path) func(*bolt.DB, *bolt.DB) error {
-	return func(_ *bolt.DB, rwDB *bolt.DB) error {
+func CreateBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, _ *bolt.DB, rwDB *bolt.DB) error {
+		log.Info().Str("path", strings.Join(path, "/")).Msg("CreateBucket")
 
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
 			var (
@@ -79,8 +82,9 @@ func CreateBucket(path bdb.Path) func(*bolt.DB, *bolt.DB) error {
 	}
 }
 
-func DeleteBucket(path bdb.Path) func(*bolt.DB, *bolt.DB) error {
-	return func(_ *bolt.DB, rwDB *bolt.DB) error {
+func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, _ *bolt.DB, rwDB *bolt.DB) error {
+		log.Info().Str("path", strings.Join(path, "/")).Msg("CreateBucket")
 
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
 			if len(path) == 1 {
@@ -153,7 +157,7 @@ func SetVersion(db *bolt.DB, version *semver.Version) (err error) {
 	})
 }
 
-func EnsureBaseVersion(_, rwDB *bolt.DB) error {
+func EnsureBaseVersion(_ *zerolog.Logger, _, rwDB *bolt.DB) error {
 	return rwDB.Update(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
@@ -192,8 +196,25 @@ func Backup(db *bolt.DB, version *semver.Version) error {
 	})
 }
 
-func OpenReadOnlyDB(dbPath string, version *semver.Version) (*bolt.DB, error) {
-	db, err := bolt.Open(BackupFilename(dbPath, version), 0666, &bolt.Options{ReadOnly: true})
+func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
+	db, err := bolt.Open(cfg.DBPath, 0644, &bolt.Options{
+		Timeout: cfg.RequestTimeout,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	db.MaxBatchSize = cfg.MaxBatchSize
+	db.MaxBatchDelay = cfg.MaxBatchDelay
+
+	return db, nil
+}
+
+func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) {
+	db, err := bolt.Open(BackupFilename(cfg.DBPath, version), 0644, &bolt.Options{
+		ReadOnly: true,
+		Timeout:  cfg.RequestTimeout,
+	})
 	if err != nil {
 		return nil, err
 	}

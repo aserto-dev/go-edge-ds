@@ -6,7 +6,6 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -21,7 +20,7 @@ type Writer struct {
 	v      *protovalidate.Validator
 }
 
-func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, w *v2.Writer) *Writer {
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
 	v, _ := protovalidate.New()
 	return &Writer{
 		logger: logger,
