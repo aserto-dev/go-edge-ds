@@ -9,7 +9,7 @@ require (
 	github.com/aserto-dev/azm v0.0.4
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-aserto v0.20.3
-	github.com/aserto-dev/go-directory v0.21.8-0.20231015174725-ea4063222bb5
+	github.com/aserto-dev/go-directory v0.21.8-0.20231015213014-2bac9fa0ff01
 	github.com/bufbuild/protovalidate-go v0.3.3
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.3.1
@@ -57,7 +57,7 @@ require (
 	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20231009173412-8bfb1ae86b6c // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20231009173412-8bfb1ae86b6c // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20231012201019-e917dd12ba7a // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231009173412-8bfb1ae86b6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

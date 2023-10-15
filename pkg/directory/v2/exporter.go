@@ -28,28 +28,28 @@ func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB, e3 *v3.Exporter) *Ex
 func (s *Exporter) Export(req *dse2.ExportRequest, stream dse2.Exporter_ExportServer) error {
 	logger := s.logger.With().Str("method", "Export").Interface("req", req).Logger()
 
+	if req.Options&uint32(dse2.Option_OPTION_METADATA_OBJECT_TYPES) != 0 {
+		if err := exportObjectTypes(s.store, stream); err != nil {
+			logger.Error().Err(err).Msg("export_object_types")
+			return err
+		}
+	}
+
+	if req.Options&uint32(dse2.Option_OPTION_METADATA_RELATION_TYPES) != 0 {
+		if err := exportRelationTypes(s.store, stream); err != nil {
+			logger.Error().Err(err).Msg("export_relation_types")
+			return err
+		}
+	}
+
+	if req.Options&uint32(dse2.Option_OPTION_METADATA_PERMISSIONS) != 0 {
+		if err := exportPermissions(s.store, stream); err != nil {
+			logger.Error().Err(err).Msg("export_permissions")
+			return err
+		}
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		if req.Options&uint32(dse2.Option_OPTION_METADATA_OBJECT_TYPES) != 0 {
-			if err := exportObjectTypes(tx, stream); err != nil {
-				logger.Error().Err(err).Msg("export_object_types")
-				return err
-			}
-		}
-
-		if req.Options&uint32(dse2.Option_OPTION_METADATA_RELATION_TYPES) != 0 {
-			if err := exportRelationTypes(tx, stream); err != nil {
-				logger.Error().Err(err).Msg("export_relation_types")
-				return err
-			}
-		}
-
-		if req.Options&uint32(dse2.Option_OPTION_METADATA_PERMISSIONS) != 0 {
-			if err := exportPermissions(tx, stream); err != nil {
-				logger.Error().Err(err).Msg("export_permissions")
-				return err
-			}
-		}
-
 		if req.Options&uint32(dse2.Option_OPTION_DATA_OBJECTS) != 0 {
 			if err := exportObjects(tx, stream); err != nil {
 				logger.Error().Err(err).Msg("export_objects")
@@ -70,16 +70,16 @@ func (s *Exporter) Export(req *dse2.ExportRequest, stream dse2.Exporter_ExportSe
 	return err
 }
 
-func exportObjectTypes(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
-	iter, err := bdb.NewScanIterator[dsc2.ObjectType](stream.Context(), tx, bdb.ObjectTypesPath)
+func exportObjectTypes(store *bdb.BoltDB, stream dse2.Exporter_ExportServer) error {
+	results, err := store.MC().GetObjectTypes()
 	if err != nil {
 		return err
 	}
 
-	for iter.Next() {
+	for _, v := range results {
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_ObjectType{
-				ObjectType: iter.Value(),
+				ObjectType: v,
 			},
 		}); err != nil {
 			return err
@@ -89,16 +89,16 @@ func exportObjectTypes(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 	return nil
 }
 
-func exportRelationTypes(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
-	iter, err := bdb.NewScanIterator[dsc2.RelationType](stream.Context(), tx, bdb.RelationTypesPath)
+func exportRelationTypes(store *bdb.BoltDB, stream dse2.Exporter_ExportServer) error {
+	results, err := store.MC().GetRelationTypes("")
 	if err != nil {
 		return err
 	}
 
-	for iter.Next() {
+	for _, v := range results {
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_RelationType{
-				RelationType: iter.Value(),
+				RelationType: v,
 			},
 		}); err != nil {
 			return err
@@ -108,16 +108,16 @@ func exportRelationTypes(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 	return nil
 }
 
-func exportPermissions(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
-	iter, err := bdb.NewScanIterator[dsc2.Permission](stream.Context(), tx, bdb.PermissionsPath)
+func exportPermissions(store *bdb.BoltDB, stream dse2.Exporter_ExportServer) error {
+	results, err := store.MC().GetPermissions()
 	if err != nil {
 		return err
 	}
 
-	for iter.Next() {
+	for _, v := range results {
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_Permission{
-				Permission: iter.Value(),
+				Permission: v,
 			},
 		}); err != nil {
 			return err
