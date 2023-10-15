@@ -10,7 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/convert"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rs/zerolog"
 )
@@ -33,8 +33,8 @@ func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, r3 *v3.Reader) *Reader
 func (s *Reader) GetObjectType(ctx context.Context, req *dsr2.GetObjectTypeRequest) (*dsr2.GetObjectTypeResponse, error) {
 	resp := &dsr2.GetObjectTypeResponse{}
 
-	if ok, err := ds.ObjectTypeIdentifier(req.Param).Validate(); !ok {
-		return resp, err
+	if req.Param == nil {
+		req.Param = &dsc2.ObjectTypeIdentifier{Name: proto.String("")}
 	}
 
 	objectType, err := s.store.MC().GetObjectType(req.Param.GetName())
@@ -70,8 +70,11 @@ func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr2.GetObjectTypesReq
 func (s *Reader) GetRelationType(ctx context.Context, req *dsr2.GetRelationTypeRequest) (*dsr2.GetRelationTypeResponse, error) {
 	resp := &dsr2.GetRelationTypeResponse{}
 
-	if ok, err := ds.RelationTypeIdentifier(req.Param).Validate(); !ok {
-		return resp, err
+	if req.Param == nil {
+		req.Param = &dsc2.RelationTypeIdentifier{
+			ObjectType: proto.String(""),
+			Name:       proto.String(""),
+		}
 	}
 
 	relationType, err := s.store.MC().GetRelationType(req.Param.GetObjectType(), req.Param.GetName())
@@ -90,10 +93,6 @@ func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr2.GetRelationType
 
 	if req.Param == nil {
 		req.Param = &dsc2.ObjectTypeIdentifier{}
-	}
-
-	if ok, err := ds.ObjectTypeSelector(req.Param).Validate(); !ok {
-		return resp, err
 	}
 
 	if req.Page == nil {
@@ -118,8 +117,10 @@ func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr2.GetRelationType
 func (s *Reader) GetPermission(ctx context.Context, req *dsr2.GetPermissionRequest) (*dsr2.GetPermissionResponse, error) {
 	resp := &dsr2.GetPermissionResponse{}
 
-	if ok, err := ds.PermissionIdentifier(req.Param).Validate(); !ok {
-		return resp, err
+	if req.Param == nil {
+		req.Param = &dsc2.PermissionIdentifier{
+			Name: proto.String(""),
+		}
 	}
 
 	permission, err := s.store.MC().GetPermission(req.Param.GetName())

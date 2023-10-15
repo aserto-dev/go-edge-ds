@@ -64,7 +64,7 @@ func (s *Writer) DeletePermission(_ context.Context, _ *dsw2.DeletePermissionReq
 	return &dsw2.DeletePermissionResponse{}, status.Errorf(codes.Unimplemented, errMetaDataMethodObsolete, "DeletePermission")
 }
 
-// SetObject.
+// SetObject, implementation is delegated to writer.v3.SetObject.
 func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*dsw2.SetObjectResponse, error) {
 	r3, err := s.w3.SetObject(ctx, &dsw3.SetObjectRequest{
 		Object: &dsc3.Object{
@@ -96,7 +96,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*ds
 	return r2, err
 }
 
-// DeleteObject.
+// DeleteObject, implementation is delegated to writer.v3.DeleteObject.
 func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest) (*dsw2.DeleteObjectResponse, error) {
 	r3, err := s.w3.DeleteObject(ctx, &dsw3.DeleteObjectRequest{
 		ObjectType:    req.GetParam().GetType(),
@@ -114,7 +114,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest
 	return r2, err
 }
 
-// SetRelation.
+// SetRelation, implementation is delegated to writer.v3.SetRelation.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) (*dsw2.SetRelationResponse, error) {
 	r3, err := s.w3.SetRelation(ctx, &dsw3.SetRelationRequest{
 		Relation: &dsc3.Relation{
@@ -150,7 +150,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) 
 	return r2, err
 }
 
-// DeleteRelation.
+// DeleteRelation, implementation is delegated to writer.v3.DeleteRelation.
 func (s *Writer) DeleteRelation(ctx context.Context, req *dsw2.DeleteRelationRequest) (*dsw2.DeleteRelationResponse, error) {
 	r3, err := s.w3.DeleteRelation(ctx, &dsw3.DeleteRelationRequest{
 		ObjectType:      req.GetParam().GetObject().GetType(),

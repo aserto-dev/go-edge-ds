@@ -29,14 +29,14 @@ var migMap = map[string]Migration{
 var (
 	ErrDirectorySchemaVersionHigher  = cerr.NewAsertoError("E20054", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema version is higher than supported by engine")
 	ErrDirectorySchemaUpdateRequired = cerr.NewAsertoError("E20055", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema update required")
-	ErrrUnknown                      = cerr.NewAsertoError("E99999", codes.Unknown, http.StatusInternalServerError, "unexpected error occured")
+	ErrUnknown                       = cerr.NewAsertoError("E99999", codes.Unknown, http.StatusInternalServerError, "unexpected error occurred")
 )
 
 // CheckSchemaVersion, validate schema version of the database file
-// errors: returns false, error
 // equal:  returns  true, nil
 // lower:  returns false, nil
 // higher  returns false, error
+// errors: returns false, error.
 func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *semver.Version) (bool, error) {
 	boltdb, err := bdb.New(config, logger)
 	if err != nil {
@@ -61,7 +61,7 @@ func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *
 	case curVersion.GreaterThan(reqVersion):
 		return false, ErrDirectorySchemaVersionHigher.Msg(curVersion.String())
 	default:
-		return false, ErrrUnknown
+		return false, ErrUnknown
 	}
 }
 

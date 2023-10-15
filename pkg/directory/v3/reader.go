@@ -238,7 +238,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	return resp, err
 }
 
-// Check.
+// Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
 	resp := &dsr3.CheckResponse{}
 
@@ -249,7 +249,7 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 	return nil, status.Error(codes.Unimplemented, "check function is not implemented")
 }
 
-// CheckPermission, check if subject granted permission on object.
+// CheckPermission, check if subject is permitted to access resource (object).
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
 	resp := &dsr3.CheckPermissionResponse{}
 
@@ -266,7 +266,7 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 	return resp, err
 }
 
-// CheckRelation check if subject has relation with object.
+// CheckRelation, check if subject is permitted to access resource (object).
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
 	resp := &dsr3.CheckRelationResponse{}
 
@@ -283,7 +283,7 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 	return resp, err
 }
 
-// GetGraph.
+// GetGraph, return graph of connected objects and relations for requested anchor subject/object.
 func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3.GetGraphResponse, error) {
 	resp := &dsr3.GetGraphResponse{}
 

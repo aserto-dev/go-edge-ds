@@ -145,11 +145,6 @@ type objectSelector struct {
 
 func ObjectSelector(i *dsc3.ObjectIdentifier) *objectSelector { return &objectSelector{i} }
 
-// func (i *objectSelector) Normalize() {
-// 	i.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
-// 	i.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
-// }
-
 // Validate rules:
 // valid states
 // - empty object

@@ -107,7 +107,7 @@ func updateModelTypes[T modelType](path bdb.Path, v T) func(*zerolog.Logger, *bo
 			if err != nil {
 				return err
 			}
-			defer wtx.Rollback()
+			defer func() { _ = wtx.Rollback() }()
 
 			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
@@ -166,7 +166,7 @@ func updateObjects[T objectType](path bdb.Path, v T) func(*zerolog.Logger, *bolt
 			if err != nil {
 				return err
 			}
-			defer wtx.Rollback()
+			defer func() { _ = wtx.Rollback() }()
 
 			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
@@ -213,7 +213,7 @@ func updateRelations[T relationType](path bdb.Path, v T, d ds.Direction) func(*z
 			if err != nil {
 				return err
 			}
-			defer wtx.Rollback()
+			defer func() { _ = wtx.Rollback() }()
 
 			b, err := mig.SetBucket(rtx, path)
 			if err != nil {

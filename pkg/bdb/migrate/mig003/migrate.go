@@ -63,8 +63,8 @@ func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 // migrateModel,
 // 1) creates a manifest file from the metadata objects in the db
 // 2) computes the in-memory model
-// 2) perists the manifest file byte-stream in the store
-// 3) perists the serialized model in the store
+// 2) persists the manifest file byte-stream in the store
+// 3) persists the serialized model in the store.
 func migrateModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("MigrateModel")
@@ -83,7 +83,7 @@ func updateObjects(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) erro
 			if err != nil {
 				return err
 			}
-			defer wtx.Rollback()
+			defer func() { _ = wtx.Rollback() }()
 
 			b, err := mig.SetBucket(rtx, path)
 			if err != nil {
@@ -133,7 +133,7 @@ func updateRelations(path bdb.Path, d ds.Direction) func(*zerolog.Logger, *bolt.
 			if err != nil {
 				return err
 			}
-			defer wtx.Rollback()
+			defer func() { _ = wtx.Rollback() }()
 
 			b, err := mig.SetBucket(rtx, path)
 			if err != nil {

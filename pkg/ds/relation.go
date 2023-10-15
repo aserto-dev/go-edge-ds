@@ -64,6 +64,7 @@ func (i *relation) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
+// TODO verify correct position of subject_relation in the key string.
 func (i *relation) ObjKey() string {
 	return i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
 		InstanceSeparator +
@@ -75,7 +76,7 @@ func (i *relation) ObjKey() string {
 	// i.GetSubjectRelation()
 }
 
-// TODO verify correct position of subject_relation in the key string
+// TODO verify correct position of subject_relation in the key string.
 func (i *relation) SubKey() string {
 	return i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
 		InstanceSeparator +
