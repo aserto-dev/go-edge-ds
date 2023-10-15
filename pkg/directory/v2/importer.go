@@ -66,14 +66,6 @@ func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
 		}
 	})
 
-	// if res.ObjectType.Set != 0 || res.ObjectType.Delete != 0 ||
-	// 	res.RelationType.Set != 0 || res.RelationType.Delete != 0 ||
-	// 	res.Permission.Set != 0 || res.Permission.Delete != 0 {
-	// 	if err := s.store.LoadModel(); err != nil {
-	// 		s.logger.Error().Err(err).Msg("model reload")
-	// 	}
-	// }
-
 	return importErr
 }
 
@@ -87,78 +79,7 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		res.Relation = updateCounter(res.Relation, req.OpCode, err)
 	}
 
-	// if objType := req.GetObjectType(); objType != nil {
-	// 	err = s.objectTypeHandler(ctx, tx, objType)
-	// 	res.ObjectType = updateCounter(res.ObjectType, req.OpCode, err)
-	// } else if perm := req.GetPermission(); perm != nil {
-	// 	err = s.permissionHandler(ctx, tx, perm)
-	// 	res.Permission = updateCounter(res.Permission, req.OpCode, err)
-	// } else if relType := req.GetRelationType(); relType != nil {
-	// 	err = s.relationTypeHandler(ctx, tx, relType)
-	// 	res.RelationType = updateCounter(res.RelationType, req.OpCode, err)
-	// } else if obj := req.GetObject(); obj != nil {
-	// 	err = s.objectHandler(ctx, tx, obj)
-	// 	res.Object = updateCounter(res.Object, req.OpCode, err)
-	// } else if rel := req.GetRelation(); rel != nil {
-	// 	err = s.relationHandler(ctx, tx, rel)
-	// 	res.Relation = updateCounter(res.Relation, req.OpCode, err)
-	// }
-
 	return err
-}
-
-func (s *Importer) objectTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.ObjectType) error {
-	s.logger.Debug().Interface("objectType", req).Msg("import_object_type")
-
-	// if req == nil {
-	// 	return derr.ErrInvalidObjectType.Msg("nil")
-	// }
-
-	// if ok, err := ds.ObjectType(req).Validate(); !ok {
-	// 	return err
-	// }
-
-	// if _, err := bdb.Set(ctx, tx, bdb.ObjectTypesPath, ds.ObjectType(req).Key(), req); err != nil {
-	// 	return derr.ErrInvalidObjectType.Msg("set")
-	// }
-
-	return nil
-}
-
-func (s *Importer) permissionHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Permission) error {
-	s.logger.Debug().Interface("permission", req).Msg("import_permission")
-
-	// if req == nil {
-	// 	return derr.ErrInvalidPermission.Msg("nil")
-	// }
-
-	// if ok, err := ds.Permission(req).Validate(); !ok {
-	// 	return err
-	// }
-
-	// if _, err := bdb.Set(ctx, tx, bdb.PermissionsPath, ds.Permission(req).Key(), req); err != nil {
-	// 	return derr.ErrInvalidPermission.Msg("set")
-	// }
-
-	return nil
-}
-
-func (s *Importer) relationTypeHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.RelationType) error {
-	s.logger.Debug().Interface("relationType", req).Msg("import_relation_type")
-
-	// if req == nil {
-	// 	return derr.ErrInvalidRelationType.Msg("nil")
-	// }
-
-	// if ok, err := ds.RelationType(req).Validate(s.store.MC()); !ok {
-	// 	return err
-	// }
-
-	// if _, err := bdb.Set(ctx, tx, bdb.RelationTypesPath, ds.RelationType(req).Key(), req); err != nil {
-	// 	return derr.ErrInvalidRelationType.Msg("set")
-	// }
-
-	return nil
 }
 
 func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Object) error {
