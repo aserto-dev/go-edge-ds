@@ -9,39 +9,82 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 // Relation.
 type relation struct {
-	*dsc2.Relation
+	*dsc3.Relation
 }
 
-func Relation(i *dsc2.Relation) *relation { return &relation{i} }
+func Relation(i *dsc3.Relation) *relation { return &relation{i} }
+
+func GetRelation(i *dsr3.GetRelationRequest) *relation {
+	return &relation{&dsc3.Relation{
+		ObjectType:      i.ObjectType,
+		ObjectId:        i.ObjectId,
+		Relation:        i.Relation,
+		SubjectType:     i.SubjectType,
+		SubjectId:       i.SubjectId,
+		SubjectRelation: i.SubjectRelation,
+	}}
+}
+
+func GetRelations(i *dsr3.GetRelationsRequest) *relation {
+	return &relation{&dsc3.Relation{
+		ObjectType:      i.ObjectType,
+		ObjectId:        i.ObjectId,
+		Relation:        i.Relation,
+		SubjectType:     i.SubjectType,
+		SubjectId:       i.SubjectId,
+		SubjectRelation: i.SubjectRelation,
+	}}
+}
 
 func (i *relation) Key() string {
 	return i.ObjKey()
 }
 
-func (i *relation) ObjKey() string {
-	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
-		InstanceSeparator +
-		i.GetRelation() +
-		InstanceSeparator +
-		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
+func (i *relation) Object() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.GetObjectType(),
+		ObjectId:   i.GetObjectId(),
+	}
 }
 
-func (i *relation) SubKey() string {
-	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
+func (i *relation) Subject() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.GetSubjectType(),
+		ObjectId:   i.GetSubjectId(),
+	}
+}
+
+func (i *relation) ObjKey() string {
+	return i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
 		InstanceSeparator +
 		i.GetRelation() +
 		InstanceSeparator +
-		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
+		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId()
+	//  +
+	// RelationSeparator +
+	// i.GetSubjectRelation()
+}
+
+// TODO verify correct position of subject_relation in the key string
+func (i *relation) SubKey() string {
+	return i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
+		InstanceSeparator +
+		i.GetRelation() +
+		InstanceSeparator +
+		i.GetObjectType() + TypeIDSeparator + i.GetObjectId()
+	// +
+	// RelationSeparator +
+	// i.GetSubjectRelation()
 }
 
 func (i *relation) Validate(mc *cache.Cache) (bool, error) {
@@ -58,11 +101,11 @@ func (i *relation) Validate(mc *cache.Cache) (bool, error) {
 		return false, ErrInvalidArgumentRelation.Msg("relation")
 	}
 
-	if ok, err := ObjectIdentifier(i.Relation.Object).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := ObjectIdentifier(i.Relation.Subject).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
 		return ok, err
 	}
 
@@ -70,74 +113,16 @@ func (i *relation) Validate(mc *cache.Cache) (bool, error) {
 		return true, nil
 	}
 
-	if !mc.ObjectExists(model.ObjectName(*i.Relation.Object.Type)) {
-		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Object.Type)
+	if !mc.ObjectExists(model.ObjectName(i.GetObjectType())) {
+		return false, derr.ErrObjectTypeNotFound.Msg(i.GetObjectType())
 	}
 
-	if !mc.ObjectExists(model.ObjectName(*i.Relation.Subject.Type)) {
-		return false, derr.ErrObjectTypeNotFound.Msg(*i.Relation.Subject.Type)
+	if !mc.ObjectExists(model.ObjectName(i.GetSubjectType())) {
+		return false, derr.ErrObjectTypeNotFound.Msg(i.GetSubjectType())
 	}
 
-	if !mc.RelationExists(model.ObjectName(*i.Relation.Object.Type), model.RelationName(i.Relation.Relation)) {
-		return false, derr.ErrRelationTypeNotFound.Msg(*i.Relation.Object.Type + ":" + i.Relation.Relation)
-	}
-
-	return true, nil
-}
-
-// RelationIdentifier.
-type relationIdentifier struct {
-	*dsc2.RelationIdentifier
-}
-
-func RelationIdentifier(i *dsc2.RelationIdentifier) *relationIdentifier {
-	return &relationIdentifier{i}
-}
-
-func (i *relationIdentifier) Key() string {
-	return i.ObjKey()
-}
-
-func (i *relationIdentifier) ObjKey() string {
-	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
-		InstanceSeparator +
-		i.Relation.GetName() +
-		InstanceSeparator +
-		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
-}
-
-func (i *relationIdentifier) SubKey() string {
-	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
-		InstanceSeparator +
-		i.Relation.GetName() +
-		InstanceSeparator +
-		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
-}
-
-func (i *relationIdentifier) Validate() (bool, error) {
-
-	if i == nil {
-		return false, derr.ErrInvalidRelationIdentifier.Msg("nil")
-	}
-
-	if i.RelationIdentifier == nil {
-		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
-	}
-
-	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
-		return ok, err
-	}
-
-	if i.RelationIdentifier.Relation != nil && (i.RelationIdentifier.Relation.ObjectType == nil || i.RelationIdentifier.Relation.GetObjectType() == "") {
-		i.Relation.ObjectType = i.Object.Type
-	}
-
-	if ok, err := RelationTypeIdentifier(i.RelationIdentifier.Relation).Validate(); !ok {
-		return ok, err
-	}
-
-	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
-		return ok, err
+	if !mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
+		return false, derr.ErrRelationTypeNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
 	}
 
 	return true, nil
@@ -148,35 +133,92 @@ func (i *relation) Hash() string {
 	h.Reset()
 
 	if i != nil && i.Relation != nil {
-		if i.Relation.Subject != nil {
-			if _, err := h.Write([]byte(i.Relation.Subject.GetKey())); err != nil {
-				return DefaultHash
-			}
-			if _, err := h.Write([]byte(i.Relation.Subject.GetType())); err != nil {
-				return DefaultHash
-			}
-		}
-		if _, err := h.Write([]byte(i.Relation.Relation)); err != nil {
+		if _, err := h.Write([]byte(i.GetObjectId())); err != nil {
 			return DefaultHash
 		}
-		if i.Relation.Object != nil {
-			if _, err := h.Write([]byte(i.Relation.Object.GetKey())); err != nil {
-				return DefaultHash
-			}
-			if _, err := h.Write([]byte(i.Relation.Object.GetType())); err != nil {
-				return DefaultHash
-			}
+		if _, err := h.Write([]byte(i.GetObjectType())); err != nil {
+			return DefaultHash
+		}
+		if _, err := h.Write([]byte(i.GetRelation())); err != nil {
+			return DefaultHash
+		}
+		if _, err := h.Write([]byte(i.GetSubjectId())); err != nil {
+			return DefaultHash
+		}
+		if _, err := h.Write([]byte(i.GetSubjectType())); err != nil {
+			return DefaultHash
+		}
+		if _, err := h.Write([]byte(i.GetSubjectRelation())); err != nil {
+			return DefaultHash
 		}
 	}
 
 	return strconv.FormatUint(h.Sum64(), 10)
 }
 
-func (i *relationIdentifier) PathAndFilter() ([]string, string, error) {
+// RelationIdentifier.
+// type relationIdentifier struct {
+// 	*dsc3.RelationIdentifier
+// }
+
+// func RelationIdentifier(i *dsc3.RelationIdentifier) *relationIdentifier {
+// 	return &relationIdentifier{i}
+// }
+
+// func (i *relationIdentifier) Key() string {
+// 	return i.ObjKey()
+// }
+
+// func (i *relationIdentifier) ObjKey() string {
+// 	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
+// 		InstanceSeparator +
+// 		i.Relation.GetName() +
+// 		InstanceSeparator +
+// 		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
+// }
+
+// func (i *relationIdentifier) SubKey() string {
+// 	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
+// 		InstanceSeparator +
+// 		i.Relation.GetName() +
+// 		InstanceSeparator +
+// 		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
+// }
+
+// func (i *relationIdentifier) Validate() (bool, error) {
+
+// 	if i == nil {
+// 		return false, derr.ErrInvalidRelationIdentifier.Msg("nil")
+// 	}
+
+// 	if i.RelationIdentifier == nil {
+// 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
+// 	}
+
+// 	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
+// 		return ok, err
+// 	}
+
+// 	if i.RelationIdentifier.Relation != nil && (i.RelationIdentifier.Relation.ObjectType == nil || i.RelationIdentifier.Relation.GetObjectType() == "") {
+// 		i.Relation.ObjectType = i.Object.Type
+// 	}
+
+// 	if ok, err := RelationTypeIdentifier(i.RelationIdentifier.Relation).Validate(); !ok {
+// 		return ok, err
+// 	}
+
+// 	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
+// 		return ok, err
+// 	}
+
+// 	return true, nil
+// }
+
+func (i *relation) PathAndFilter() ([]string, string, error) {
 	switch {
-	case ObjectSelector(i.RelationIdentifier.Object).IsComplete():
+	case ObjectSelector(i.Object()).IsComplete():
 		return bdb.RelationsObjPath, i.ObjFilter(), nil
-	case ObjectSelector(i.RelationIdentifier.Subject).IsComplete():
+	case ObjectSelector(i.Subject()).IsComplete():
 		return bdb.RelationsSubPath, i.SubFilter(), nil
 	default:
 		return []string{}, "", ErrNoCompleteObjectIdentifier
@@ -186,33 +228,33 @@ func (i *relationIdentifier) PathAndFilter() ([]string, string, error) {
 // ObjFilter
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relationIdentifier) ObjFilter() string {
+func (i *relation) ObjFilter() string {
 	filter := strings.Builder{}
 
-	filter.WriteString(i.GetObject().GetType())
-	filter.WriteByte(':')
-	filter.WriteString(i.GetObject().GetKey())
-	filter.WriteByte('|')
+	filter.WriteString(i.GetObjectType())
+	filter.WriteString(TypeIDSeparator)
+	filter.WriteString(i.GetObjectId())
+	filter.WriteString(InstanceSeparator)
 
-	if IsNotSet(i.GetRelation().GetName()) {
+	if IsNotSet(i.GetRelation()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetRelation().GetName())
-	filter.WriteByte('|')
+	filter.WriteString(i.GetRelation())
+	filter.WriteString(InstanceSeparator)
 
-	if IsNotSet(i.GetSubject().GetType()) {
+	if IsNotSet(i.GetSubjectType()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetSubject().GetType())
-	filter.WriteByte(':')
+	filter.WriteString(i.GetSubjectType())
+	filter.WriteString(TypeIDSeparator)
 
-	if IsNotSet(i.GetSubject().GetKey()) {
+	if IsNotSet(i.GetSubjectId()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetSubject().GetKey())
+	filter.WriteString(i.GetSubjectId())
 
 	return filter.String()
 }
@@ -220,100 +262,40 @@ func (i *relationIdentifier) ObjFilter() string {
 // SubFilter
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relationIdentifier) SubFilter() string {
+func (i *relation) SubFilter() string {
 	filter := strings.Builder{}
 
-	filter.WriteString(i.GetSubject().GetType())
-	filter.WriteByte(':')
-	filter.WriteString(i.GetSubject().GetKey())
-	filter.WriteByte('|')
+	filter.WriteString(i.GetSubjectType())
+	filter.WriteString(TypeIDSeparator)
+	filter.WriteString(i.GetSubjectId())
+	filter.WriteString(InstanceSeparator)
 
-	if IsNotSet(i.GetRelation().GetName()) {
+	if IsNotSet(i.GetRelation()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetRelation().GetName())
-	filter.WriteByte('|')
+	filter.WriteString(i.GetRelation())
+	filter.WriteString(InstanceSeparator)
 
-	if IsNotSet(i.GetObject().GetType()) {
+	if IsNotSet(i.GetObjectType()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetObject().GetType())
-	filter.WriteByte(':')
+	filter.WriteString(i.GetObjectType())
+	filter.WriteString(TypeIDSeparator)
 
-	if IsNotSet(i.GetObject().GetKey()) {
+	if IsNotSet(i.GetObjectId()) {
 		return filter.String()
 	}
 
-	filter.WriteString(i.GetObject().GetKey())
+	filter.WriteString(i.GetObjectId())
 
 	return filter.String()
 }
 
-// RelationSelector.
-type relationSelector struct {
-	*dsc2.RelationIdentifier
-}
+type RelationFilter func(*dsc3.Relation) bool
 
-func RelationSelector(i *dsc2.RelationIdentifier) *relationSelector { return &relationSelector{i} }
-
-func (i *relationSelector) Validate() (bool, error) {
-	if i == nil {
-		return false, derr.ErrInvalidRelationIdentifier.Msg("nil")
-	}
-
-	if i.RelationIdentifier == nil {
-		i.RelationIdentifier = &dsc2.RelationIdentifier{
-			Subject:  &dsc2.ObjectIdentifier{},
-			Relation: &dsc2.RelationTypeIdentifier{},
-			Object:   &dsc2.ObjectIdentifier{},
-		}
-	}
-
-	if i.RelationIdentifier.Subject == nil {
-		i.RelationIdentifier.Subject = &dsc2.ObjectIdentifier{}
-	}
-
-	if i.RelationIdentifier.Relation == nil {
-		i.RelationIdentifier.Relation = &dsc2.RelationTypeIdentifier{}
-	}
-
-	if i.RelationIdentifier.Object == nil {
-		i.RelationIdentifier.Object = &dsc2.ObjectIdentifier{}
-	}
-
-	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
-		return ok, err
-	}
-
-	if ok, err := RelationTypeSelector(i.RelationIdentifier.Relation).Validate(); !ok {
-		return ok, err
-	}
-
-	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
-		return ok, err
-	}
-
-	// propagate object type to relation if missing.
-	if i.RelationIdentifier.Relation.GetObjectType() == "" {
-		i.RelationIdentifier.Relation.ObjectType = i.RelationIdentifier.Object.Type
-	}
-
-	// relation:object_type and object:object_type must match
-	if i.RelationIdentifier.Relation.GetObjectType() != i.RelationIdentifier.Object.GetType() {
-		return false, errors.Wrapf(derr.ErrInvalidObjectType, "conflicting object types relation:%s object:%s",
-			i.RelationIdentifier.Relation.GetObjectType(),
-			i.RelationIdentifier.Object.GetType(),
-		)
-	}
-
-	return true, nil
-}
-
-type RelationFilter func(*dsc2.Relation) bool
-
-func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
+func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	var (
 		path      bdb.Path
 		keyFilter string
@@ -323,13 +305,13 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
-	if ObjectIdentifier(i.Object).IsComplete() {
+	if ObjectIdentifier(i.Object()).IsComplete() {
 		path = bdb.RelationsObjPath
-		keyFilter = RelationIdentifier(i.RelationIdentifier).ObjFilter()
+		keyFilter = i.ObjFilter()
 	}
-	if ObjectIdentifier(i.Subject).IsComplete() {
+	if ObjectIdentifier(i.Subject()).IsComplete() {
 		path = bdb.RelationsSubPath
-		keyFilter = RelationIdentifier(i.RelationIdentifier).SubFilter()
+		keyFilter = i.SubFilter()
 	}
 	if len(path) == 0 {
 		log.Warn().Msg("!!! no covering index path, full scan !!!")
@@ -338,52 +320,57 @@ func (i *relationSelector) Filter() (bdb.Path, string, RelationFilter) {
 	}
 
 	// #2 build valueFilter function
-	filters := []func(item *dsc2.Relation) bool{}
+	filters := []func(item *dsc3.Relation) bool{}
 
-	if i.RelationIdentifier.Object.GetType() != "" {
-		fv := i.RelationIdentifier.Object.GetType()
-		filters = append(filters, func(item *dsc2.Relation) bool {
-			equal := strings.Compare(item.Object.GetType(), fv)
-			log.Trace().Str("fv", fv).Str("item", item.Object.GetType()).Bool("equal", equal == 0).Msg("object_type filter")
-			return equal == 0
-		})
-	}
-	if i.RelationIdentifier.Object.GetKey() != "" {
-		fv := i.RelationIdentifier.Object.GetKey()
-		filters = append(filters, func(item *dsc2.Relation) bool {
-			equal := strings.Compare(fv, item.Object.GetKey())
-			log.Trace().Str("fv", fv).Str("item", item.Object.GetKey()).Bool("equal", equal == 0).Msg("object_id filter")
+	if fv := i.GetObjectType(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
+			equal := strings.Compare(item.GetObjectType(), fv)
+			log.Trace().Str("fv", fv).Str("item", item.GetObjectType()).Bool("equal", equal == 0).Msg("object_type filter")
 			return equal == 0
 		})
 	}
 
-	if i.RelationIdentifier.Relation.GetName() != "" {
-		fv := i.RelationIdentifier.Relation.GetName()
-		filters = append(filters, func(item *dsc2.Relation) bool {
+	if fv := i.GetObjectId(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
+			equal := strings.Compare(fv, item.GetObjectId())
+			log.Trace().Str("fv", fv).Str("item", item.GetObjectId()).Bool("equal", equal == 0).Msg("object_id filter")
+			return equal == 0
+		})
+	}
+
+	if fv := i.GetRelation(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.Relation, fv)
 			log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal == 0).Msg("relation filter")
 			return equal == 0
 		})
 	}
 
-	if i.RelationIdentifier.Subject.GetType() != "" {
-		fv := i.RelationIdentifier.Subject.GetType()
-		filters = append(filters, func(item *dsc2.Relation) bool {
-			equal := strings.Compare(item.Subject.GetType(), fv)
-			log.Trace().Str("fv", fv).Str("item", item.Subject.GetType()).Bool("equal", equal == 0).Msg("subject_type filter")
-			return equal == 0
-		})
-	}
-	if i.RelationIdentifier.Subject.GetKey() != "" {
-		fv := i.RelationIdentifier.Subject.GetKey()
-		filters = append(filters, func(item *dsc2.Relation) bool {
-			equal := strings.Compare(fv, item.Subject.GetKey())
-			log.Trace().Str("fv", fv).Str("item", item.Subject.GetKey()).Bool("equal", equal == 0).Msg("subject_id filter")
+	if fv := i.GetSubjectType(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
+			equal := strings.Compare(item.GetSubjectType(), fv)
+			log.Trace().Str("fv", fv).Str("item", item.GetSubjectType()).Bool("equal", equal == 0).Msg("subject_type filter")
 			return equal == 0
 		})
 	}
 
-	valueFilter := func(i *dsc2.Relation) bool {
+	if fv := i.GetSubjectId(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
+			equal := strings.Compare(fv, item.GetSubjectId())
+			log.Trace().Str("fv", fv).Str("item", item.GetSubjectId()).Bool("equal", equal == 0).Msg("subject_id filter")
+			return equal == 0
+		})
+	}
+
+	if fv := i.GetSubjectRelation(); fv != "" {
+		filters = append(filters, func(item *dsc3.Relation) bool {
+			equal := strings.Compare(item.SubjectRelation, fv)
+			log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")
+			return equal == 0
+		})
+	}
+
+	valueFilter := func(i *dsc3.Relation) bool {
 		for _, filter := range filters {
 			if !filter(i) {
 				return false

@@ -4,23 +4,28 @@ import (
 	"context"
 
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/convert"
+	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/rs/zerolog"
-	bolt "go.etcd.io/bbolt"
 )
 
 type Reader struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	r3     dsr3.ReaderServer
 }
 
-func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, r3 *v3.Reader) *Reader {
 	return &Reader{
 		logger: logger,
 		store:  store,
+		r3:     r3,
 	}
 }
 
@@ -151,269 +156,185 @@ func (s *Reader) GetPermissions(ctx context.Context, req *dsr2.GetPermissionsReq
 
 // Get single object instance.
 func (s *Reader) GetObject(ctx context.Context, req *dsr2.GetObjectRequest) (*dsr2.GetObjectResponse, error) {
-	resp := &dsr2.GetObjectResponse{}
-
-	if ok, err := ds.ObjectIdentifier(req.Param).Validate(); !ok {
-		return resp, err
+	r3, err := s.r3.GetObject(ctx, &dsr3.GetObjectRequest{
+		ObjectType:    req.GetParam().GetType(),
+		ObjectId:      req.GetParam().GetKey(),
+		WithRelations: req.GetWithRelations(),
+		Page: &dsc3.PaginationRequest{
+			Size:  req.GetPage().GetSize(),
+			Token: req.GetPage().GetToken(),
+		},
+	})
+	if err != nil {
+		return &dsr2.GetObjectResponse{}, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		obj, err := bdb.Get[dsc2.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(req.Param).Key())
-		if err != nil {
-			return err
-		}
+	r2 := &dsr2.GetObjectResponse{
+		Result:    convert.ObjectToV2(r3.Result),
+		Relations: convert.RelationArrayToV2(r3.Relations),
+		Page:      convert.PaginationResponseToV2(r3.Page),
+	}
 
-		if req.GetWithRelations() {
-			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-			incoming, err := bdb.Scan[dsc2.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
-			if err != nil {
-				return err
-			}
-			resp.Relations = append(resp.Relations, incoming...)
-
-			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-			outgoing, err := bdb.Scan[dsc2.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
-			if err != nil {
-				return err
-			}
-			resp.Relations = append(resp.Relations, outgoing...)
-
-			s.logger.Trace().Msg("get object with relations")
-		}
-
-		resp.Result = obj
-		return nil
-	})
-
-	return resp, err
+	return r2, err
 }
 
 // Get multiple object instances by id or type+key, in a single request.
 func (s *Reader) GetObjectMany(ctx context.Context, req *dsr2.GetObjectManyRequest) (*dsr2.GetObjectManyResponse, error) {
-	resp := &dsr2.GetObjectManyResponse{Results: []*dsc2.Object{}}
 
-	if req.Param == nil {
-		req.Param = []*dsc2.ObjectIdentifier{}
-	}
-
-	// validate all object identifiers first.
-	for _, i := range req.Param {
-		if ok, err := ds.ObjectIdentifier(i).Validate(); !ok {
-			return resp, err
-		}
-	}
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		for _, i := range req.Param {
-			obj, err := bdb.Get[dsc2.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(i).Key())
-			if err != nil {
-				return err
-			}
-			resp.Results = append(resp.Results, obj)
-		}
-		return nil
+	r3, err := s.r3.GetObjectMany(ctx, &dsr3.GetObjectManyRequest{
+		Param: convert.ObjectIdentifierArrayToV3(req.Param),
 	})
+	if err != nil {
+		return &dsr2.GetObjectManyResponse{}, err
+	}
 
-	return resp, err
+	r2 := &dsr2.GetObjectManyResponse{
+		Results: convert.ObjectArrayToV2(r3.Results),
+	}
+
+	return r2, err
 }
 
 // Get all object instances, optionally filtered by object type. (paginated).
 func (s *Reader) GetObjects(ctx context.Context, req *dsr2.GetObjectsRequest) (*dsr2.GetObjectsResponse, error) {
-	resp := &dsr2.GetObjectsResponse{Results: []*dsc2.Object{}, Page: &dsc2.PaginationResponse{}}
-
-	if req.Param == nil {
-		req.Param = &dsc2.ObjectTypeIdentifier{}
+	r3, err := s.r3.GetObjects(ctx, &dsr3.GetObjectsRequest{})
+	if err != nil {
+		return &dsr2.GetObjectsResponse{}, err
 	}
 
-	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100}
+	r2 := &dsr2.GetObjectsResponse{
+		Results: convert.ObjectArrayToV2(r3.Results),
+		Page:    convert.PaginationResponseToV2(r3.Page),
 	}
 
-	if ok, err := ds.ObjectTypeSelector(req.Param).Validate(); !ok {
-		return resp, err
-	}
-
-	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
-		bdb.WithPageToken(req.Page.Token),
-		bdb.WithKeyFilter(req.Param.GetName()),
-	}
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewPageIterator[dsc2.Object](ctx, tx, bdb.ObjectsPath, opts...)
-		if err != nil {
-			return err
-		}
-
-		iter.Next()
-
-		resp.Results = iter.Value()
-		resp.Page = &dsc2.PaginationResponse{
-			NextToken:  iter.NextToken(),
-			ResultSize: int32(len(resp.Results)),
-		}
-
-		return nil
-	})
-
-	return resp, err
+	return r2, err
 }
 
 // Get relation instances based on subject, relation, object filter.
 func (s *Reader) GetRelation(ctx context.Context, req *dsr2.GetRelationRequest) (*dsr2.GetRelationResponse, error) {
-	resp := &dsr2.GetRelationResponse{Results: []*dsc2.Relation{}, Objects: map[string]*dsc2.Object{}}
-
-	if ok, err := ds.RelationIdentifier(req.Param).Validate(); !ok {
-		return resp, err
+	r3, err := s.r3.GetRelation(ctx, &dsr3.GetRelationRequest{
+		ObjectType:  req.GetParam().GetObject().GetType(),
+		ObjectId:    req.GetParam().GetObject().GetKey(),
+		Relation:    req.GetParam().GetRelation().GetName(),
+		SubjectType: req.GetParam().GetSubject().GetType(),
+		SubjectId:   req.GetParam().GetSubject().GetKey(),
+		WithObjects: req.GetWithObjects(),
+	})
+	if err != nil {
+		return &dsr2.GetRelationResponse{}, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		relations, err := bdb.Scan[dsc2.Relation](ctx, tx, bdb.RelationsObjPath, ds.RelationIdentifier(req.Param).ObjKey())
-		if err != nil {
-			return err
-		}
+	r2 := &dsr2.GetRelationResponse{
+		Results: convert.RelationArrayToV2([]*dsc3.Relation{r3.Result}),
+		Objects: map[string]*dsc2.Object{},
+	}
 
-		if len(relations) == 0 {
-			return bdb.ErrKeyNotFound
-		}
-		if len(relations) != 1 {
-			return bdb.ErrMultipleResults
-		}
+	for k, v := range r3.Objects {
+		r2.Objects[k] = convert.ObjectToV2(v)
+	}
 
-		rel := relations[0]
-		resp.Results = append(resp.Results, rel)
-
-		if req.GetWithObjects() {
-			objects := map[string]*dsc2.Object{}
-			for i := 0; i < len(resp.Results); i++ {
-				sub, err := bdb.Get[dsc2.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject).Key())
-				if err != nil {
-					return err
-				}
-				objects[ds.ObjectIdentifier(rel.Subject).Key()] = sub
-
-				obj, err := bdb.Get[dsc2.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object).Key())
-				if err != nil {
-					return err
-				}
-				objects[ds.ObjectIdentifier(rel.Object).Key()] = obj
-			}
-			resp.Objects = objects
-		}
-
-		return nil
-	})
-
-	return resp, err
+	return r2, err
 }
 
 // Get relation instances based on subject, relation, object filter (paginated).
 func (s *Reader) GetRelations(ctx context.Context, req *dsr2.GetRelationsRequest) (*dsr2.GetRelationsResponse, error) {
-	resp := &dsr2.GetRelationsResponse{Results: []*dsc2.Relation{}, Page: &dsc2.PaginationResponse{}}
-
-	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100}
-	}
-
-	if req.Param == nil {
-		req.Param = &dsc2.RelationIdentifier{
-			Object:   &dsc2.ObjectIdentifier{},
-			Relation: &dsc2.RelationTypeIdentifier{},
-			Subject:  &dsc2.ObjectIdentifier{},
-		}
-	}
-
-	if ok, err := ds.RelationSelector(req.Param).Validate(); !ok {
-		return resp, err
-	}
-
-	path, keyFilter, valueFilter := ds.RelationSelector(req.Param).Filter()
-
-	opts := []bdb.ScanOption{
-		bdb.WithPageToken(req.Page.Token),
-		bdb.WithKeyFilter(keyFilter),
-	}
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		iter, err := bdb.NewScanIterator[dsc2.Relation](ctx, tx, path, opts...)
-		if err != nil {
-			return err
-		}
-
-		for iter.Next() {
-			if !valueFilter(iter.Value()) {
-				continue
-			}
-			resp.Results = append(resp.Results, iter.Value())
-
-			if req.Page.Size == int32(len(resp.Results)) {
-				if iter.Next() {
-					resp.Page.NextToken = iter.Key()
-				}
-				break
-			}
-		}
-
-		resp.Page.ResultSize = int32(len(resp.Results))
-
-		return nil
+	r3, err := s.r3.GetRelations(ctx, &dsr3.GetRelationsRequest{
+		ObjectType:      req.GetParam().GetObject().GetType(),
+		ObjectId:        req.GetParam().GetObject().GetKey(),
+		Relation:        req.GetParam().GetRelation().GetName(),
+		SubjectType:     req.GetParam().GetSubject().GetType(),
+		SubjectId:       req.GetParam().GetSubject().GetKey(),
+		SubjectRelation: "",
+		WithObjects:     false,
+		Page:            convert.PaginationRequestToV3(req.Page),
 	})
+	if err != nil {
+		return &dsr2.GetRelationsResponse{}, err
+	}
 
-	return resp, err
+	r2 := &dsr2.GetRelationsResponse{
+		Results: convert.RelationArrayToV2(r3.Results),
+		Page:    convert.PaginationResponseToV2(r3.Page),
+	}
+
+	return r2, err
 }
 
 // Check if subject has permission on object.
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr2.CheckPermissionRequest) (*dsr2.CheckPermissionResponse, error) {
-	resp := &dsr2.CheckPermissionResponse{}
-
-	if ok, err := ds.CheckPermission(req).Validate(); !ok {
-		return resp, err
+	r3, err := s.r3.CheckPermission(ctx, &dsr3.CheckPermissionRequest{
+		ObjectType:  req.GetObject().GetType(),
+		ObjectId:    req.GetObject().GetKey(),
+		Permission:  req.GetPermission().GetName(),
+		SubjectType: req.GetSubject().GetType(),
+		SubjectId:   req.GetSubject().GetKey(),
+		Trace:       req.GetTrace(),
+	})
+	if err != nil {
+		return &dsr2.CheckPermissionResponse{}, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		var err error
-		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.store.MC())
-		return err
-	})
+	r2 := &dsr2.CheckPermissionResponse{
+		Check: r3.GetCheck(),
+		Trace: r3.GetTrace(),
+	}
 
-	return resp, err
+	return r2, err
 }
 
 // Check if subject has relation to object.
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr2.CheckRelationRequest) (*dsr2.CheckRelationResponse, error) {
-	resp := &dsr2.CheckRelationResponse{}
-
-	if ok, err := ds.CheckRelation(req).Validate(); !ok {
-		return resp, err
+	r3, err := s.r3.CheckRelation(ctx, &dsr3.CheckRelationRequest{
+		ObjectType:  req.GetObject().GetType(),
+		ObjectId:    req.GetObject().GetKey(),
+		Relation:    req.GetRelation().GetName(),
+		SubjectType: req.GetSubject().GetType(),
+		SubjectId:   req.GetSubject().GetKey(),
+		Trace:       req.GetTrace(),
+	})
+	if err != nil {
+		return &dsr2.CheckRelationResponse{}, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		var err error
-		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.store.MC())
-		return err
-	})
+	r2 := &dsr2.CheckRelationResponse{
+		Check: r3.GetCheck(),
+		Trace: r3.GetTrace(),
+	}
 
-	return resp, err
+	return r2, err
 }
 
 // Get object dependency graph.
 func (s *Reader) GetGraph(ctx context.Context, req *dsr2.GetGraphRequest) (*dsr2.GetGraphResponse, error) {
-	resp := &dsr2.GetGraphResponse{}
-
-	if ok, err := ds.GetGraph(req).Validate(); !ok {
-		return resp, err
+	r3, err := s.r3.GetGraph(ctx, &dsr3.GetGraphRequest{
+		AnchorType:  req.GetAnchor().GetType(),
+		AnchorId:    req.GetAnchor().GetKey(),
+		ObjectType:  req.GetObject().GetType(),
+		ObjectId:    req.GetObject().GetKey(),
+		Relation:    req.GetRelation().GetName(),
+		SubjectType: req.GetSubject().GetType(),
+		SubjectId:   req.GetSubject().GetKey(),
+	})
+	if err != nil {
+		return &dsr2.GetGraphResponse{}, err
 	}
 
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		var err error
-		results, err := ds.GetGraph(req).Exec(ctx, tx)
-		if err != nil {
-			return err
-		}
+	r2 := &dsr2.GetGraphResponse{
+		Results: []*dsc2.ObjectDependency{},
+	}
 
-		resp.Results = results
-		return nil
-	})
+	for _, v := range r3.Results {
+		r2.Results = append(r2.Results, &dsc2.ObjectDependency{
+			ObjectType:  v.GetObjectType(),
+			ObjectKey:   v.GetObjectId(),
+			Relation:    v.GetRelation(),
+			SubjectType: v.GetSubjectType(),
+			SubjectKey:  v.GetSubjectId(),
+			Depth:       v.GetDepth(),
+			IsCycle:     v.GetIsCycle(),
+			Path:        v.GetPath(),
+		})
+	}
 
-	return resp, err
+	return r2, err
 }

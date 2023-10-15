@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"errors"
 	"time"
 
 	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
@@ -19,6 +20,7 @@ import (
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
+	"github.com/Masterminds/semver"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
@@ -54,6 +56,30 @@ type Directory struct {
 func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 	newLogger := logger.With().Str("component", "directory").Logger()
 
+	cfg := bdb.Config{
+		DBPath:         config.DBPath,
+		RequestTimeout: config.RequestTimeout,
+		MaxBatchSize:   bolt.DefaultMaxBatchSize,
+		MaxBatchDelay:  bolt.DefaultMaxBatchDelay,
+	}
+
+	if ok, err := migrate.CheckSchemaVersion(&cfg, logger, semver.MustParse(schemaVersion)); !ok {
+		switch {
+		case errors.Is(err, migrate.ErrDirectorySchemaUpdateRequired):
+			if err := migrate.Migrate(&cfg, logger, semver.MustParse(schemaVersion)); err != nil {
+				return nil, err
+			}
+		case errors.Is(err, migrate.ErrDirectorySchemaVersionHigher):
+			return nil, err
+		default:
+			return nil, err
+		}
+
+		if ok, err := migrate.CheckSchemaVersion(&cfg, logger, semver.MustParse(schemaVersion)); !ok {
+			return nil, err
+		}
+	}
+
 	store, err := bdb.New(&bdb.Config{
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout,
@@ -69,26 +95,24 @@ func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
 		return nil, err
 	}
 
-	reader2 := v2.NewReader(logger, store)
-	writer2 := v2.NewWriter(logger, store)
+	reader3 := v3.NewReader(logger, store)
+	writer3 := v3.NewWriter(logger, store)
+	exporter3 := v3.NewExporter(logger, store)
+	importer3 := v3.NewImporter(logger, store)
 
 	dir := &Directory{
 		config:    config,
 		logger:    &newLogger,
 		store:     store,
-		exporter2: v2.NewExporter(logger, store),
-		importer2: v2.NewImporter(logger, store),
-		reader2:   reader2,
-		writer2:   writer2,
-		exporter3: v3.NewExporter(logger, store),
-		importer3: v3.NewImporter(logger, store),
 		model3:    v3.NewModel(logger, store),
-		reader3:   v3.NewReader(logger, store, reader2),
-		writer3:   v3.NewWriter(logger, store, writer2),
-	}
-
-	if err := dir.Migrate(schemaVersion); err != nil {
-		return nil, err
+		reader3:   reader3,
+		writer3:   writer3,
+		exporter3: exporter3,
+		importer3: importer3,
+		exporter2: v2.NewExporter(logger, store, exporter3),
+		importer2: v2.NewImporter(logger, store, importer3),
+		reader2:   v2.NewReader(logger, store, reader3),
+		writer2:   v2.NewWriter(logger, store, writer3),
 	}
 
 	if err := store.LoadModel(); err != nil {
@@ -103,10 +127,6 @@ func (s *Directory) Close() {
 		s.store.Close()
 		s.store = nil
 	}
-}
-
-func (s *Directory) Migrate(version string) error {
-	return migrate.Store(s.logger, s.store, version)
 }
 
 func (s *Directory) Exporter2() dse2.ExporterServer {

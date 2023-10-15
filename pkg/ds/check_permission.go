@@ -5,8 +5,8 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
@@ -15,14 +15,28 @@ import (
 )
 
 type checkPermission struct {
-	*dsr2.CheckPermissionRequest
+	*dsr3.CheckPermissionRequest
 }
 
-func CheckPermission(i *dsr2.CheckPermissionRequest) *checkPermission {
+func CheckPermission(i *dsr3.CheckPermissionRequest) *checkPermission {
 	return &checkPermission{i}
 }
 
-func (i *checkPermission) Validate() (bool, error) {
+func (i *checkPermission) Object() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.ObjectType,
+		ObjectId:   i.ObjectId,
+	}
+}
+
+func (i *checkPermission) Subject() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.SubjectType,
+		ObjectId:   i.SubjectId,
+	}
+}
+
+func (i *checkPermission) Validate(mc *cache.Cache) (bool, error) {
 	if i == nil {
 		return false, ErrInvalidArgumentObjectType.Msg("check permission request not set (nil)")
 	}
@@ -31,40 +45,40 @@ func (i *checkPermission) Validate() (bool, error) {
 		return false, ErrInvalidArgumentObjectType.Msg("check permission request not set (nil)")
 	}
 
-	if ok, err := ObjectIdentifier(i.CheckPermissionRequest.Object).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := PermissionIdentifier(i.CheckPermissionRequest.Permission).Validate(); !ok {
-		return ok, err
+	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.PermissionName(i.Permission)) {
+		return false, ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
 	}
 
-	if ok, err := ObjectIdentifier(i.CheckPermissionRequest.Subject).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
 		return ok, err
 	}
 
 	return true, nil
 }
 
-func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr2.CheckPermissionResponse, error) {
-	resp := &dsr2.CheckPermissionResponse{Check: false, Trace: []string{}}
+func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckPermissionResponse, error) {
+	resp := &dsr3.CheckPermissionResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
 	if err != nil {
 		return resp, err
 	}
 
-	match, err := check.check(i.Object)
+	match, err := check.check(i.Object())
 
-	return &dsr2.CheckPermissionResponse{Check: match}, err
+	return &dsr3.CheckPermissionResponse{Check: match}, err
 }
 
 func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*permissionChecker, error) {
 	relations := mc.ExpandPermission(
-		model.ObjectName(i.CheckPermissionRequest.Object.GetType()),
-		model.PermissionName(i.CheckPermissionRequest.Permission.GetName()))
+		model.ObjectName(i.GetObjectType()),
+		model.PermissionName(i.GetPermission()))
 
-	userSet, err := CreateUserSet(ctx, tx, i.Subject)
+	userSet, err := CreateUserSet(ctx, tx, i.Subject())
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +90,7 @@ func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []st
 		anchor:  i,
 		userSet: userSet,
 		filter:  relations,
-		trace:   [][]*dsc2.Relation{},
+		trace:   [][]*dsc3.Relation{},
 	}, nil
 }
 
@@ -85,15 +99,15 @@ type permissionChecker struct {
 	tx      *bolt.Tx
 	path    []string
 	anchor  *checkPermission
-	userSet []*dsc2.ObjectIdentifier
+	userSet []*dsc3.ObjectIdentifier
 	filter  []model.RelationName
-	trace   [][]*dsc2.Relation
+	trace   [][]*dsc3.Relation
 }
 
-func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
+func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	// relations associated to object instance.
 	filter := ObjectIdentifier(root).Key() + InstanceSeparator
-	relations, err := bdb.Scan[dsc2.Relation](c.ctx, c.tx, c.path, filter)
+	relations, err := bdb.Scan[dsc3.Relation](c.ctx, c.tx, c.path, filter)
 	if err != nil {
 		return false, err
 	}
@@ -106,7 +120,7 @@ func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 
 	for _, r := range relations {
 		if lo.Contains(c.filter, model.RelationName(r.Relation)) || r.Relation == "parent" {
-			match, err := c.check(r.Subject)
+			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
 			}
@@ -120,8 +134,8 @@ func (c *permissionChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	return false, nil
 }
 
-func (c *permissionChecker) isMatch(relation *dsc2.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
+func (c *permissionChecker) isMatch(relation *dsc3.Relation) bool {
+	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
 		return true
 	}
 	return false

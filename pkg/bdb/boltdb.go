@@ -9,10 +9,10 @@ import (
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
 	cerr "github.com/aserto-dev/errors"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -53,7 +53,6 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 // Open BoltDB key-value store instance.
 func (s *BoltDB) Open() error {
 	s.logger.Info().Str("db_path", s.config.DBPath).Msg("opening boltdb store")
-	var err error
 
 	if s.config.DBPath == "" {
 		return errors.New("store path not set")
@@ -70,9 +69,9 @@ func (s *BoltDB) Open() error {
 		}
 	}
 
-	db, err := bolt.Open(s.config.DBPath, 0600, &bolt.Options{
+	db, err := bolt.Open(s.config.DBPath, 0644, &bolt.Options{
 		Timeout:      s.config.RequestTimeout,
-		FreelistType: bolt.FreelistMapType,
+		FreelistType: bolt.FreelistArrayType, // WARNING: using bolt.FreelistMapType resulted store corruptions in the migration path
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to open directory '%s'", s.config.DBPath)

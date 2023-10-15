@@ -1,9 +1,6 @@
 package ds
 
 import (
-	"hash/fnv"
-	"strconv"
-
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 )
 
@@ -30,19 +27,19 @@ func (i *permission) Validate() (bool, error) {
 	return true, nil
 }
 
-func (i *permission) Hash() string {
-	h := fnv.New64a()
-	h.Reset()
+// func (i *permission) Hash() string {
+// 	h := fnv.New64a()
+// 	h.Reset()
 
-	if _, err := h.Write([]byte(i.GetName())); err != nil {
-		return DefaultHash
-	}
-	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
-		return DefaultHash
-	}
+// 	if _, err := h.Write([]byte(i.GetName())); err != nil {
+// 		return DefaultHash
+// 	}
+// 	if _, err := h.Write([]byte(i.GetDisplayName())); err != nil {
+// 		return DefaultHash
+// 	}
 
-	return strconv.FormatUint(h.Sum64(), 10)
-}
+// 	return strconv.FormatUint(h.Sum64(), 10)
+// }
 
 // PermissionIdentifier.
 type permissionIdentifier struct {

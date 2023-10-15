@@ -9,6 +9,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/metadata"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -22,7 +23,7 @@ func MigrationVersion() *semver.Version {
 	return migVersion
 }
 
-var fnMap = []func(*bolt.DB, *bolt.DB) error{
+var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	mig.CreateBucket(bdb.SystemPath),
 	mig.EnsureBaseVersion,
 	mig.CreateBucket(bdb.ObjectTypesPath),
@@ -34,16 +35,18 @@ var fnMap = []func(*bolt.DB, *bolt.DB) error{
 	seed,
 }
 
-func Migrate(roDB, rwDB *bolt.DB) error {
+func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
+	log.Info().Str("version", Version).Msg("StartMigration")
 	for _, fn := range fnMap {
-		if err := fn(roDB, rwDB); err != nil {
+		if err := fn(log, roDB, rwDB); err != nil {
 			return err
 		}
 	}
+	log.Info().Str("version", Version).Msg("FinishedMigration")
 	return nil
 }
 
-func seed(_, rwDB *bolt.DB) error {
+func seed(_ *zerolog.Logger, _, rwDB *bolt.DB) error {
 	return rwDB.Update(func(tx *bolt.Tx) error {
 		for _, objType := range metadata.ObjectTypes {
 			ts := timestamppb.New(time.Now().UTC())

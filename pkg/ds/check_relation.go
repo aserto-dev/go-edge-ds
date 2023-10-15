@@ -5,8 +5,8 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
@@ -15,14 +15,28 @@ import (
 )
 
 type checkRelation struct {
-	*dsr2.CheckRelationRequest
+	*dsr3.CheckRelationRequest
 }
 
-func CheckRelation(i *dsr2.CheckRelationRequest) *checkRelation {
+func CheckRelation(i *dsr3.CheckRelationRequest) *checkRelation {
 	return &checkRelation{i}
 }
 
-func (i *checkRelation) Validate() (bool, error) {
+func (i *checkRelation) Object() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.ObjectType,
+		ObjectId:   i.ObjectId,
+	}
+}
+
+func (i *checkRelation) Subject() *dsc3.ObjectIdentifier {
+	return &dsc3.ObjectIdentifier{
+		ObjectType: i.SubjectType,
+		ObjectId:   i.SubjectId,
+	}
+}
+
+func (i *checkRelation) Validate(mc *cache.Cache) (bool, error) {
 	if i == nil {
 		return false, ErrInvalidArgumentObjectType.Msg("check relation request not set (nil)")
 	}
@@ -31,45 +45,40 @@ func (i *checkRelation) Validate() (bool, error) {
 		return false, ErrInvalidArgumentObjectType.Msg("check relations request not set (nil)")
 	}
 
-	if ok, err := ObjectIdentifier(i.CheckRelationRequest.Object).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
 		return ok, err
 	}
 
-	if ok, err := ObjectIdentifier(i.CheckRelationRequest.Subject).Validate(); !ok {
+	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
 		return ok, err
 	}
 
-RECHECK:
-	if ok, err := RelationTypeIdentifier(i.CheckRelationRequest.Relation).Validate(); !ok {
-		if i.CheckRelationRequest.Relation.GetObjectType() == "" {
-			i.CheckRelationRequest.Relation.ObjectType = i.CheckRelationRequest.Object.Type
-			goto RECHECK
-		}
-		return ok, err
+	if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
+		return false, ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
 	}
 
 	return true, nil
 }
 
-func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr2.CheckRelationResponse, error) {
-	resp := &dsr2.CheckRelationResponse{Check: false, Trace: []string{}}
+func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckRelationResponse, error) {
+	resp := &dsr3.CheckRelationResponse{Check: false, Trace: []string{}}
 
 	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
 	if err != nil {
 		return resp, err
 	}
 
-	match, err := check.check(i.Object)
+	match, err := check.check(i.Object())
 
-	return &dsr2.CheckRelationResponse{Check: match}, err
+	return &dsr3.CheckRelationResponse{Check: match}, err
 }
 
 func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*relationChecker, error) {
 	relations := mc.ExpandRelation(
-		model.ObjectName(i.CheckRelationRequest.Object.GetType()),
-		model.RelationName(i.CheckRelationRequest.Relation.GetName()))
+		model.ObjectName(i.GetObjectType()),
+		model.RelationName(i.GetRelation()))
 
-	userSet, err := CreateUserSet(ctx, tx, i.Subject)
+	userSet, err := CreateUserSet(ctx, tx, i.Subject())
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +90,7 @@ func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []stri
 		anchor:  i,
 		userSet: userSet,
 		filter:  relations,
-		trace:   [][]*dsc2.Relation{},
+		trace:   [][]*dsc3.Relation{},
 	}, nil
 }
 
@@ -90,16 +99,16 @@ type relationChecker struct {
 	tx      *bolt.Tx
 	path    []string
 	anchor  *checkRelation
-	userSet []*dsc2.ObjectIdentifier
+	userSet []*dsc3.ObjectIdentifier
 	filter  []model.RelationName
-	trace   [][]*dsc2.Relation
+	trace   [][]*dsc3.Relation
 }
 
-func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
+func (c *relationChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	filter := ObjectIdentifier(root).Key() + InstanceSeparator
 
 	// relations associated to object instance.
-	relations, err := bdb.Scan[dsc2.Relation](c.ctx, c.tx, c.path, filter)
+	relations, err := bdb.Scan[dsc3.Relation](c.ctx, c.tx, c.path, filter)
 	if err != nil {
 		return false, err
 	}
@@ -112,7 +121,7 @@ func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 
 	for _, r := range relations {
 		if lo.Contains(c.filter, model.RelationName(r.Relation)) {
-			match, err := c.check(r.Subject)
+			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
 			}
@@ -126,8 +135,8 @@ func (c *relationChecker) check(root *dsc2.ObjectIdentifier) (bool, error) {
 	return false, nil
 }
 
-func (c *relationChecker) isMatch(relation *dsc2.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc2.ObjectIdentifier](c.userSet, relation.Subject) {
+func (c *relationChecker) isMatch(relation *dsc3.Relation) bool {
+	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
 		return true
 	}
 	return false
