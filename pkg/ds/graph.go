@@ -46,7 +46,7 @@ func (i *getGraph) Subject() *dsc3.ObjectIdentifier {
 
 func (i *getGraph) Validate(mc *cache.Cache) (bool, error) {
 	if i == nil || i.GetGraphRequest == nil {
-		return false, ErrInvalidArgumentObjectType.Msg("get graph request not set (nil)")
+		return false, ErrInvalidRequest.Msg("get_graph")
 	}
 
 	// anchor must be defined, hence use an ObjectIdentifier.

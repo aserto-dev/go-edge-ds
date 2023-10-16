@@ -3,11 +3,10 @@ package v2
 import (
 	"context"
 
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/convert"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/rs/zerolog"
@@ -67,30 +66,14 @@ func (s *Writer) DeletePermission(_ context.Context, _ *dsw2.DeletePermissionReq
 // SetObject, implementation is delegated to writer.v3.SetObject.
 func (s *Writer) SetObject(ctx context.Context, req *dsw2.SetObjectRequest) (*dsw2.SetObjectResponse, error) {
 	r3, err := s.w3.SetObject(ctx, &dsw3.SetObjectRequest{
-		Object: &dsc3.Object{
-			Type:        req.GetObject().GetType(),
-			Id:          req.GetObject().GetKey(),
-			DisplayName: req.GetObject().GetDisplayName(),
-			Properties:  req.GetObject().GetProperties(),
-			CreatedAt:   req.GetObject().GetCreatedAt(),
-			UpdatedAt:   req.GetObject().GetUpdatedAt(),
-			Etag:        req.GetObject().GetHash(),
-		},
+		Object: convert.ObjectToV3(req.GetObject()),
 	})
 	if err != nil {
 		return &dsw2.SetObjectResponse{}, err
 	}
 
 	r2 := &dsw2.SetObjectResponse{
-		Result: &dsc2.Object{
-			Type:        r3.GetResult().GetType(),
-			Key:         r3.GetResult().GetId(),
-			DisplayName: r3.GetResult().GetDisplayName(),
-			Properties:  r3.GetResult().GetProperties(),
-			CreatedAt:   r3.GetResult().GetCreatedAt(),
-			UpdatedAt:   r3.GetResult().GetUpdatedAt(),
-			Hash:        r3.GetResult().GetEtag(),
-		},
+		Result: convert.ObjectToV2(r3.GetResult()),
 	}
 
 	return r2, err
@@ -117,34 +100,14 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest
 // SetRelation, implementation is delegated to writer.v3.SetRelation.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw2.SetRelationRequest) (*dsw2.SetRelationResponse, error) {
 	r3, err := s.w3.SetRelation(ctx, &dsw3.SetRelationRequest{
-		Relation: &dsc3.Relation{
-			ObjectType:      req.GetRelation().GetObject().GetType(),
-			ObjectId:        req.GetRelation().GetObject().GetKey(),
-			Relation:        req.GetRelation().GetRelation(),
-			SubjectType:     req.GetRelation().GetSubject().GetType(),
-			SubjectId:       req.GetRelation().GetSubject().GetKey(),
-			SubjectRelation: "",
-		},
+		Relation: convert.RelationToV3(req.GetRelation()),
 	})
 	if err != nil {
 		return &dsw2.SetRelationResponse{}, err
 	}
 
 	r2 := &dsw2.SetRelationResponse{
-		Result: &dsc2.Relation{
-			Object: &dsc2.ObjectIdentifier{
-				Type: proto.String(r3.GetResult().GetObjectType()),
-				Key:  proto.String(r3.GetResult().GetObjectId()),
-			},
-			Relation: r3.GetResult().GetRelation(),
-			Subject: &dsc2.ObjectIdentifier{
-				Type: proto.String(r3.GetResult().GetSubjectType()),
-				Key:  proto.String(r3.GetResult().GetSubjectId()),
-			},
-			CreatedAt: r3.GetResult().GetCreatedAt(),
-			UpdatedAt: r3.GetResult().GetUpdatedAt(),
-			Hash:      r3.GetResult().GetEtag(),
-		},
+		Result: convert.RelationToV2(r3.GetResult()),
 	}
 
 	return r2, err

@@ -17,8 +17,8 @@ import (
 // model contains object related items.
 const (
 	objectIdentifierNil  string = "not set (nil)"
-	objectIdentifierKey  string = "key"
 	objectIdentifierType string = "type"
+	objectIdentifierID   string = "id"
 )
 
 type object struct {
@@ -43,7 +43,7 @@ func (i *object) Validate(mc *cache.Cache) (bool, error) {
 
 	// #2 check if id field is set.
 	if IsNotSet(i.GetId()) {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierKey)
+		return false, ErrInvalidArgumentObject.Msg(objectIdentifierID)
 	}
 
 	if i.Properties == nil {
@@ -55,7 +55,7 @@ func (i *object) Validate(mc *cache.Cache) (bool, error) {
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
-		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
+		return false, derr.ErrObjectNotFound.Msg(i.Object.Type)
 	}
 
 	return true, nil
@@ -100,12 +100,6 @@ type objectIdentifier struct {
 
 func ObjectIdentifier(i *dsc3.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
 
-// TODO not used, integrated into validate or set.
-// func (i *objectIdentifier) Normalize() {
-// 	i.ObjectIdentifier.Type = proto.String(strings.ToLower(strings.TrimSpace(i.GetType())))
-// 	i.ObjectIdentifier.Key = proto.String(strings.ToLower(strings.TrimSpace(i.GetKey())))
-// }
-
 func (i *objectIdentifier) Validate() (bool, error) {
 	if i.ObjectIdentifier == nil {
 		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierNil)
@@ -118,7 +112,7 @@ func (i *objectIdentifier) Validate() (bool, error) {
 
 	// #2 check if id field is set.
 	if IsNotSet(i.GetObjectId()) {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierKey)
+		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierID)
 	}
 
 	// #3 validate that type is defined in the type system.

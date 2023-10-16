@@ -103,7 +103,7 @@ var relationTestCasesWithID = []*TestCase{
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Object.GetKey())
 
 				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "8138580768329688687", resp.Result.Hash)
+				assert.Equal(t, "2966454309474781929", resp.Result.Hash)
 			}
 			return func(proto.Message) {}
 		},
@@ -146,7 +146,7 @@ var relationTestCasesWithID = []*TestCase{
 				assert.Equal(t, "test-user-2@acmecorp.com", resp.Results[0].Object.GetKey())
 
 				assert.NotEmpty(t, resp.Results[0].Hash)
-				assert.Equal(t, "8138580768329688687", resp.Results[0].Hash)
+				assert.Equal(t, "2966454309474781929", resp.Results[0].Hash)
 			}
 			return func(proto.Message) {}
 		},

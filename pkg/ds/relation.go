@@ -115,15 +115,15 @@ func (i *relation) Validate(mc *cache.Cache) (bool, error) {
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.GetObjectType())) {
-		return false, derr.ErrObjectTypeNotFound.Msg(i.GetObjectType())
+		return false, derr.ErrObjectNotFound.Msg(i.GetObjectType())
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.GetSubjectType())) {
-		return false, derr.ErrObjectTypeNotFound.Msg(i.GetSubjectType())
+		return false, derr.ErrObjectNotFound.Msg(i.GetSubjectType())
 	}
 
 	if !mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
-		return false, derr.ErrRelationTypeNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
+		return false, derr.ErrRelationNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
 	}
 
 	return true, nil
@@ -156,64 +156,6 @@ func (i *relation) Hash() string {
 
 	return strconv.FormatUint(h.Sum64(), 10)
 }
-
-// RelationIdentifier.
-// type relationIdentifier struct {
-// 	*dsc3.RelationIdentifier
-// }
-
-// func RelationIdentifier(i *dsc3.RelationIdentifier) *relationIdentifier {
-// 	return &relationIdentifier{i}
-// }
-
-// func (i *relationIdentifier) Key() string {
-// 	return i.ObjKey()
-// }
-
-// func (i *relationIdentifier) ObjKey() string {
-// 	return i.Object.GetType() + TypeIDSeparator + i.Object.GetKey() +
-// 		InstanceSeparator +
-// 		i.Relation.GetName() +
-// 		InstanceSeparator +
-// 		i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey()
-// }
-
-// func (i *relationIdentifier) SubKey() string {
-// 	return i.Subject.GetType() + TypeIDSeparator + i.Subject.GetKey() +
-// 		InstanceSeparator +
-// 		i.Relation.GetName() +
-// 		InstanceSeparator +
-// 		i.Object.GetType() + TypeIDSeparator + i.Object.GetKey()
-// }
-
-// func (i *relationIdentifier) Validate() (bool, error) {
-
-// 	if i == nil {
-// 		return false, derr.ErrInvalidRelationIdentifier.Msg("nil")
-// 	}
-
-// 	if i.RelationIdentifier == nil {
-// 		return false, derr.ErrInvalidArgument.Msg("relation_identifier")
-// 	}
-
-// 	if ok, err := ObjectSelector(i.RelationIdentifier.Object).Validate(); !ok {
-// 		return ok, err
-// 	}
-
-// 	if i.RelationIdentifier.Relation != nil && (i.RelationIdentifier.Relation.ObjectType == nil || i.RelationIdentifier.Relation.GetObjectType() == "") {
-// 		i.Relation.ObjectType = i.Object.Type
-// 	}
-
-// 	if ok, err := RelationTypeIdentifier(i.RelationIdentifier.Relation).Validate(); !ok {
-// 		return ok, err
-// 	}
-
-// 	if ok, err := ObjectSelector(i.RelationIdentifier.Subject).Validate(); !ok {
-// 		return ok, err
-// 	}
-
-// 	return true, nil
-// }
 
 func (i *relation) PathAndFilter() ([]string, string, error) {
 	switch {

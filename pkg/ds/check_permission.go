@@ -37,12 +37,8 @@ func (i *checkPermission) Subject() *dsc3.ObjectIdentifier {
 }
 
 func (i *checkPermission) Validate(mc *cache.Cache) (bool, error) {
-	if i == nil {
-		return false, ErrInvalidArgumentObjectType.Msg("check permission request not set (nil)")
-	}
-
-	if i.CheckPermissionRequest == nil {
-		return false, ErrInvalidArgumentObjectType.Msg("check permission request not set (nil)")
+	if i == nil || i.CheckPermissionRequest == nil {
+		return false, ErrInvalidRequest.Msg("check_permission")
 	}
 
 	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {

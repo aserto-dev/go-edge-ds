@@ -37,12 +37,8 @@ func (i *checkRelation) Subject() *dsc3.ObjectIdentifier {
 }
 
 func (i *checkRelation) Validate(mc *cache.Cache) (bool, error) {
-	if i == nil {
-		return false, ErrInvalidArgumentObjectType.Msg("check relation request not set (nil)")
-	}
-
-	if i.CheckRelationRequest == nil {
-		return false, ErrInvalidArgumentObjectType.Msg("check relations request not set (nil)")
+	if i == nil || i.CheckRelationRequest == nil {
+		return false, ErrInvalidRequest.Msg("check_relation")
 	}
 
 	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {

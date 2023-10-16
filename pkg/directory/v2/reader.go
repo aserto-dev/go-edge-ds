@@ -157,6 +157,10 @@ func (s *Reader) GetPermissions(ctx context.Context, req *dsr2.GetPermissionsReq
 
 // Get single object instance.
 func (s *Reader) GetObject(ctx context.Context, req *dsr2.GetObjectRequest) (*dsr2.GetObjectResponse, error) {
+	if req.Page == nil {
+		req.Page = &dsc2.PaginationRequest{Size: 100, Token: ""}
+	}
+
 	r3, err := s.r3.GetObject(ctx, &dsr3.GetObjectRequest{
 		ObjectType:    req.GetParam().GetType(),
 		ObjectId:      req.GetParam().GetKey(),

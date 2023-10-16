@@ -3,6 +3,9 @@ package convert
 import (
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func ObjectIdentifierToV2(i *dsc3.ObjectIdentifier) *dsc2.ObjectIdentifier {
@@ -36,11 +39,16 @@ func ObjectIdentifierArrayToV3(in []*dsc2.ObjectIdentifier) []*dsc3.ObjectIdenti
 }
 
 func ObjectToV2(in *dsc3.Object) *dsc2.Object {
+	if in.Properties == nil {
+		in.Properties = pb.NewStruct()
+	}
+	p := proto.Clone(in.Properties).(*structpb.Struct)
+
 	return &dsc2.Object{
 		Type:        in.GetType(),
 		Key:         in.GetId(),
 		DisplayName: in.GetDisplayName(),
-		Properties:  in.GetProperties(),
+		Properties:  p,
 		CreatedAt:   in.GetCreatedAt(),
 		UpdatedAt:   in.GetUpdatedAt(),
 		Hash:        in.GetEtag(),
@@ -64,11 +72,16 @@ func ObjectMapToV2(in map[string]*dsc3.Object) map[string]*dsc2.Object {
 }
 
 func ObjectToV3(in *dsc2.Object) *dsc3.Object {
+	if in.Properties == nil {
+		in.Properties = pb.NewStruct()
+	}
+	p := proto.Clone(in.Properties).(*structpb.Struct)
+
 	return &dsc3.Object{
 		Type:        in.GetType(),
 		Id:          in.GetKey(),
 		DisplayName: in.GetDisplayName(),
-		Properties:  in.GetProperties(),
+		Properties:  p,
 		CreatedAt:   in.GetCreatedAt(),
 		UpdatedAt:   in.GetUpdatedAt(),
 		Etag:        in.GetHash(),
