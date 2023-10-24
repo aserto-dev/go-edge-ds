@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-edge-ds/magefiles
 
-go 1.19
+go 1.20
 
 require (
 	github.com/aserto-dev/mage-loot v0.8.15
@@ -36,9 +36,9 @@ require (
 	github.com/subosito/gotenv v1.4.2 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/zricethezav/gitleaks/v8 v8.3.0 // indirect
-	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/sync v0.4.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

@@ -24,6 +24,31 @@ func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key s
 	return Unmarshal[T, M](buf)
 }
 
+func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M, error) {
+	result := []M{}
+
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return result, err
+	}
+
+	c := b.Cursor()
+	for key, value := c.First(); key != nil; key, value = c.Next() {
+		if key == nil {
+			break
+		}
+
+		i, err := Unmarshal[T, M](value)
+		if err != nil {
+			return []M{}, err
+		}
+
+		result = append(result, i)
+	}
+
+	return result, nil
+}
+
 func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string, t M) (M, error) {
 	buf, err := Marshal(t)
 	if err != nil {

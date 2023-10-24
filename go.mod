@@ -1,12 +1,12 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.19
+go 1.20
 
 // replace github.com/aserto-dev/azm => ../azm
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.5
+	github.com/aserto-dev/azm v0.0.6
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.21.8-0.20231015213014-2bac9fa0ff01
 	github.com/bufbuild/protovalidate-go v0.3.4

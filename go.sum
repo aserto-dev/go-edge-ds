@@ -8,8 +8,8 @@ github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3Q
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230512164433-5d1fd1a340c9 h1:goHVqTbFX3AIo0tzGr14pgfAW2ZfPChKO21Z9MGf/gk=
 github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230512164433-5d1fd1a340c9/go.mod h1:pSwJ0fSY5KhvocuWSx4fz3BA8OrA1bQn+K1Eli3BRwM=
-github.com/aserto-dev/azm v0.0.5 h1:PYBLvKkauSOvVCqCzfMfj/fcebTZh9jvEzEHiMtG7+w=
-github.com/aserto-dev/azm v0.0.5/go.mod h1:FFCUZcKKevC406bH5vzSJwDv6D4i4FVd4sIRD8UFL44=
+github.com/aserto-dev/azm v0.0.6 h1:96pTpT9n7pX//9Pt/47VboxmEz1dYYuJUatXDmeGoH4=
+github.com/aserto-dev/azm v0.0.6/go.mod h1:GeMRu6I7JMpByppqflZcusgbMZyXCGnYEdDW6x4qgX4=
 github.com/aserto-dev/errors v0.0.6 h1:iH5fkJwBGFPbcdS4B8mwvNdwODlhDEXXPduZtjLh6vo=
 github.com/aserto-dev/errors v0.0.6/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-directory v0.21.8-0.20231015213014-2bac9fa0ff01 h1:glYqVO35wG+iRZ3wBnvm0YNh+ZaK1pDE3BUtZlA3U8M=
