@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/azm v0.0.6
 	github.com/aserto-dev/errors v0.0.6
-	github.com/aserto-dev/go-directory v0.21.8-0.20231015213014-2bac9fa0ff01
+	github.com/aserto-dev/go-directory v0.21.8-0.20231024193431-4f1633502744
 	github.com/bufbuild/protovalidate-go v0.3.4
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.3.1
