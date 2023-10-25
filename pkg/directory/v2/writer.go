@@ -5,8 +5,8 @@ import (
 
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	"github.com/aserto-dev/go-directory/pkg/convert"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/convert"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/rs/zerolog"
