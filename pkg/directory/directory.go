@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -53,7 +54,7 @@ type Directory struct {
 	writer3   dsw3.WriterServer
 }
 
-func New(config *Config, logger *zerolog.Logger) (*Directory, error) {
+func New(ctx context.Context, config *Config, logger *zerolog.Logger) (*Directory, error) {
 	newLogger := logger.With().Str("component", "directory").Logger()
 
 	cfg := bdb.Config{
