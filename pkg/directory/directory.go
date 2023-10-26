@@ -65,15 +65,34 @@ func New(ctx context.Context, config *Config, logger *zerolog.Logger) (*Director
 	}
 
 	if ok, err := migrate.CheckSchemaVersion(&cfg, logger, semver.MustParse(schemaVersion)); !ok {
+		errs := make(chan error)
+		migrationDone := make(chan bool)
+
 		switch {
 		case errors.Is(err, migrate.ErrDirectorySchemaUpdateRequired):
-			if err := migrate.Migrate(&cfg, logger, semver.MustParse(schemaVersion)); err != nil {
-				return nil, err
-			}
+			go func() {
+				if err := migrate.Migrate(&cfg, logger, semver.MustParse(schemaVersion)); err != nil {
+					errs <- err
+				}
+				migrationDone <- true
+			}()
 		case errors.Is(err, migrate.ErrDirectorySchemaVersionHigher):
 			return nil, err
 		default:
 			return nil, err
+		}
+
+		running := true
+		for running {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case migrateErr := <-errs:
+				return nil, migrateErr
+			case <-migrationDone:
+				running = false
+				break
+			}
 		}
 
 		if ok, err := migrate.CheckSchemaVersion(&cfg, logger, semver.MustParse(schemaVersion)); !ok {
