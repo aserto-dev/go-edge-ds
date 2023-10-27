@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -84,7 +83,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw2.DeleteObjectRequest
 	r3, err := s.w3.DeleteObject(ctx, &dsw3.DeleteObjectRequest{
 		ObjectType:    req.GetParam().GetType(),
 		ObjectId:      req.GetParam().GetKey(),
-		WithRelations: proto.Bool(req.GetWithRelations()),
+		WithRelations: req.GetWithRelations(),
 	})
 	if err != nil {
 		return &dsw2.DeleteObjectResponse{}, err

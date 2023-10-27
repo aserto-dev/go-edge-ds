@@ -52,7 +52,7 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 
 // Open BoltDB key-value store instance.
 func (s *BoltDB) Open() error {
-	s.logger.Info().Str("db_path", s.config.DBPath).Msg("opening boltdb store")
+	s.logger.Info().Str("db_path", s.config.DBPath).Msg("open")
 
 	if s.config.DBPath == "" {
 		return errors.New("store path not set")
@@ -85,6 +85,7 @@ func (s *BoltDB) Open() error {
 // Close closes BoltDB key-value store instance.
 func (s *BoltDB) Close() {
 	if s.db != nil {
+		s.logger.Info().Str("db_path", s.config.DBPath).Msg("close")
 		s.db.Close()
 		s.db = nil
 	}
