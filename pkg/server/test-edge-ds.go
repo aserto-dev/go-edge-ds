@@ -50,7 +50,7 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 
 	edgeDSLogger := logger.With().Str("component", "api.edge-directory").Logger()
 
-	edgeDirServer, err := eds.New(cfg, &edgeDSLogger)
+	edgeDirServer, err := eds.New(context.Background(), cfg, &edgeDSLogger)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to start edge directory server")
 	}
