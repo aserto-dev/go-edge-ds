@@ -133,7 +133,7 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 		return err
 	}
 	defer func() {
-		log.Debug().Msg("close rwDB")
+		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
 		if err := rwDB.Close(); err != nil {
 			log.Error().Err(err).Msg("close rwDB")
 		}
@@ -149,7 +149,7 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 		return err
 	}
 	defer func() {
-		log.Debug().Msg("close roDB")
+		log.Debug().Str("db_path", roDB.Path()).Msg("close-ro")
 		if err := roDB.Close(); err != nil {
 			log.Error().Err(err).Msg("close roDB")
 		}

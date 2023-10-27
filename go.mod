@@ -3,15 +3,16 @@ module github.com/aserto-dev/go-edge-ds
 go 1.20
 
 // replace github.com/aserto-dev/azm => ../azm
+// replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.6
+	github.com/aserto-dev/azm v0.0.9
 	github.com/aserto-dev/errors v0.0.6
-	github.com/aserto-dev/go-directory v0.21.8-0.20231024193431-4f1633502744
+	github.com/aserto-dev/go-directory v0.21.8-0.20231025221233-49189a5f0560
 	github.com/bufbuild/protovalidate-go v0.3.4
 	github.com/gonvenience/ytbx v1.4.4
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/homeport/dyff v1.6.0
 	github.com/magefile/mage v1.15.0
@@ -20,7 +21,7 @@ require (
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.38.1
 	github.com/stretchr/testify v1.8.4
-	go.etcd.io/bbolt v1.3.7
+	go.etcd.io/bbolt v1.3.8
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 )
