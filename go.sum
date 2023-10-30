@@ -12,8 +12,8 @@ github.com/aserto-dev/azm v0.0.10 h1:v5OU9XaTyrZgapp5wJ872kXiIPhaZQUZyMK2UXUoANg
 github.com/aserto-dev/azm v0.0.10/go.mod h1:GeMRu6I7JMpByppqflZcusgbMZyXCGnYEdDW6x4qgX4=
 github.com/aserto-dev/errors v0.0.6 h1:iH5fkJwBGFPbcdS4B8mwvNdwODlhDEXXPduZtjLh6vo=
 github.com/aserto-dev/errors v0.0.6/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
-github.com/aserto-dev/go-directory v0.21.8-0.20231025221233-49189a5f0560 h1:jW+vtqzu91NSfivxXFcDzZyL3TzLhIRMgivLVojG3OQ=
-github.com/aserto-dev/go-directory v0.21.8-0.20231025221233-49189a5f0560/go.mod h1:xkZFWZ0u0RcYRBkJLTqantIG/jnVxYhzd2+kIQf8PnU=
+github.com/aserto-dev/go-directory v0.30.0 h1:mKQhoP7rl9XjxP8X0H6RvjvgjqeRh7WqbWugg/nsCCM=
+github.com/aserto-dev/go-directory v0.30.0/go.mod h1:xkZFWZ0u0RcYRBkJLTqantIG/jnVxYhzd2+kIQf8PnU=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/bufbuild/protovalidate-go v0.3.4 h1:FrHcBBShspitvmC9Nkwu7BNs/EXWjkEQqrgFnWxYH60=
 github.com/bufbuild/protovalidate-go v0.3.4/go.mod h1:Au57xmLypglbQAF0GzuDDYbYIct7SZ9QnwJlaPolyFw=
@@ -90,8 +90,9 @@ github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3/go.mod h1:x1uk6
 github.com/mattn/go-colorable v0.1.13 h1:fFA4WZxdEF4tXPZVKMLwD8oUnCTTo08duU7wxecdEvA=
 github.com/mattn/go-colorable v0.1.13/go.mod h1:7S9/ev0klgBDR4GtXTXX8a3vIGJpMovkB8vQcUbaXHg=
 github.com/mattn/go-isatty v0.0.16/go.mod h1:kYGgaQfpe5nmfYZH+SKPsOc2e4SrIfOl2e/yFXSvRLM=
-github.com/mattn/go-isatty v0.0.19 h1:JITubQf0MOLdlGRuRq+jtsDlekdYPia9ZFsB8h/APPA=
 github.com/mattn/go-isatty v0.0.19/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
+github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
+github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mitchellh/go-ps v1.0.0 h1:i6ampVEEF4wQFF+bkYfwYgY+F/uYJDktmvLPf7qIgjc=
 github.com/mitchellh/go-ps v1.0.0/go.mod h1:J4lOc8z8yJs6vUwklHw2XEIiT4z4C40KtWVN3nvg8Pg=
 github.com/mitchellh/hashstructure v1.1.0 h1:P6P1hdjqAAknpY/M1CGipelZgp+4y9ja9kmUZPXP+H0=

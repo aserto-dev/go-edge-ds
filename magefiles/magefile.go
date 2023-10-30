@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	os.Setenv("GO_VERSION", "1.19")
+	os.Setenv("GO_VERSION", "1.20")
 	os.Setenv("DOCKER_BUILDKIT", "1")
 }
 
@@ -29,13 +29,6 @@ func Test() error {
 
 func Deps() {
 	deps.GetAllDeps()
-}
-
-func Build() error {
-	return sh.RunV("go", []string{
-		"build",
-		"-o", "./bin/" + runtime.GOOS + "-" + runtime.GOARCH + "/server",
-		"./internal/cmd/server"}...)
 }
 
 func Run() error {

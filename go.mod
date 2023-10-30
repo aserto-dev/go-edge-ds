@@ -9,7 +9,7 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/azm v0.0.10
 	github.com/aserto-dev/errors v0.0.6
-	github.com/aserto-dev/go-directory v0.21.8-0.20231025221233-49189a5f0560
+	github.com/aserto-dev/go-directory v0.30.0
 	github.com/bufbuild/protovalidate-go v0.3.4
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.4.0
@@ -42,7 +42,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-ciede2000 v0.0.0-20170301095244-782e8c62fec3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
