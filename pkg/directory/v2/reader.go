@@ -217,8 +217,14 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr2.GetObjectsRequest) (*
 
 // Get relation instances based on subject, relation, object filter.
 func (s *Reader) GetRelation(ctx context.Context, req *dsr2.GetRelationRequest) (*dsr2.GetRelationResponse, error) {
+	// if object type isn't specified on the request object identifier, try to get it from the relation identifier.
+	objType := req.GetParam().GetObject().GetType()
+	if objType == "" {
+		objType = req.GetParam().GetRelation().GetObjectType()
+	}
+
 	r3, err := s.r3.GetRelation(ctx, &dsr3.GetRelationRequest{
-		ObjectType:  req.GetParam().GetObject().GetType(),
+		ObjectType:  objType,
 		ObjectId:    req.GetParam().GetObject().GetKey(),
 		Relation:    req.GetParam().GetRelation().GetName(),
 		SubjectType: req.GetParam().GetSubject().GetType(),
@@ -243,8 +249,14 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr2.GetRelationRequest) 
 
 // Get relation instances based on subject, relation, object filter (paginated).
 func (s *Reader) GetRelations(ctx context.Context, req *dsr2.GetRelationsRequest) (*dsr2.GetRelationsResponse, error) {
+	// if object type isn't specified on the request object identifier, try to get it from the relation identifier.
+	objType := req.GetParam().GetObject().GetType()
+	if objType == "" {
+		objType = req.GetParam().GetRelation().GetObjectType()
+	}
+
 	r3, err := s.r3.GetRelations(ctx, &dsr3.GetRelationsRequest{
-		ObjectType:      req.GetParam().GetObject().GetType(),
+		ObjectType:      objType,
 		ObjectId:        req.GetParam().GetObject().GetKey(),
 		Relation:        req.GetParam().GetRelation().GetName(),
 		SubjectType:     req.GetParam().GetSubject().GetType(),
