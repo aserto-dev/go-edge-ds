@@ -157,19 +157,7 @@ func (s *Reader) GetPermissions(ctx context.Context, req *dsr2.GetPermissionsReq
 
 // Get single object instance.
 func (s *Reader) GetObject(ctx context.Context, req *dsr2.GetObjectRequest) (*dsr2.GetObjectResponse, error) {
-	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100, Token: ""}
-	}
-
-	r3, err := s.r3.GetObject(ctx, &dsr3.GetObjectRequest{
-		ObjectType:    req.GetParam().GetType(),
-		ObjectId:      req.GetParam().GetKey(),
-		WithRelations: req.GetWithRelations(),
-		Page: &dsc3.PaginationRequest{
-			Size:  req.GetPage().GetSize(),
-			Token: req.GetPage().GetToken(),
-		},
-	})
+	r3, err := s.r3.GetObject(ctx, convert.GetObjectRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetObjectResponse{}, err
 	}
@@ -185,10 +173,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr2.GetObjectRequest) (*ds
 
 // Get multiple object instances by id or type+key, in a single request.
 func (s *Reader) GetObjectMany(ctx context.Context, req *dsr2.GetObjectManyRequest) (*dsr2.GetObjectManyResponse, error) {
-
-	r3, err := s.r3.GetObjectMany(ctx, &dsr3.GetObjectManyRequest{
-		Param: convert.ObjectIdentifierArrayToV3(req.Param),
-	})
+	r3, err := s.r3.GetObjectMany(ctx, convert.GetObjectManyRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetObjectManyResponse{}, err
 	}
@@ -202,7 +187,7 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr2.GetObjectManyReque
 
 // Get all object instances, optionally filtered by object type. (paginated).
 func (s *Reader) GetObjects(ctx context.Context, req *dsr2.GetObjectsRequest) (*dsr2.GetObjectsResponse, error) {
-	r3, err := s.r3.GetObjects(ctx, &dsr3.GetObjectsRequest{})
+	r3, err := s.r3.GetObjects(ctx, convert.GetObjectsRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetObjectsResponse{}, err
 	}
@@ -217,20 +202,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr2.GetObjectsRequest) (*
 
 // Get relation instances based on subject, relation, object filter.
 func (s *Reader) GetRelation(ctx context.Context, req *dsr2.GetRelationRequest) (*dsr2.GetRelationResponse, error) {
-	// if object type isn't specified on the request object identifier, try to get it from the relation identifier.
-	objType := req.GetParam().GetObject().GetType()
-	if objType == "" {
-		objType = req.GetParam().GetRelation().GetObjectType()
-	}
-
-	r3, err := s.r3.GetRelation(ctx, &dsr3.GetRelationRequest{
-		ObjectType:  objType,
-		ObjectId:    req.GetParam().GetObject().GetKey(),
-		Relation:    req.GetParam().GetRelation().GetName(),
-		SubjectType: req.GetParam().GetSubject().GetType(),
-		SubjectId:   req.GetParam().GetSubject().GetKey(),
-		WithObjects: req.GetWithObjects(),
-	})
+	r3, err := s.r3.GetRelation(ctx, convert.GetRelationRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetRelationResponse{}, err
 	}
@@ -249,22 +221,7 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr2.GetRelationRequest) 
 
 // Get relation instances based on subject, relation, object filter (paginated).
 func (s *Reader) GetRelations(ctx context.Context, req *dsr2.GetRelationsRequest) (*dsr2.GetRelationsResponse, error) {
-	// if object type isn't specified on the request object identifier, try to get it from the relation identifier.
-	objType := req.GetParam().GetObject().GetType()
-	if objType == "" {
-		objType = req.GetParam().GetRelation().GetObjectType()
-	}
-
-	r3, err := s.r3.GetRelations(ctx, &dsr3.GetRelationsRequest{
-		ObjectType:      objType,
-		ObjectId:        req.GetParam().GetObject().GetKey(),
-		Relation:        req.GetParam().GetRelation().GetName(),
-		SubjectType:     req.GetParam().GetSubject().GetType(),
-		SubjectId:       req.GetParam().GetSubject().GetKey(),
-		SubjectRelation: "",
-		WithObjects:     false,
-		Page:            convert.PaginationRequestToV3(req.Page),
-	})
+	r3, err := s.r3.GetRelations(ctx, convert.GetRelationsRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetRelationsResponse{}, err
 	}
@@ -279,14 +236,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr2.GetRelationsRequest
 
 // Check if subject has permission on object.
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr2.CheckPermissionRequest) (*dsr2.CheckPermissionResponse, error) {
-	r3, err := s.r3.CheckPermission(ctx, &dsr3.CheckPermissionRequest{
-		ObjectType:  req.GetObject().GetType(),
-		ObjectId:    req.GetObject().GetKey(),
-		Permission:  req.GetPermission().GetName(),
-		SubjectType: req.GetSubject().GetType(),
-		SubjectId:   req.GetSubject().GetKey(),
-		Trace:       req.GetTrace(),
-	})
+	r3, err := s.r3.CheckPermission(ctx, convert.CheckPermissionRequestToV3(req))
 	if err != nil {
 		return &dsr2.CheckPermissionResponse{}, err
 	}
@@ -301,14 +251,7 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr2.CheckPermissionR
 
 // Check if subject has relation to object.
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr2.CheckRelationRequest) (*dsr2.CheckRelationResponse, error) {
-	r3, err := s.r3.CheckRelation(ctx, &dsr3.CheckRelationRequest{
-		ObjectType:  req.GetObject().GetType(),
-		ObjectId:    req.GetObject().GetKey(),
-		Relation:    req.GetRelation().GetName(),
-		SubjectType: req.GetSubject().GetType(),
-		SubjectId:   req.GetSubject().GetKey(),
-		Trace:       req.GetTrace(),
-	})
+	r3, err := s.r3.CheckRelation(ctx, convert.CheckRelationRequestToV3(req))
 	if err != nil {
 		return &dsr2.CheckRelationResponse{}, err
 	}
@@ -323,15 +266,7 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr2.CheckRelationReque
 
 // Get object dependency graph.
 func (s *Reader) GetGraph(ctx context.Context, req *dsr2.GetGraphRequest) (*dsr2.GetGraphResponse, error) {
-	r3, err := s.r3.GetGraph(ctx, &dsr3.GetGraphRequest{
-		AnchorType:  req.GetAnchor().GetType(),
-		AnchorId:    req.GetAnchor().GetKey(),
-		ObjectType:  req.GetObject().GetType(),
-		ObjectId:    req.GetObject().GetKey(),
-		Relation:    req.GetRelation().GetName(),
-		SubjectType: req.GetSubject().GetType(),
-		SubjectId:   req.GetSubject().GetKey(),
-	})
+	r3, err := s.r3.GetGraph(ctx, convert.GetGraphRequestToV3(req))
 	if err != nil {
 		return &dsr2.GetGraphResponse{}, err
 	}
