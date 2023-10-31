@@ -119,7 +119,10 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	opts := []bdb.ScanOption{
 		bdb.WithPageSize(req.Page.Size),
 		bdb.WithPageToken(req.Page.Token),
-		bdb.WithKeyFilter(req.GetObjectType()),
+	}
+
+	if req.GetObjectType() != "" {
+		opts = append(opts, bdb.WithKeyFilter(req.GetObjectType()+ds.TypeIDSeparator))
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
