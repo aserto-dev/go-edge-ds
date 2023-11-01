@@ -139,7 +139,7 @@ func migrateModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 			return err
 		}
 
-		log.Info().Str("manifest", fileName).Msg("write migrated manifest")
+		log.Info().Str("version", Version).Msgf("write migrated manifest: %s", fileName)
 		return nil
 	}
 }
