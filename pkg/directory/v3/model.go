@@ -189,16 +189,16 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 
 	m, err := manifest.Load(bytes.NewReader(data.Bytes()))
 	if err != nil {
-		return err
+		return derr.ErrInvalidArgument.Msg(err.Error())
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
-			return errors.Errorf("failed to set manifest")
+			return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
 		}
 
 		if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
-			return errors.Errorf("failed to set manifest")
+			return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
 		}
 
 		return nil
@@ -221,7 +221,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		if err := ds.Manifest(md).Delete(ctx, tx); err != nil {
-			return errors.Errorf("failed to delete manifest")
+			return derr.ErrUnknown.Msgf("failed to delete manifest: %s", err.Error())
 		}
 		return nil
 	}); err != nil {
@@ -229,7 +229,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 	}
 
 	if err := s.store.MC().UpdateModel(&mod.Model{}); err != nil {
-		return resp, err
+		return resp, derr.ErrUnknown.Msgf("failed to update model: %s", err.Error())
 	}
 
 	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, nil
