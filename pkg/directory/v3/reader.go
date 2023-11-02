@@ -11,8 +11,6 @@ import (
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type Reader struct {
@@ -249,7 +247,13 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 		return resp, err
 	}
 
-	return nil, status.Error(codes.Unimplemented, "check function is not implemented")
+	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		var err error
+		resp, err = ds.Check(req).Exec(ctx, tx, s.store.MC())
+		return err
+	})
+
+	return resp, err
 }
 
 // CheckPermission, check if subject is permitted to access resource (object).
