@@ -64,28 +64,22 @@ func (i *relation) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-// TODO verify correct position of subject_relation in the key string.
 func (i *relation) ObjKey() string {
 	return i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
 		InstanceSeparator +
 		i.GetRelation() +
 		InstanceSeparator +
-		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId()
-	//  +
-	// RelationSeparator +
-	// i.GetSubjectRelation()
+		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
+		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
 }
 
-// TODO verify correct position of subject_relation in the key string.
 func (i *relation) SubKey() string {
 	return i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
 		InstanceSeparator +
 		i.GetRelation() +
 		InstanceSeparator +
-		i.GetObjectType() + TypeIDSeparator + i.GetObjectId()
-	// +
-	// RelationSeparator +
-	// i.GetSubjectRelation()
+		i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
+		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
 }
 
 func (i *relation) Validate(mc *cache.Cache) (bool, error) {
