@@ -30,6 +30,8 @@ type Config struct {
 	RequestTimeout time.Duration
 	MaxBatchSize   int
 	MaxBatchDelay  time.Duration
+	MaxBatchSize   int
+	MaxBatchDelay  time.Duration
 }
 
 // BoltDB based key-value store.

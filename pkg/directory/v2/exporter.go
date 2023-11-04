@@ -26,6 +26,7 @@ func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB, e3 *v3.Exporter) *Ex
 }
 
 func (s *Exporter) Export(req *dse2.ExportRequest, stream dse2.Exporter_ExportServer) error {
+func (s *Exporter) Export(req *dse2.ExportRequest, stream dse2.Exporter_ExportServer) error {
 	logger := s.logger.With().Str("method", "Export").Interface("req", req).Logger()
 
 	if req.Options&uint32(dse2.Option_OPTION_METADATA_OBJECT_TYPES) != 0 {
@@ -57,6 +58,7 @@ func (s *Exporter) Export(req *dse2.ExportRequest, stream dse2.Exporter_ExportSe
 			}
 		}
 
+		if req.Options&uint32(dse2.Option_OPTION_DATA_RELATIONS) != 0 {
 		if req.Options&uint32(dse2.Option_OPTION_DATA_RELATIONS) != 0 {
 			if err := exportRelations(tx, stream); err != nil {
 				logger.Error().Err(err).Msg("export_relations")
@@ -129,11 +131,15 @@ func exportPermissions(store *bdb.BoltDB, stream dse2.Exporter_ExportServer) err
 
 func exportObjects(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 	iter, err := bdb.NewScanIterator[dsc2.Object](stream.Context(), tx, bdb.ObjectsPath)
+func exportObjects(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
+	iter, err := bdb.NewScanIterator[dsc2.Object](stream.Context(), tx, bdb.ObjectsPath)
 	if err != nil {
 		return err
 	}
 
 	for iter.Next() {
+		if err := stream.Send(&dse2.ExportResponse{
+			Msg: &dse2.ExportResponse_Object{
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_Object{
 				Object: iter.Value(),
@@ -148,11 +154,15 @@ func exportObjects(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 
 func exportRelations(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 	iter, err := bdb.NewScanIterator[dsc2.Relation](stream.Context(), tx, bdb.RelationsObjPath)
+func exportRelations(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
+	iter, err := bdb.NewScanIterator[dsc2.Relation](stream.Context(), tx, bdb.RelationsObjPath)
 	if err != nil {
 		return err
 	}
 
 	for iter.Next() {
+		if err := stream.Send(&dse2.ExportResponse{
+			Msg: &dse2.ExportResponse_Relation{
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_Relation{
 				Relation: iter.Value(),
