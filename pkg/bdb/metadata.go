@@ -16,6 +16,7 @@ type MessageM[T any] interface {
 	proto.Message
 	*T
 	GetCreatedAt() *timestamppb.Timestamp
+	GetEtag() string
 }
 
 func UpdateMetadata[T any, M MessageM[T]](ctx context.Context, tx *bolt.Tx, path []string, key string, msg *T) (M, error) {
@@ -42,6 +43,12 @@ func UpdateMetadata[T any, M MessageM[T]](ctx context.Context, tx *bolt.Tx, path
 	// always set updated_at timestamp.
 	if err := SetFieldProperty(msg, "UpdatedAt", ts); err != nil {
 		return nil, err
+	}
+
+	if cur.GetEtag() != "" {
+		if err := SetFieldProperty(msg, "Etag", cur.GetEtag()); err != nil {
+			return nil, err
+		}
 	}
 
 	return msg, nil

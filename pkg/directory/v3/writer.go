@@ -37,13 +37,21 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 		return resp, err
 	}
 
-	req.Object.Etag = ds.Object(req.Object).Hash()
+	etag := ds.Object(req.Object).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
 		if err != nil {
 			return err
 		}
+
+		if etag == updReq.Etag {
+			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+			resp.Result = updReq
+			return nil
+		}
+
+		updReq.Etag = etag
 
 		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), updReq)
 		if err != nil {
@@ -124,7 +132,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		return resp, err
 	}
 
-	req.Relation.Etag = ds.Relation(req.Relation).Hash()
+	etag := ds.Relation(req.Relation).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
@@ -132,18 +140,24 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return err
 		}
 
+		if etag == updReq.Etag {
+			s.logger.Trace().Str("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+			resp.Result = updReq
+			return nil
+		}
+
+		updReq.Etag = etag
+
 		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
 		if err != nil {
 			return err
 		}
 
-		subRel, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), req.Relation)
-		if err != nil {
+		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), updReq); err != nil {
 			return err
 		}
 
 		resp.Result = objRel
-		_ = subRel
 
 		return nil
 	})

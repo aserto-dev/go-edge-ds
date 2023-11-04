@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
+	"github.com/bufbuild/protovalidate-go"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -19,12 +20,15 @@ import (
 type Importer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
+	v      *protovalidate.Validator
 }
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
+	v, _ := protovalidate.New()
 	return &Importer{
 		logger: logger,
 		store:  store,
+		v:      v,
 	}
 }
 
@@ -73,13 +77,31 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 }
 
 func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
-	s.logger.Debug().Interface("object", req).Msg("import_object")
+	s.logger.Debug().Interface("object", req).Msg("ImportObject")
 
 	if req == nil {
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req); err != nil {
+	if err := s.v.Validate(req); err != nil {
+		return derr.ErrInvalidObject.Msg(err.Error())
+	}
+
+	etag := ds.Object(req).Hash()
+
+	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req)
+	if err != nil {
+		return err
+	}
+
+	if etag == updReq.Etag {
+		s.logger.Trace().Str("key", ds.Object(req).Key()).Str("etag-equal", etag).Msg("ImportObject")
+		return nil
+	}
+
+	updReq.Etag = etag
+
+	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -87,17 +109,35 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obj
 }
 
 func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
-	s.logger.Debug().Interface("relation", req).Msg("import_relation")
+	s.logger.Debug().Interface("relation", req).Msg("ImportRelation")
 
 	if req == nil {
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req); err != nil {
+	if err := s.v.Validate(req); err != nil {
+		return derr.ErrInvalidRelation.Msg(err.Error())
+	}
+
+	etag := ds.Relation(req).Hash()
+
+	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req)
+	if err != nil {
+		return err
+	}
+
+	if etag == updReq.Etag {
+		s.logger.Trace().Str("key", ds.Relation(req).ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
+		return nil
+	}
+
+	updReq.Etag = etag
+
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey(), req); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

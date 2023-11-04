@@ -45,12 +45,12 @@ func (i *checkPermission) Validate(mc *cache.Cache) (bool, error) {
 		return ok, err
 	}
 
-	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.PermissionName(i.Permission)) {
-		return false, ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
-	}
-
 	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
 		return ok, err
+	}
+
+	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.PermissionName(i.Permission)) {
+		return false, ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
 	}
 
 	return true, nil

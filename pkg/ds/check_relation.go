@@ -101,9 +101,8 @@ type relationChecker struct {
 }
 
 func (c *relationChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
-	filter := ObjectIdentifier(root).Key() + InstanceSeparator
-
 	// relations associated to object instance.
+	filter := ObjectIdentifier(root).Key() + InstanceSeparator
 	relations, err := bdb.Scan[dsc3.Relation](c.ctx, c.tx, c.path, filter)
 	if err != nil {
 		return false, err
