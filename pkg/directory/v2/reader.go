@@ -32,8 +32,6 @@ func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, r3 *v3.Reader) *Reader
 // Get object type (metadata).
 func (s *Reader) GetObjectType(ctx context.Context, req *dsr2.GetObjectTypeRequest) (*dsr2.GetObjectTypeResponse, error) {
 	resp := &dsr2.GetObjectTypeResponse{}
-func (s *Reader) GetObjectType(ctx context.Context, req *dsr2.GetObjectTypeRequest) (*dsr2.GetObjectTypeResponse, error) {
-	resp := &dsr2.GetObjectTypeResponse{}
 
 	if req.Param == nil {
 		req.Param = &dsc2.ObjectTypeIdentifier{Name: proto.String("")}
@@ -52,11 +50,8 @@ func (s *Reader) GetObjectType(ctx context.Context, req *dsr2.GetObjectTypeReque
 // Get all objects types (metadata) (paginated).
 func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr2.GetObjectTypesRequest) (*dsr2.GetObjectTypesResponse, error) {
 	resp := &dsr2.GetObjectTypesResponse{Results: []*dsc2.ObjectType{}}
-func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr2.GetObjectTypesRequest) (*dsr2.GetObjectTypesResponse, error) {
-	resp := &dsr2.GetObjectTypesResponse{Results: []*dsc2.ObjectType{}}
 
 	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100}
 		req.Page = &dsc2.PaginationRequest{Size: 100}
 	}
 
@@ -72,8 +67,6 @@ func (s *Reader) GetObjectTypes(ctx context.Context, req *dsr2.GetObjectTypesReq
 }
 
 // Get relation type (metadata).
-func (s *Reader) GetRelationType(ctx context.Context, req *dsr2.GetRelationTypeRequest) (*dsr2.GetRelationTypeResponse, error) {
-	resp := &dsr2.GetRelationTypeResponse{}
 func (s *Reader) GetRelationType(ctx context.Context, req *dsr2.GetRelationTypeRequest) (*dsr2.GetRelationTypeResponse, error) {
 	resp := &dsr2.GetRelationTypeResponse{}
 
@@ -97,15 +90,12 @@ func (s *Reader) GetRelationType(ctx context.Context, req *dsr2.GetRelationTypeR
 // Get all relation types, optionally filtered by object type (metadata) (paginated).
 func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr2.GetRelationTypesRequest) (*dsr2.GetRelationTypesResponse, error) {
 	resp := &dsr2.GetRelationTypesResponse{Results: []*dsc2.RelationType{}, Page: &dsc2.PaginationResponse{}}
-func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr2.GetRelationTypesRequest) (*dsr2.GetRelationTypesResponse, error) {
-	resp := &dsr2.GetRelationTypesResponse{Results: []*dsc2.RelationType{}, Page: &dsc2.PaginationResponse{}}
 
 	if req.Param == nil {
 		req.Param = &dsc2.ObjectTypeIdentifier{}
 	}
 
 	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100}
 		req.Page = &dsc2.PaginationRequest{Size: 100}
 	}
 
@@ -124,8 +114,6 @@ func (s *Reader) GetRelationTypes(ctx context.Context, req *dsr2.GetRelationType
 }
 
 // Get permission (metadata).
-func (s *Reader) GetPermission(ctx context.Context, req *dsr2.GetPermissionRequest) (*dsr2.GetPermissionResponse, error) {
-	resp := &dsr2.GetPermissionResponse{}
 func (s *Reader) GetPermission(ctx context.Context, req *dsr2.GetPermissionRequest) (*dsr2.GetPermissionResponse, error) {
 	resp := &dsr2.GetPermissionResponse{}
 
@@ -148,11 +136,8 @@ func (s *Reader) GetPermission(ctx context.Context, req *dsr2.GetPermissionReque
 // Get all permissions (metadata) (paginated).
 func (s *Reader) GetPermissions(ctx context.Context, req *dsr2.GetPermissionsRequest) (*dsr2.GetPermissionsResponse, error) {
 	resp := &dsr2.GetPermissionsResponse{Results: []*dsc2.Permission{}}
-func (s *Reader) GetPermissions(ctx context.Context, req *dsr2.GetPermissionsRequest) (*dsr2.GetPermissionsResponse, error) {
-	resp := &dsr2.GetPermissionsResponse{Results: []*dsc2.Permission{}}
 
 	if req.Page == nil {
-		req.Page = &dsc2.PaginationRequest{Size: 100}
 		req.Page = &dsc2.PaginationRequest{Size: 100}
 	}
 

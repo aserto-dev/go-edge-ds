@@ -37,13 +37,11 @@ func MigrationVersion() *semver.Version {
 
 type modelType interface {
 	*dsc2.ObjectType | *dsc2.RelationType | *dsc2.Permission
-	*dsc2.ObjectType | *dsc2.RelationType | *dsc2.Permission
 	proto.Message
 	GetName() string
 }
 
 type objectType interface {
-	*dsc2.Object
 	*dsc2.Object
 	proto.Message
 	GetType() string
@@ -53,12 +51,9 @@ type objectType interface {
 
 type relationType interface {
 	*dsc2.Relation
-	*dsc2.Relation
 	proto.Message
 	GetSubject() *dsc2.ObjectIdentifier
-	GetSubject() *dsc2.ObjectIdentifier
 	GetRelation() string
-	GetObject() *dsc2.ObjectIdentifier
 	GetObject() *dsc2.ObjectIdentifier
 }
 
@@ -67,24 +62,20 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	mig.DeleteBucket(ObjectTypesNamePath),
 	mig.CreateBucket(bdb.ObjectTypesPath),
 	updateModelTypes(bdb.ObjectTypesPath, &dsc2.ObjectType{}),
-	updateModelTypes(bdb.ObjectTypesPath, &dsc2.ObjectType{}),
 
 	mig.DeleteBucket(bdb.RelationTypesPath),
 	mig.DeleteBucket(RelationTypesNamePath),
 	mig.CreateBucket(bdb.RelationTypesPath),
-	updateModelTypes(bdb.RelationTypesPath, &dsc2.RelationType{}),
 	updateModelTypes(bdb.RelationTypesPath, &dsc2.RelationType{}),
 
 	mig.DeleteBucket(bdb.PermissionsPath),
 	mig.DeleteBucket(PermissionsNamePath),
 	mig.CreateBucket(bdb.PermissionsPath),
 	updateModelTypes(bdb.PermissionsPath, &dsc2.Permission{}),
-	updateModelTypes(bdb.PermissionsPath, &dsc2.Permission{}),
 
 	mig.DeleteBucket(bdb.ObjectsPath),
 	mig.DeleteBucket(ObjectsKeyPath),
 	mig.CreateBucket(bdb.ObjectsPath),
-	updateObjects(bdb.ObjectsPath, &dsc2.Object{}),
 	updateObjects(bdb.ObjectsPath, &dsc2.Object{}),
 
 	mig.DeleteBucket(bdb.RelationsObjPath),
@@ -156,12 +147,9 @@ func keyModelType[T modelType](v T) []byte {
 	var i interface{} = v
 	switch msg := i.(type) {
 	case *dsc2.ObjectType:
-	case *dsc2.ObjectType:
 		return []byte(msg.GetName())
 	case *dsc2.Permission:
-	case *dsc2.Permission:
 		return []byte(msg.GetName())
-	case *dsc2.RelationType:
 	case *dsc2.RelationType:
 		return []byte(msg.GetObjectType() + ds.TypeIDSeparator + msg.GetName())
 	}

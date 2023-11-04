@@ -41,21 +41,10 @@ func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
 		RelationType: &dsi2.ImportCounter{},
 		Object:       &dsi2.ImportCounter{},
 		Relation:     &dsi2.ImportCounter{},
-func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
-	res := &dsi2.ImportResponse{
-		ObjectType:   &dsi2.ImportCounter{},
-		Permission:   &dsi2.ImportCounter{},
-		RelationType: &dsi2.ImportCounter{},
-		Object:       &dsi2.ImportCounter{},
-		Relation:     &dsi2.ImportCounter{},
 	}
 
 	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
 
-	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
-	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
-
-	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
 	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
 
@@ -80,7 +69,6 @@ func (s *Importer) Import(stream dsi2.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi2.ImportRequest, res *dsi2.ImportResponse) (err error) {
 func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi2.ImportRequest, res *dsi2.ImportResponse) (err error) {
 
 	if obj := req.GetObject(); obj != nil {
@@ -115,7 +103,6 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Obj
 }
 
 func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Relation) error {
-func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
 	req3 := convert.RelationToV3(req)
@@ -136,12 +123,9 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.R
 }
 
 func updateCounter(c *dsi2.ImportCounter, opCode dsi2.Opcode, err error) *dsi2.ImportCounter {
-func updateCounter(c *dsi2.ImportCounter, opCode dsi2.Opcode, err error) *dsi2.ImportCounter {
 	c.Recv++
 	if opCode == dsi2.Opcode_OPCODE_SET {
-	if opCode == dsi2.Opcode_OPCODE_SET {
 		c.Set++
-	} else if opCode == dsi2.Opcode_OPCODE_DELETE {
 	} else if opCode == dsi2.Opcode_OPCODE_DELETE {
 		c.Delete++
 	}
