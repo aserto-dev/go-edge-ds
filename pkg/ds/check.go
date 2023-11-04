@@ -10,6 +10,7 @@ import (
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
@@ -71,16 +72,25 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 }
 
 func (i *check) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*checker, error) {
-	relations := mc.ExpandPermission(
-		model.ObjectName(i.GetObjectType()),
-		model.PermissionName(i.GetRelation())) // NOTE changed to pass relation instead of permission.
+	var relations []model.RelationName
+	if mc.PermissionExists(model.ObjectName(i.GetObjectType()), model.PermissionName(i.GetRelation())) {
+		relations = mc.ExpandPermission(
+			model.ObjectName(i.GetObjectType()),
+			model.PermissionName(i.GetRelation()))
+	} else if mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
+		relations = mc.ExpandRelation(
+			model.ObjectName(i.GetObjectType()),
+			model.RelationName(i.GetRelation()))
+	} else {
+		return nil, derr.ErrRelationTypeNotFound.Msg(i.GetRelation())
+	}
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject())
 	if err != nil {
 		return nil, err
 	}
 
-	return &checker{
+	checker := &checker{
 		ctx:     ctx,
 		tx:      tx,
 		path:    path,
@@ -88,7 +98,10 @@ func (i *check) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *
 		userSet: userSet,
 		filter:  relations,
 		trace:   [][]*dsc3.Relation{},
-	}, nil
+		mc:      mc,
+	}
+
+	return checker, nil
 }
 
 type checker struct {
@@ -99,6 +112,7 @@ type checker struct {
 	userSet []*dsc3.ObjectIdentifier
 	filter  []model.RelationName
 	trace   [][]*dsc3.Relation
+	mc      *cache.Cache
 }
 
 func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
@@ -116,7 +130,7 @@ func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, model.RelationName(r.Relation)) { // NOTE removed magic "parent" for inheritance.
+		if lo.Contains(c.filter, model.RelationName(r.Relation)) {
 			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
