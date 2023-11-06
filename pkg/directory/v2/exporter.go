@@ -1,9 +1,10 @@
 package v2
 
 import (
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
+	"github.com/aserto-dev/go-directory/pkg/convert"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
@@ -128,15 +129,16 @@ func exportPermissions(store *bdb.BoltDB, stream dse2.Exporter_ExportServer) err
 }
 
 func exportObjects(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
-	iter, err := bdb.NewScanIterator[dsc2.Object](stream.Context(), tx, bdb.ObjectsPath)
+	iter, err := bdb.NewScanIterator[dsc3.Object](stream.Context(), tx, bdb.ObjectsPath)
 	if err != nil {
 		return err
 	}
 
 	for iter.Next() {
+		convert.ObjectToV2(iter.Value())
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_Object{
-				Object: iter.Value(),
+				Object: convert.ObjectToV2(iter.Value()),
 			},
 		}); err != nil {
 			return err
@@ -147,7 +149,7 @@ func exportObjects(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 }
 
 func exportRelations(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
-	iter, err := bdb.NewScanIterator[dsc2.Relation](stream.Context(), tx, bdb.RelationsObjPath)
+	iter, err := bdb.NewScanIterator[dsc3.Relation](stream.Context(), tx, bdb.RelationsObjPath)
 	if err != nil {
 		return err
 	}
@@ -155,7 +157,7 @@ func exportRelations(tx *bolt.Tx, stream dse2.Exporter_ExportServer) error {
 	for iter.Next() {
 		if err := stream.Send(&dse2.ExportResponse{
 			Msg: &dse2.ExportResponse_Relation{
-				Relation: iter.Value(),
+				Relation: convert.RelationToV2(iter.Value()),
 			},
 		}); err != nil {
 			return err
