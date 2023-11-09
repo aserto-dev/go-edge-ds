@@ -251,7 +251,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 		keyFilter = i.SubFilter()
 	}
 	if len(path) == 0 {
-		log.Warn().Msg("!!! no covering index path, full scan !!!")
+		log.Warn().Msg("no covering index path, default to scan of relation object path")
 		path = bdb.RelationsObjPath
 		keyFilter = ""
 	}

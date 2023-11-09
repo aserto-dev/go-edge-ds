@@ -5,6 +5,7 @@ import (
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -34,7 +35,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	resp := &dsw3.SetObjectResponse{}
 
 	if err := s.v.Validate(req); err != nil {
-		return resp, err
+		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	etag := ds.Object(req.Object).Hash()
@@ -69,7 +70,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	resp := &dsw3.DeleteObjectResponse{}
 
 	if err := s.v.Validate(req); err != nil {
-		return resp, err
+		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
@@ -129,7 +130,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 	resp := &dsw3.SetRelationResponse{}
 
 	if err := s.v.Validate(req); err != nil {
-		return resp, err
+		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	etag := ds.Relation(req.Relation).Hash()
@@ -169,7 +170,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	resp := &dsw3.DeleteRelationResponse{}
 
 	if err := s.v.Validate(req); err != nil {
-		return resp, err
+		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {

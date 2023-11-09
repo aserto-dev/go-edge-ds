@@ -56,7 +56,7 @@ var _ = dsm3.ModelServer(&Model{})
 
 func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetManifestServer) error {
 	if err := s.v.Validate(req); err != nil {
-		return err
+		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	hdr, ok := metadata.FromIncomingContext(stream.Context())
@@ -214,7 +214,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequest) (*dsm3.DeleteManifestResponse, error) {
 	resp := &dsm3.DeleteManifestResponse{}
 	if err := s.v.Validate(req); err != nil {
-		return resp, err
+		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	md := &dsm3.Metadata{}
