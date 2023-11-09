@@ -84,7 +84,7 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obj
 	}
 
 	if err := s.v.Validate(req); err != nil {
-		return derr.ErrInvalidObject.Msg(err.Error())
+		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	etag := ds.Object(req).Hash()
@@ -116,7 +116,7 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.R
 	}
 
 	if err := s.v.Validate(req); err != nil {
-		return derr.ErrInvalidRelation.Msg(err.Error())
+		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
 	etag := ds.Relation(req).Hash()
