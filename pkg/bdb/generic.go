@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 )

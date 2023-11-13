@@ -9,7 +9,7 @@ import (
 	"github.com/aserto-dev/azm/model"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 
 	"github.com/mitchellh/hashstructure/v2"
 )

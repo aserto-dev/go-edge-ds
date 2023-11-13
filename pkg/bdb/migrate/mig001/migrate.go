@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/metadata"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/timestamppb"

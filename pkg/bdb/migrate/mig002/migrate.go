@@ -6,10 +6,10 @@ import (
 	"os"
 
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 	"github.com/rs/zerolog"
 
 	"github.com/Masterminds/semver"
