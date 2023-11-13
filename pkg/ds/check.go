@@ -5,8 +5,8 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
@@ -156,10 +156,8 @@ func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 }
 
 func (c *checker) isMatch(relation *dsc3.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
-		return true
-	}
-	return false
+	return lo.Contains(c.filter, model.RelationName(relation.Relation)) &&
+		pb.Contains(c.userSet, Relation(relation).Subject())
 }
 
 func (c *checker) isCandidate(r *dsc3.Relation) bool {

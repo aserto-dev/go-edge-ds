@@ -7,8 +7,8 @@ import (
 	"github.com/aserto-dev/azm/model"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"

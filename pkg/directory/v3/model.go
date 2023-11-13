@@ -12,9 +12,9 @@ import (
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
+	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/aserto-dev/go-edge-ds/pkg/pb"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
