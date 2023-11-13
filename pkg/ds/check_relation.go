@@ -87,6 +87,7 @@ func (i *checkRelation) newChecker(ctx context.Context, tx *bolt.Tx, path []stri
 		userSet: userSet,
 		filter:  relations,
 		trace:   [][]*dsc3.Relation{},
+		visited: map[ot]bool{},
 	}, nil
 }
 
@@ -98,6 +99,7 @@ type relationChecker struct {
 	userSet []*dsc3.ObjectIdentifier
 	filter  []model.RelationName
 	trace   [][]*dsc3.Relation
+	visited map[ot]bool
 }
 
 func (c *relationChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
@@ -115,7 +117,7 @@ func (c *relationChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, model.RelationName(r.Relation)) {
+		if c.isCandidate(r) {
 			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
@@ -135,4 +137,8 @@ func (c *relationChecker) isMatch(relation *dsc3.Relation) bool {
 		return true
 	}
 	return false
+}
+
+func (c *relationChecker) isCandidate(r *dsc3.Relation) bool {
+	return lo.Contains(c.filter, model.RelationName(r.Relation)) && !c.visited[ot{r.SubjectType, r.SubjectId}]
 }

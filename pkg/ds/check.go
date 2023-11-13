@@ -99,9 +99,16 @@ func (i *check) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *
 		filter:  relations,
 		trace:   [][]*dsc3.Relation{},
 		mc:      mc,
+		visited: map[ot]bool{},
 	}
 
 	return checker, nil
+}
+
+// value type to be used as a key in a map.
+type ot struct {
+	ObjectType string
+	ObjectID   string
 }
 
 type checker struct {
@@ -113,6 +120,7 @@ type checker struct {
 	filter  []model.RelationName
 	trace   [][]*dsc3.Relation
 	mc      *cache.Cache
+	visited map[ot]bool
 }
 
 func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
@@ -123,6 +131,8 @@ func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 		return false, err
 	}
 
+	c.visited[ot{ObjectType: root.ObjectType, ObjectID: root.ObjectId}] = true
+
 	for _, r := range relations {
 		if c.isMatch(r) {
 			return true, nil
@@ -130,7 +140,7 @@ func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, model.RelationName(r.Relation)) {
+		if c.isCandidate(r) {
 			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
@@ -150,4 +160,9 @@ func (c *checker) isMatch(relation *dsc3.Relation) bool {
 		return true
 	}
 	return false
+}
+
+func (c *checker) isCandidate(r *dsc3.Relation) bool {
+	return lo.Contains(c.filter, model.RelationName(r.Relation)) &&
+		!c.visited[ot{ObjectType: r.SubjectType, ObjectID: r.SubjectId}]
 }

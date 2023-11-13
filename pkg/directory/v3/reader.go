@@ -303,7 +303,7 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 	return resp, err
 }
 
-// CheckRelation, check if subject is permitted to access resource (object).
+// CheckRelation, check if subject has the specified relation to a resource (object).
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
 	resp := &dsr3.CheckRelationResponse{}
 

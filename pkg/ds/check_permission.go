@@ -87,6 +87,7 @@ func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []st
 		userSet: userSet,
 		filter:  relations,
 		trace:   [][]*dsc3.Relation{},
+		visited: map[ot]bool{},
 	}, nil
 }
 
@@ -98,6 +99,7 @@ type permissionChecker struct {
 	userSet []*dsc3.ObjectIdentifier
 	filter  []model.RelationName
 	trace   [][]*dsc3.Relation
+	visited map[ot]bool
 }
 
 func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
@@ -108,6 +110,8 @@ func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 		return false, err
 	}
 
+	c.visited[ot{root.ObjectType, root.ObjectId}] = true
+
 	for _, r := range relations {
 		if c.isMatch(r) {
 			return true, nil
@@ -115,7 +119,7 @@ func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 	}
 
 	for _, r := range relations {
-		if lo.Contains(c.filter, model.RelationName(r.Relation)) || r.Relation == "parent" {
+		if c.isCandidate(r) {
 			match, err := c.check(Relation(r).Subject())
 			if err != nil {
 				return false, err
@@ -135,4 +139,9 @@ func (c *permissionChecker) isMatch(relation *dsc3.Relation) bool {
 		return true
 	}
 	return false
+}
+
+func (c *permissionChecker) isCandidate(r *dsc3.Relation) bool {
+	return (lo.Contains(c.filter, model.RelationName(r.Relation)) || r.Relation == "parent") &&
+		!c.visited[ot{r.SubjectType, r.SubjectId}]
 }
