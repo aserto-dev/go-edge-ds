@@ -143,7 +143,10 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 
 // GetRelation, get a single relation instance based on subject, relation, object filter.
 func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) (*dsr3.GetRelationResponse, error) {
-	resp := &dsr3.GetRelationResponse{Result: &dsc3.Relation{}, Objects: map[string]*dsc3.Object{}}
+	resp := &dsr3.GetRelationResponse{
+		Result:  &dsc3.Relation{},
+		Objects: map[string]*dsc3.Object{},
+	}
 
 	if err := s.v.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
@@ -176,13 +179,13 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 
 			sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
 			if err != nil {
-				return err
+				sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
 			}
 			objects[ds.Object(sub).Key()] = sub
 
 			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
 			if err != nil {
-				return err
+				obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
 			}
 			objects[ds.Object(obj).Key()] = obj
 
@@ -197,7 +200,11 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 
 // GetRelations, gets paginated set of relation instances based on subject, relation, object filter.
 func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest) (*dsr3.GetRelationsResponse, error) {
-	resp := &dsr3.GetRelationsResponse{Results: []*dsc3.Relation{}, Page: &dsc3.PaginationResponse{}}
+	resp := &dsr3.GetRelationsResponse{
+		Results: []*dsc3.Relation{},
+		Objects: map[string]*dsc3.Object{},
+		Page:    &dsc3.PaginationResponse{},
+	}
 
 	if err := s.v.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
@@ -232,6 +239,28 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				}
 				break
 			}
+		}
+
+		if req.GetWithObjects() {
+			objects := map[string]*dsc3.Object{}
+
+			for _, r := range resp.Results {
+				rel := ds.Relation(r)
+
+				sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
+				if err != nil {
+					sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
+				}
+				objects[ds.Object(sub).Key()] = sub
+
+				obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
+				if err != nil {
+					obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
+				}
+				objects[ds.Object(obj).Key()] = obj
+			}
+
+			resp.Objects = objects
 		}
 
 		return nil
