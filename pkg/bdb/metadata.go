@@ -31,6 +31,11 @@ func UpdateMetadata[T any, M MessageM[T]](ctx context.Context, tx *bolt.Tx, path
 		if err := SetFieldProperty(msg, "CreatedAt", ts); err != nil {
 			return nil, err
 		}
+		// if new instance set Etag to empty string.
+		if err := SetFieldProperty(msg, "Etag", ""); err != nil {
+			return nil, err
+		}
+
 	case err != nil:
 		return nil, err
 	default:

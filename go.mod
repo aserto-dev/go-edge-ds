@@ -7,10 +7,10 @@ go 1.20
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.15
+	github.com/aserto-dev/azm v0.0.16
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.30.4
-	github.com/bufbuild/protovalidate-go v0.4.0
+	github.com/bufbuild/protovalidate-go v0.4.1
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.4.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
@@ -27,9 +27,9 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231030212536-12f9cba37c9d.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231106192134-1baebb0a1518.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr/v4 v4.0.0-20230512164433-5d1fd1a340c9 // indirect
+	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
@@ -38,7 +38,7 @@ require (
 	github.com/gonvenience/term v1.0.2 // indirect
 	github.com/gonvenience/text v1.0.7 // indirect
 	github.com/gonvenience/wrap v1.1.2 // indirect
-	github.com/google/cel-go v0.18.1 // indirect
+	github.com/google/cel-go v0.18.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
