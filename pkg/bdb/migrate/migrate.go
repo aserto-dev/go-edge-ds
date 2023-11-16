@@ -10,7 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig003"
-	"github.com/pkg/errors"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/Masterminds/semver"
 	"github.com/rs/zerolog"
@@ -39,13 +39,11 @@ var (
 // higher  returns false, error
 // errors: returns false, error.
 func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *semver.Version) (bool, error) {
-	if exist, err := fileExists(config.DBPath); err == nil && !exist {
+	if !fs.FileExists(config.DBPath) {
 		if err := create(config, logger, reqVersion); err != nil {
 			return false, err
 		}
 		return true, nil
-	} else if err != nil {
-		return false, err
 	}
 
 	boltdb, err := bdb.New(config, logger)
@@ -217,14 +215,4 @@ func execute(logger *zerolog.Logger, roDB, rwDB *bolt.DB, newVersion *semver.Ver
 		return fnMigrate(logger, roDB, rwDB)
 	}
 	return os.ErrNotExist
-}
-
-func fileExists(path string) (bool, error) {
-	if _, err := os.Stat(path); err == nil {
-		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
-	} else {
-		return false, errors.Wrapf(err, "failed to stat file '%s'", path)
-	}
 }

@@ -2,13 +2,13 @@ package bdb
 
 import (
 	"net/http"
-	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
 	cerr "github.com/aserto-dev/errors"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -59,13 +59,9 @@ func (s *BoltDB) Open() error {
 	}
 
 	dbDir := filepath.Dir(s.config.DBPath)
-	exists, err := filePathExists(dbDir)
-	if err != nil {
-		return errors.Wrap(err, "failed to determine if store path/file exists")
-	}
-	if !exists {
-		if err = os.MkdirAll(dbDir, 0700); err != nil {
-			return errors.Wrapf(err, "failed to create directory '%s'", dbDir)
+	if !fs.DirExists(dbDir) {
+		if err := fs.EnsureDirPath(dbDir); err != nil {
+			return err
 		}
 	}
 
@@ -88,17 +84,6 @@ func (s *BoltDB) Close() {
 		s.logger.Info().Str("db_path", s.config.DBPath).Msg("close")
 		s.db.Close()
 		s.db = nil
-	}
-}
-
-// filePathExists, internal helper function to detect if the file path exists.
-func filePathExists(path string) (bool, error) {
-	if _, err := os.Stat(path); err == nil {
-		return true, nil
-	} else if os.IsNotExist(err) {
-		return false, nil
-	} else {
-		return false, errors.Wrapf(err, "failed to stat file [%s]", path)
 	}
 }
 
