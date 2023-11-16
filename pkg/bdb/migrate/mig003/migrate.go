@@ -85,9 +85,6 @@ func createModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 		ctx := context.Background()
 
 		manifestBuf := new(bytes.Buffer)
-		if _, err := manifestBuf.WriteString(emptyManifest); err != nil {
-			return err
-		}
 
 		model, err := v3.Load(bytes.NewReader(manifestBuf.Bytes()))
 		if err != nil {
@@ -111,18 +108,6 @@ func createModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 			return err
 		}
 
-		fileName := manifestFilename(rwDB.Path(), "manifest.yaml")
-		w, err := os.Create(fileName)
-		if err != nil {
-			return err
-		}
-		defer w.Close()
-
-		if _, err := manifestBuf.WriteTo(w); err != nil {
-			return err
-		}
-
-		log.Info().Str("version", Version).Msgf("write base manifest: %s", fileName)
 		return nil
 	}
 }
