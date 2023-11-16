@@ -152,7 +152,7 @@ func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) er
 		rwDB = nil
 	}()
 
-	// create flow is signalled by roDB == nil.
+	// create flow is signaled by roDB == nil.
 	if err := execute(log, nil, rwDB, version); err != nil {
 		return err
 	}
