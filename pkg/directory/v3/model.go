@@ -12,17 +12,19 @@ import (
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
+	mnfst "github.com/aserto-dev/go-directory/pkg/manifest"
 	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/go-http-utils/headers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
+	"github.com/samber/lo"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -59,16 +61,6 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	hdr, ok := metadata.FromIncomingContext(stream.Context())
-	if !ok {
-		return status.Errorf(codes.DataLoss, "failed to get metadata")
-	}
-	amr, ok := hdr["aserto-model-request"]
-	getModel := false
-	if ok && amr[0] == "model-only" {
-		getModel = true
-	}
-
 	md := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
@@ -90,52 +82,58 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 			return err
 		}
 
-		body := &dsm3.Body{}
+		inMD, _ := metadata.FromIncomingContext(stream.Context())
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), md.Etag) {
+			return nil
+		}
 
-		for curByte := 0; curByte < len(manifest.Body.Data); curByte += model.MaxChunkSizeBytes {
-			if curByte+model.MaxChunkSizeBytes > len(manifest.Body.Data) {
-				body.Data = manifest.Body.Data[curByte:len(manifest.Body.Data)]
-			} else {
-				body.Data = manifest.Body.Data[curByte : curByte+model.MaxChunkSizeBytes]
+		amr := mnfst.IncomingManifestRequest(stream.Context())
+		if amr.WithBody() {
+			body := &dsm3.Body{}
+
+			for curByte := 0; curByte < len(manifest.Body.Data); curByte += model.MaxChunkSizeBytes {
+				if curByte+model.MaxChunkSizeBytes > len(manifest.Body.Data) {
+					body.Data = manifest.Body.Data[curByte:len(manifest.Body.Data)]
+				} else {
+					body.Data = manifest.Body.Data[curByte : curByte+model.MaxChunkSizeBytes]
+				}
+
+				if err := stream.Send(&dsm3.GetManifestResponse{
+					Msg: &dsm3.GetManifestResponse_Body{
+						Body: body,
+					},
+				}); err != nil {
+					return err
+				}
+			}
+		}
+
+		if amr.WithModel() {
+			model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
+			switch {
+			case bdb.ErrIsNotFound(err):
+				return derr.ErrNotFound.Msg("model")
+			case err != nil:
+				return errors.Errorf("failed to get model")
+			}
+
+			m := pb.NewStruct()
+			r, err := model.Reader()
+			if err != nil {
+				return err
+			}
+
+			if err := pb.BufToProto(r, m); err != nil {
+				return err
 			}
 
 			if err := stream.Send(&dsm3.GetManifestResponse{
-				Msg: &dsm3.GetManifestResponse_Body{
-					Body: body,
+				Msg: &dsm3.GetManifestResponse_Model{
+					Model: m,
 				},
 			}); err != nil {
 				return err
 			}
-		}
-
-		if !getModel {
-			return nil
-		}
-
-		model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
-		switch {
-		case bdb.ErrIsNotFound(err):
-			return derr.ErrNotFound.Msg("model")
-		case err != nil:
-			return errors.Errorf("failed to get model")
-		}
-
-		m := pb.NewStruct()
-		r, err := model.Reader()
-		if err != nil {
-			return err
-		}
-
-		if err := pb.BufToProto(r, m); err != nil {
-			return err
-		}
-
-		if err := stream.Send(&dsm3.GetManifestResponse{
-			Msg: &dsm3.GetManifestResponse_Model{
-				Model: m,
-			},
-		}); err != nil {
-			return err
 		}
 
 		return nil
@@ -147,6 +145,11 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	logger := s.logger.With().Str("method", "SetManifest").Logger()
 	logger.Trace().Send()
+
+	etag := metautils.ExtractIncoming(stream.Context()).Get(headers.IfMatch)
+	if etag != "" && etag != s.store.MC().Metadata().ETag {
+		return derr.ErrHashMismatch
+	}
 
 	h := fnv.New64a()
 	h.Reset()
