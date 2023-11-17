@@ -3,8 +3,10 @@ package mig003
 import (
 	"bytes"
 	"context"
+	"hash/fnv"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/aserto-dev/azm/migrate"
 	v3 "github.com/aserto-dev/azm/v3"
@@ -91,8 +93,13 @@ func createModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 			return err
 		}
 
+		h := fnv.New64a()
+		h.Reset()
+		_, _ = h.Write(manifestBuf.Bytes())
+
 		md := &dsm3.Metadata{
 			UpdatedAt: timestamppb.Now(),
+			Etag:      strconv.FormatUint(h.Sum64(), 10),
 		}
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
 			if err := ds.Manifest(md).Set(ctx, tx, manifestBuf); err != nil {
