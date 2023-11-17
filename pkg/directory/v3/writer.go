@@ -87,8 +87,8 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 					return err
 				}
 
-				rel := ds.Relation(iter.Value())
 				for iter.Next() {
+					rel := ds.Relation(iter.Value())
 					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 						return err
 					}
@@ -105,8 +105,9 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 					return err
 				}
 
-				rel := ds.Relation(iter.Value())
 				for iter.Next() {
+					rel := ds.Relation(iter.Value())
+
 					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 						return err
 					}
