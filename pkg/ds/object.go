@@ -55,7 +55,7 @@ func (i *object) Validate(mc *cache.Cache) (bool, error) {
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
-		return false, derr.ErrObjectNotFound.Msg(i.Object.Type)
+		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
 	}
 
 	return true, nil
