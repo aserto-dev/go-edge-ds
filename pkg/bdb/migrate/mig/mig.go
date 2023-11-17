@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 	"github.com/rs/zerolog"
 
 	"github.com/Masterminds/semver"
@@ -197,6 +198,13 @@ func Backup(db *bolt.DB, version *semver.Version) error {
 }
 
 func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
+	dbDir := filepath.Dir(cfg.DBPath)
+	if !fs.DirExists(dbDir) {
+		if err := fs.EnsureDirPath(dbDir); err != nil {
+			return nil, err
+		}
+	}
+
 	db, err := bolt.Open(cfg.DBPath, 0644, &bolt.Options{
 		Timeout: cfg.RequestTimeout,
 	})

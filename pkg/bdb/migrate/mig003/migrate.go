@@ -3,8 +3,10 @@ package mig003
 import (
 	"bytes"
 	"context"
+	"hash/fnv"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/aserto-dev/azm/migrate"
 	v3 "github.com/aserto-dev/azm/v3"
@@ -39,7 +41,10 @@ const (
 )
 
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
+	mig.CreateBucket(bdb.SystemPath),
+
 	mig.CreateBucket(bdb.ManifestPath),
+	createModel(),
 	migrateModel(),
 
 	mig.DeleteBucket(bdb.ObjectTypesPath),
@@ -70,6 +75,50 @@ func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	return nil
 }
 
+func createModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
+	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		// skip when roDB is set.
+		if roDB != nil {
+			log.Debug().Msg("SKIP CreateModel")
+			return nil
+		}
+
+		log.Info().Str("version", Version).Msg("CreateModel")
+		ctx := context.Background()
+
+		manifestBuf := new(bytes.Buffer)
+
+		model, err := v3.Load(bytes.NewReader(manifestBuf.Bytes()))
+		if err != nil {
+			return err
+		}
+
+		h := fnv.New64a()
+		h.Reset()
+		_, _ = h.Write(manifestBuf.Bytes())
+
+		md := &dsm3.Metadata{
+			UpdatedAt: timestamppb.Now(),
+			Etag:      strconv.FormatUint(h.Sum64(), 10),
+		}
+		if err := rwDB.Update(func(tx *bolt.Tx) error {
+			if err := ds.Manifest(md).Set(ctx, tx, manifestBuf); err != nil {
+				return errors.Errorf("failed to set manifest")
+			}
+
+			if err := ds.Manifest(md).SetModel(ctx, tx, model); err != nil {
+				return errors.Errorf("failed to set model")
+			}
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
 // migrateModel,
 // 1) creates a manifest file from the metadata objects in the db
 // 2) computes the in-memory model
@@ -77,6 +126,11 @@ func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 // 3) persists the serialized model in the store.
 func migrateModel() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		// skip when roDB is nil.
+		if roDB == nil {
+			log.Debug().Msg("SKIP MigrateModel")
+			return nil
+		}
 
 		log.Info().Str("version", Version).Msg("MigrateModel")
 		ctx := context.Background()
@@ -178,6 +232,12 @@ func getMetadata(ctx context.Context, roDB *bolt.DB) (*migrate.Metadata, error) 
 // updateObjects, read values from read-only backup, write to new bucket.
 func updateObjects(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		// skip when roDB is nil.
+		if roDB == nil {
+			log.Debug().Msg("SKIP UpdateObjects")
+			return nil
+		}
+
 		log.Info().Str("version", Version).Msg("UpdateObjects")
 
 		if err := roDB.View(func(rtx *bolt.Tx) error {
@@ -228,6 +288,12 @@ func updateObjects(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) erro
 // updateRelations, read values from read-only backup, write to new bucket.
 func updateRelations(path bdb.Path, d ds.Direction) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+		// skip when roDB is nil.
+		if roDB == nil {
+			log.Debug().Msg("SKIP UpdateRelations")
+			return nil
+		}
+
 		log.Info().Str("version", Version).Msg("UpdateRelations")
 
 		if err := roDB.View(func(rtx *bolt.Tx) error {

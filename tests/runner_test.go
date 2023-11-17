@@ -36,7 +36,12 @@ func TestMain(m *testing.M) {
 	ctx := context.Background()
 	logger := zerolog.New(io.Discard)
 
-	dbPath := path.Join(os.TempDir(), "edge-ds", "test-eds.db")
+	dirPath := os.TempDir()
+	if err := os.MkdirAll(dirPath, 0700); err != nil {
+		panic(err)
+	}
+
+	dbPath := path.Join(dirPath, "edge-ds", "test-eds.db")
 	os.Remove(dbPath)
 	fmt.Println(dbPath)
 

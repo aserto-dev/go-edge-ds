@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig003"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/Masterminds/semver"
 	"github.com/rs/zerolog"
@@ -38,10 +39,18 @@ var (
 // higher  returns false, error
 // errors: returns false, error.
 func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *semver.Version) (bool, error) {
+	if !fs.FileExists(config.DBPath) {
+		if err := create(config, logger, reqVersion); err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+
 	boltdb, err := bdb.New(config, logger)
 	if err != nil {
 		return false, err
 	}
+
 	if err := boltdb.Open(); err != nil {
 		return false, err
 	}
@@ -51,6 +60,7 @@ func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *
 	if err != nil {
 		return false, err
 	}
+
 	logger.Info().Str("current", curVersion.String()).Msg("schema_version")
 
 	switch {
@@ -125,6 +135,35 @@ func getCurrent(config *bdb.Config, logger *zerolog.Logger) (*semver.Version, er
 	defer boltdb.Close()
 
 	return mig.GetVersion(boltdb.DB())
+}
+
+func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) error {
+	rwDB, err := mig.OpenDB(config)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
+		if err := rwDB.Close(); err != nil {
+			log.Error().Err(err).Msg("close rwDB")
+		}
+		rwDB = nil
+	}()
+
+	// create flow is signaled by roDB == nil.
+	if err := execute(log, nil, rwDB, version); err != nil {
+		return err
+	}
+
+	if err := mig.SetVersion(rwDB, version); err != nil {
+		return err
+	}
+
+	if err := rwDB.Sync(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *semver.Version) error {

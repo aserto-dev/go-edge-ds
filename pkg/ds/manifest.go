@@ -84,6 +84,12 @@ func (m *manifest) Set(ctx context.Context, tx *bolt.Tx, buf *bytes.Buffer) erro
 // SetModel, persists the model cache in the _manifest bucket
 // _metadata/{name}/{version}/model.
 func (m *manifest) SetModel(ctx context.Context, tx *bolt.Tx, mod *model.Model) error {
+	if mod.Metadata == nil {
+		mod.Metadata = &model.Metadata{}
+	}
+	mod.Metadata.ETag = m.Metadata.Etag
+	mod.Metadata.UpdatedAt = m.Metadata.UpdatedAt.AsTime()
+
 	if _, err := bdb.SetAny[model.Model](ctx, tx, bdb.ManifestPath, bdb.ModelKey, mod); err != nil {
 		return err
 	}
