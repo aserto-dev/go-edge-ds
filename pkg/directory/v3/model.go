@@ -83,7 +83,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		}
 
 		inMD, _ := metadata.FromIncomingContext(stream.Context())
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), md.Etag) {
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.Etag) {
 			return nil
 		}
 
