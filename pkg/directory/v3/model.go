@@ -7,7 +7,6 @@ import (
 	"io"
 	"strconv"
 
-	mod "github.com/aserto-dev/azm/model"
 	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
@@ -220,19 +219,38 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	md := &dsm3.Metadata{}
+	h := fnv.New64a()
+	h.Reset()
+
+	data := bytes.NewBuffer([]byte{})
+	_, _ = h.Write(data.Bytes())
+
+	md := &dsm3.Metadata{
+		UpdatedAt: timestamppb.Now(),
+		Etag:      strconv.FormatUint(h.Sum64(), 10),
+	}
+
+	m, err := manifest.Load(bytes.NewReader(data.Bytes()))
+	if err != nil {
+		return resp, derr.ErrInvalidArgument.Msg(err.Error())
+	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		if err := ds.Manifest(md).Delete(ctx, tx); err != nil {
+		if err := ds.Manifest(&dsm3.Metadata{}).Delete(ctx, tx); err != nil {
 			return derr.ErrUnknown.Msgf("failed to delete manifest: %s", err.Error())
 		}
+
+		if err := ds.Manifest(md).Set(ctx, tx, data); err != nil {
+			return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
+		}
+
+		if err := ds.Manifest(md).SetModel(ctx, tx, m); err != nil {
+			return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
+		}
+
 		return nil
 	}); err != nil {
 		return resp, err
-	}
-
-	if err := s.store.MC().UpdateModel(&mod.Model{}); err != nil {
-		return resp, derr.ErrUnknown.Msgf("failed to update model: %s", err.Error())
 	}
 
 	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, nil
