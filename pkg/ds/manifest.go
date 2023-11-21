@@ -97,14 +97,38 @@ func (m *manifest) SetModel(ctx context.Context, tx *bolt.Tx, mod *model.Model) 
 	return nil
 }
 
-// Delete, removes the manifest from the _manifest bucket using key=name:version,
-// if not version is provided, version will be set to latest.
+// !!! NOTE: delete manifest is a destructive operation !!!
+//
+// Delete:
+// sets the manifest to an empty manifest,
+// updates the model accordingly,
+// deletes and recreates the objects and relations buckets.
 func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
-	if ok, _ := bdb.BucketExists(tx, bdb.ManifestPath); !ok {
-		return nil
+	if err := bdb.DeleteBucket(tx, bdb.ManifestPath); err != nil {
+		return err
+	}
+	if _, err := bdb.CreateBucket(tx, bdb.ManifestPath); err != nil {
+		return err
 	}
 
-	if err := bdb.DeleteBucket(tx, bdb.ManifestPath); err != nil {
+	if err := bdb.DeleteBucket(tx, bdb.ObjectsPath); err != nil {
+		return err
+	}
+	if _, err := bdb.CreateBucket(tx, bdb.ObjectsPath); err != nil {
+		return err
+	}
+
+	if err := bdb.DeleteBucket(tx, bdb.RelationsObjPath); err != nil {
+		return err
+	}
+	if _, err := bdb.CreateBucket(tx, bdb.RelationsObjPath); err != nil {
+		return err
+	}
+
+	if err := bdb.DeleteBucket(tx, bdb.RelationsSubPath); err != nil {
+		return err
+	}
+	if _, err := bdb.CreateBucket(tx, bdb.RelationsSubPath); err != nil {
 		return err
 	}
 
