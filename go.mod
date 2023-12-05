@@ -10,7 +10,7 @@ require (
 	github.com/aserto-dev/azm v0.0.17
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.30.5
-	github.com/bufbuild/protovalidate-go v0.4.1
+	github.com/bufbuild/protovalidate-go v0.4.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.4.0
@@ -20,7 +20,7 @@ require (
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.31.0
-	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.8
 	google.golang.org/grpc v1.59.0
@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231106192134-1baebb0a1518.2 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.31.0-20231115204500-e097f827e652.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
