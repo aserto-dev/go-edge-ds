@@ -1,14 +1,13 @@
 package v3
 
 import (
-	"fmt"
+	"encoding/json"
+	"sync/atomic"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
@@ -91,7 +90,7 @@ func exportRelations(tx *bolt.Tx, stream dse3.Exporter_ExportServer) error {
 }
 
 func exportStats(tx *bolt.Tx, stream dse3.Exporter_ExportServer, opts uint32) error {
-	stats := pb.NewStruct()
+	stats := &Stats{ObjectTypes: ObjectTypes{}}
 
 	// object stats.
 	if opts&uint32(dse3.Option_OPTION_DATA_OBJECTS) != 0 {
@@ -101,25 +100,8 @@ func exportStats(tx *bolt.Tx, stream dse3.Exporter_ExportServer, opts uint32) er
 		}
 
 		for iter.Next() {
-			objectType := iter.Value().Type
-
-			f, ok := stats.Fields[objectType]
-			if !ok {
-				sv, err := structpb.NewValue(map[string]interface{}{})
-				if err != nil {
-					return err
-				}
-				sv.Fields["_obj_count"], err = structpb.NewValue(uint32(0))
-				structpb.NewStructValue()
-				stats.Fields[objectType], err = structpb.NewValue(uint32(0))
-			}
-
-			// if _, ok := stats[objectType]; !ok {
-			// 	stats[objectType] = 0
-			// }
-			// counter := stats[objectType].(int)
-			// counter++
-			// stats[objectType] = counter
+			obj := iter.Value()
+			stats.CountObject(obj)
 		}
 	}
 
@@ -131,35 +113,118 @@ func exportStats(tx *bolt.Tx, stream dse3.Exporter_ExportServer, opts uint32) er
 		}
 
 		for iter.Next() {
-			objectType := iter.Value().ObjectType
-			// if _, ok := stats[objectType]; !ok {
-			// 	stats[objectType] = 0
-			// }
-
-			// counter := stats[objectType].(int)
-			// counter++
-			// stats[objectType] = counter
-
-			// relation := iter.Value().Relation
-			// if _, ok := stats[objectType][relation]; !ok {
-			// 	stats[objectType] = 0
-			// }
-
+			rel := iter.Value()
+			stats.CountRelation(rel)
 		}
 	}
 
-	s, err := structpb.NewStruct(stats)
+	buf, err := json.Marshal(stats)
 	if err != nil {
 		return err
 	}
 
-	if err := stream.Send(&dse3.ExportResponse{Msg: &dse3.ExportResponse_Stats{Stats: s}}); err != nil {
+	resp := pb.NewStruct()
+	if err := resp.UnmarshalJSON(buf); err != nil {
+		return err
+	}
+
+	if err := stream.Send(&dse3.ExportResponse{Msg: &dse3.ExportResponse_Stats{Stats: resp}}); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func zStr(r *dsc3.Relation) string {
-	return fmt.Sprintf("%s#%s@%s%s", r.ObjectType, r.Relation, r.SubjectType, ds.Iff(r.SubjectRelation != "", fmt.Sprintf("#%s", r.SubjectRelation), ""))
+type ObjType string
+type Relation string
+type SubType string
+type SubRel string
+
+type Stats struct {
+	ObjectTypes ObjectTypes `json:"object_types,omitempty"`
+}
+
+type ObjectTypes map[ObjType]struct {
+	ObjCount  int32     `json:"_obj_count,omitempty"`
+	Count     int32     `json:"_count,omitempty"`
+	Relations Relations `json:"relations,omitempty"`
+}
+
+type Relations map[Relation]struct {
+	Count        int32        `json:"_count,omitempty"`
+	SubjectTypes SubjectTypes `json:"subject_types,omitempty"`
+}
+
+type SubjectTypes map[SubType]struct {
+	Count            int32            `json:"_count,omitempty"`
+	SubjectRelations SubjectRelations `json:"subject_relations,omitempty"`
+}
+
+type SubjectRelations map[SubRel]struct {
+	Count int32 `json:"_count,omitempty"`
+}
+
+func (s *Stats) CountObject(obj *dsc3.Object) {
+	ot, ok := s.ObjectTypes[ObjType(obj.Type)]
+	if !ok {
+		atomic.StoreInt32(&ot.ObjCount, 0)
+		if ot.Relations == nil {
+			ot.Relations = Relations{}
+		}
+	}
+
+	atomic.AddInt32(&ot.ObjCount, 1)
+
+	s.ObjectTypes[ObjType(obj.Type)] = ot
+}
+
+func (s *Stats) CountRelation(rel *dsc3.Relation) {
+	objType := ObjType(rel.ObjectType)
+	relation := Relation(rel.Relation)
+	subType := SubType(rel.SubjectType)
+	subRel := SubRel(rel.SubjectRelation)
+
+	// object_types
+	ot, ok := s.ObjectTypes[objType]
+	if !ok {
+		atomic.StoreInt32(&ot.Count, 0)
+	}
+
+	if ot.Relations == nil {
+		ot.Relations = Relations{}
+	}
+
+	atomic.AddInt32(&ot.Count, 1)
+	s.ObjectTypes[objType] = ot
+
+	// relations
+	re, ok := ot.Relations[relation]
+	if !ok {
+		atomic.StoreInt32(&re.Count, 0)
+		re.SubjectTypes = SubjectTypes{}
+	}
+
+	atomic.AddInt32(&re.Count, 1)
+	ot.Relations[relation] = re
+
+	// subject_types
+	st, ok := re.SubjectTypes[subType]
+	if !ok {
+		atomic.StoreInt32(&st.Count, 0)
+		st.SubjectRelations = SubjectRelations{}
+	}
+
+	atomic.AddInt32(&st.Count, 1)
+	re.SubjectTypes[subType] = st
+
+	// subject_relations
+	if subRel != "" {
+		sr, ok := st.SubjectRelations[subRel]
+		if !ok {
+			atomic.StoreInt32(&sr.Count, 0)
+		}
+
+		atomic.AddInt32(&sr.Count, 1)
+		st.SubjectRelations[subRel] = sr
+	}
 }
