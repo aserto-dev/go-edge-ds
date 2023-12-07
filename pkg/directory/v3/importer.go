@@ -65,18 +65,34 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 
 func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
 
-	if obj := req.GetObject(); obj != nil {
-		err = s.objectHandler(ctx, tx, obj)
-		res.Object = updateCounter(res.Object, req.OpCode, err)
-	} else if rel := req.GetRelation(); rel != nil {
-		err = s.relationHandler(ctx, tx, rel)
-		res.Relation = updateCounter(res.Relation, req.OpCode, err)
+	switch m := req.Msg.(type) {
+	case *dsi3.ImportRequest_Object:
+		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+			err = s.objectSetHandler(ctx, tx, m.Object)
+			res.Object = updateCounter(res.Object, req.OpCode, err)
+		}
+
+		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+			err = s.objectDeleteHandler(ctx, tx, m.Object)
+			res.Object = updateCounter(res.Object, req.OpCode, err)
+		}
+
+	case *dsi3.ImportRequest_Relation:
+		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+			err = s.relationSetHandler(ctx, tx, m.Relation)
+			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+		}
+
+		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+			err = s.relationDeleteHandler(ctx, tx, m.Relation)
+			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+		}
 	}
 
 	return err
 }
 
-func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
+func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("ImportObject")
 
 	if req == nil {
@@ -108,7 +124,25 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obj
 	return nil
 }
 
-func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
+func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
+	s.logger.Debug().Interface("object", req).Msg("ImportObject")
+
+	if req == nil {
+		return derr.ErrInvalidObject.Msg("nil")
+	}
+
+	if err := s.v.Validate(req); err != nil {
+		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key()); err != nil {
+		return derr.ErrInvalidObject.Msg("delete")
+	}
+
+	return nil
+}
+
+func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("ImportRelation")
 
 	if req == nil {
@@ -139,6 +173,28 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.R
 
 	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
+	}
+
+	return nil
+}
+
+func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
+	s.logger.Debug().Interface("relation", req).Msg("ImportRelation")
+
+	if req == nil {
+		return derr.ErrInvalidRelation.Msg("nil")
+	}
+
+	if err := s.v.Validate(req); err != nil {
+		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey()); err != nil {
+		return derr.ErrInvalidRelation.Msg("delete")
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey()); err != nil {
+		return derr.ErrInvalidRelation.Msg("delete")
 	}
 
 	return nil
