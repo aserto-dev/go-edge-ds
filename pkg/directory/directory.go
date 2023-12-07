@@ -165,3 +165,7 @@ func (s *Directory) Reader3() dsr3.ReaderServer {
 func (s *Directory) Writer3() dsw3.WriterServer {
 	return s.writer3
 }
+
+func (s *Directory) Logger() *zerolog.Logger {
+	return s.logger
+}
