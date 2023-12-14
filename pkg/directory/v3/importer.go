@@ -24,7 +24,11 @@ type Importer struct {
 }
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
-	v, _ := protovalidate.New()
+	v, err := protovalidate.New()
+	if err != nil {
+		panic(err)
+	}
+
 	return &Importer{
 		logger: logger,
 		store:  store,
@@ -45,21 +49,29 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 
 	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 		for {
+			select {
+			case <-ctx.Done(): // exit if context is done
+				return nil
+			default:
+			}
+
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Debug().Interface("res", res).Msg("import stream EOF")
+				s.logger.Trace().Interface("res", res).Msg("import stream EOF")
 				return stream.Send(res)
-			} else if err != nil {
-				s.logger.Err(err).Msg("cannot receive req")
-				return stream.Send(res)
+			}
+
+			if err != nil {
+				s.logger.Trace().Str("err", err.Error()).Msg("cannot receive req")
+				continue
 			}
 
 			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
 				s.logger.Err(err).Msg("cannot handle load request")
-				return stream.Send(res)
 			}
 		}
 	})
+
 	return importErr
 }
 
@@ -91,6 +103,51 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 
 	return err
 }
+
+// func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
+
+// 	switch m := req.Msg.(type) {
+// 	case *dsi3.ImportRequest_Object:
+// 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+// 			err = s.objectSetHandler(ctx, tx, m.Object)
+// 			res.Object = updateCounter(res.Object, req.OpCode, err)
+// 			if err != nil {
+// 				s.logger.Error().Err(err).Msg("objectSetHandler")
+// 			}
+// 			return err
+// 		}
+
+// 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+// 			err = s.objectDeleteHandler(ctx, tx, m.Object)
+// 			res.Object = updateCounter(res.Object, req.OpCode, err)
+// 			if err != nil {
+// 				s.logger.Error().Err(err).Msg("objectDeleteHandler")
+// 			}
+// 			return err
+// 		}
+
+// 	case *dsi3.ImportRequest_Relation:
+// 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+// 			err = s.relationSetHandler(ctx, tx, m.Relation)
+// 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+// 			if err != nil {
+// 				s.logger.Error().Err(err).Msg("relationSetHandler")
+// 			}
+// 			return err
+// 		}
+
+// 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+// 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
+// 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+// 			if err != nil {
+// 				s.logger.Error().Err(err).Msg("relationDeleteHandler")
+// 			}
+// 			return err
+// 		}
+// 	}
+// 	panic("excepted path")
+// 	// return err
+// }
 
 func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("ImportObject")

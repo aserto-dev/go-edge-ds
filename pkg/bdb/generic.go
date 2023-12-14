@@ -1,12 +1,11 @@
 package bdb
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 
-	"github.com/aserto-dev/go-directory/pkg/pb"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -67,18 +66,23 @@ func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
 }
 
 func Marshal[T any, M Message[T]](t M) ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if err := pb.ProtoToBuf(buf, any(t).(proto.Message)); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+	return protojson.MarshalOptions{
+		Multiline:       false,
+		Indent:          "",
+		AllowPartial:    false,
+		UseProtoNames:   true,
+		UseEnumNumbers:  false,
+		EmitUnpopulated: false,
+	}.Marshal(any(t).(proto.Message))
 }
 
 func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
-	if err := pb.BufToProto(bytes.NewReader(b), any(&t).(proto.Message)); err != nil {
+
+	if err := (protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(b, any(&t).(proto.Message))); err != nil {
 		return nil, err
 	}
+
 	return &t, nil
 }
 
