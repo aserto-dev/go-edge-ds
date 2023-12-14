@@ -5,16 +5,20 @@ import (
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/model"
-	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	"github.com/aserto-dev/go-directory/pkg/derr"
 
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
 )
+
+// value type to be used as a key in a map.
+type ot struct {
+	ObjectType string
+	ObjectID   string
+}
 
 type check struct {
 	*dsr3.CheckRequest
@@ -59,108 +63,16 @@ func (i *check) Validate(mc *cache.Cache) (bool, error) {
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {
-	resp := &dsr3.CheckResponse{Check: false, Trace: []string{}}
-
-	check, err := i.newChecker(ctx, tx, bdb.RelationsObjPath, mc)
-	if err != nil {
-		return resp, err
-	}
-
-	match, err := check.check(i.Object())
-
-	return &dsr3.CheckResponse{Check: match}, err
-}
-
-func (i *check) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*checker, error) {
-	var relations []model.RelationName
-	if mc.PermissionExists(model.ObjectName(i.GetObjectType()), model.PermissionName(i.GetRelation())) {
-		relations = mc.ExpandPermission(
-			model.ObjectName(i.GetObjectType()),
-			model.PermissionName(i.GetRelation()))
-	} else if mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
-		relations = mc.ExpandRelation(
-			model.ObjectName(i.GetObjectType()),
-			model.RelationName(i.GetRelation()))
-	} else {
-		return nil, derr.ErrRelationTypeNotFound.Msg(i.GetRelation())
-	}
-
-	userSet, err := CreateUserSet(ctx, tx, i.Subject())
-	if err != nil {
-		return nil, err
-	}
-
-	checker := &checker{
-		ctx:     ctx,
-		tx:      tx,
-		path:    path,
-		anchor:  i,
-		userSet: userSet,
-		filter:  relations,
-		trace:   [][]*dsc3.Relation{},
-		mc:      mc,
-		visited: map[ot]bool{},
-	}
-
-	return checker, nil
-}
-
-// value type to be used as a key in a map.
-type ot struct {
-	ObjectType string
-	ObjectID   string
-}
-
-type checker struct {
-	ctx     context.Context
-	tx      *bolt.Tx
-	path    []string
-	anchor  *check
-	userSet []*dsc3.ObjectIdentifier
-	filter  []model.RelationName
-	trace   [][]*dsc3.Relation
-	mc      *cache.Cache
-	visited map[ot]bool
-}
-
-func (c *checker) check(root *dsc3.ObjectIdentifier) (bool, error) {
-	// relations associated to object instance.
-	filter := ObjectIdentifier(root).Key() + InstanceSeparator
-	relations, err := bdb.Scan[dsc3.Relation](c.ctx, c.tx, c.path, filter)
-	if err != nil {
-		return false, err
-	}
-
-	c.visited[ot{ObjectType: root.ObjectType, ObjectID: root.ObjectId}] = true
-
-	for _, r := range relations {
-		if c.isMatch(r) {
-			return true, nil
+	return mc.Check(i.CheckRequest, func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
+		path, keyFilter, valueFilter := Relation(r).Filter()
+		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, keyFilter)
+		if err != nil {
+			return nil, err
 		}
-	}
 
-	for _, r := range relations {
-		if c.isCandidate(r) {
-			match, err := c.check(Relation(r).Subject())
-			if err != nil {
-				return false, err
-			}
+		return lo.Filter(relations, func(r *dsc3.Relation, _ int) bool {
+			return valueFilter(r)
+		}), nil
 
-			if match {
-				return match, nil
-			}
-		}
-	}
-
-	return false, nil
-}
-
-func (c *checker) isMatch(relation *dsc3.Relation) bool {
-	return lo.Contains(c.filter, model.RelationName(relation.Relation)) &&
-		pb.Contains(c.userSet, Relation(relation).Subject())
-}
-
-func (c *checker) isCandidate(r *dsc3.Relation) bool {
-	return lo.Contains(c.filter, model.RelationName(r.Relation)) &&
-		!c.visited[ot{ObjectType: r.SubjectType, ObjectID: r.SubjectId}]
+	})
 }

@@ -3,11 +3,12 @@ module github.com/aserto-dev/go-edge-ds
 go 1.20
 
 // replace github.com/aserto-dev/azm => ../azm
+
 // replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.17
+	github.com/aserto-dev/azm v0.0.18-0.20231214203218-85ddcb27e9a0
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.30.6
 	github.com/bufbuild/protovalidate-go v0.4.3
@@ -32,6 +33,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/deckarep/golang-set/v2 v2.5.0 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gonvenience/bunt v1.3.5 // indirect
@@ -54,7 +56,7 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect

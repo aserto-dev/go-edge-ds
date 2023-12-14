@@ -49,7 +49,7 @@ func (i *checkPermission) Validate(mc *cache.Cache) (bool, error) {
 		return ok, err
 	}
 
-	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.PermissionName(i.Permission)) {
+	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.RelationName(i.Permission)) {
 		return false, ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
 	}
 
@@ -72,7 +72,7 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache
 func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*permissionChecker, error) {
 	relations := mc.ExpandPermission(
 		model.ObjectName(i.GetObjectType()),
-		model.PermissionName(i.GetPermission()))
+		model.RelationName(i.GetPermission()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject())
 	if err != nil {
