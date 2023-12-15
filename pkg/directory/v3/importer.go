@@ -25,6 +25,7 @@ type Importer struct {
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
 	v, _ := protovalidate.New()
+
 	return &Importer{
 		logger: logger,
 		store:  store,
@@ -45,21 +46,29 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 
 	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 		for {
+			select {
+			case <-ctx.Done(): // exit if context is done
+				return nil
+			default:
+			}
+
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Debug().Interface("res", res).Msg("import stream EOF")
+				s.logger.Trace().Interface("res", res).Msg("import stream EOF")
 				return stream.Send(res)
-			} else if err != nil {
-				s.logger.Err(err).Msg("cannot receive req")
-				return stream.Send(res)
+			}
+
+			if err != nil {
+				s.logger.Trace().Str("err", err.Error()).Msg("cannot receive req")
+				continue
 			}
 
 			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
 				s.logger.Err(err).Msg("cannot handle load request")
-				return stream.Send(res)
 			}
 		}
 	})
+
 	return importErr
 }
 
@@ -70,26 +79,35 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.objectSetHandler(ctx, tx, m.Object)
 			res.Object = updateCounter(res.Object, req.OpCode, err)
+			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.objectDeleteHandler(ctx, tx, m.Object)
 			res.Object = updateCounter(res.Object, req.OpCode, err)
+			return err
 		}
+
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
 
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.relationSetHandler(ctx, tx, m.Relation)
 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			return err
 		}
-	}
 
-	return err
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
+
+	default:
+		return derr.ErrUnknown.Msgf("import request")
+	}
 }
 
 func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
