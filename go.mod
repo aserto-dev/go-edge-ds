@@ -9,11 +9,11 @@ require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/azm v0.0.17
 	github.com/aserto-dev/errors v0.0.6
-	github.com/aserto-dev/go-directory v0.30.6
+	github.com/aserto-dev/go-directory v0.30.7
 	github.com/bufbuild/protovalidate-go v0.4.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/homeport/dyff v1.6.0
 	github.com/magefile/mage v1.15.0
@@ -23,7 +23,7 @@ require (
 	github.com/samber/lo v1.39.0
 	github.com/stretchr/testify v1.8.4
 	go.etcd.io/bbolt v1.3.8
-	google.golang.org/grpc v1.59.0
+	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0
 )
 

@@ -82,72 +82,36 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.objectSetHandler(ctx, tx, m.Object)
 			res.Object = updateCounter(res.Object, req.OpCode, err)
+			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.objectDeleteHandler(ctx, tx, m.Object)
 			res.Object = updateCounter(res.Object, req.OpCode, err)
+			return err
 		}
+
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
 
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.relationSetHandler(ctx, tx, m.Relation)
 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			return err
 		}
+
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
+
+	default:
+		return derr.ErrUnknown.Msgf("import request")
 	}
-
-	return err
 }
-
-// func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
-
-// 	switch m := req.Msg.(type) {
-// 	case *dsi3.ImportRequest_Object:
-// 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
-// 			err = s.objectSetHandler(ctx, tx, m.Object)
-// 			res.Object = updateCounter(res.Object, req.OpCode, err)
-// 			if err != nil {
-// 				s.logger.Error().Err(err).Msg("objectSetHandler")
-// 			}
-// 			return err
-// 		}
-
-// 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
-// 			err = s.objectDeleteHandler(ctx, tx, m.Object)
-// 			res.Object = updateCounter(res.Object, req.OpCode, err)
-// 			if err != nil {
-// 				s.logger.Error().Err(err).Msg("objectDeleteHandler")
-// 			}
-// 			return err
-// 		}
-
-// 	case *dsi3.ImportRequest_Relation:
-// 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
-// 			err = s.relationSetHandler(ctx, tx, m.Relation)
-// 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
-// 			if err != nil {
-// 				s.logger.Error().Err(err).Msg("relationSetHandler")
-// 			}
-// 			return err
-// 		}
-
-// 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
-// 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
-// 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
-// 			if err != nil {
-// 				s.logger.Error().Err(err).Msg("relationDeleteHandler")
-// 			}
-// 			return err
-// 		}
-// 	}
-// 	panic("excepted path")
-// 	// return err
-// }
 
 func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
 	s.logger.Debug().Interface("object", req).Msg("ImportObject")
