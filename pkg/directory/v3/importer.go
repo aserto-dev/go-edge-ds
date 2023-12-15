@@ -24,10 +24,7 @@ type Importer struct {
 }
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
-	v, err := protovalidate.New()
-	if err != nil {
-		panic(err)
-	}
+	v, _ := protovalidate.New()
 
 	return &Importer{
 		logger: logger,
