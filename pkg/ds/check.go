@@ -14,12 +14,6 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// value type to be used as a key in a map.
-type ot struct {
-	ObjectType string
-	ObjectID   string
-}
-
 type check struct {
 	*dsr3.CheckRequest
 }
