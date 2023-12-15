@@ -8,12 +8,8 @@ github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3Q
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
-github.com/aserto-dev/azm v0.0.18-0.20231214164918-0f414644655f h1:+nXcubo8h7czhe10xjlS45YOWexPL3Ch7lpugca8yUs=
-github.com/aserto-dev/azm v0.0.18-0.20231214164918-0f414644655f/go.mod h1:t/+CxbaWuS8qzwrVZZefHSNtQf8aK44imB+/rC4uOyw=
-github.com/aserto-dev/azm v0.0.18-0.20231214200020-3e54d00da7f4 h1:obvbU4+z3rUFsRlqVSdXg9gy6GvkjZbYRtEG1o1/UBk=
-github.com/aserto-dev/azm v0.0.18-0.20231214200020-3e54d00da7f4/go.mod h1:t/+CxbaWuS8qzwrVZZefHSNtQf8aK44imB+/rC4uOyw=
-github.com/aserto-dev/azm v0.0.18-0.20231214203218-85ddcb27e9a0 h1:weOeYTZjNFjh0mwdjJXjmAw12jEHiGu4X0C+QhhDBQs=
-github.com/aserto-dev/azm v0.0.18-0.20231214203218-85ddcb27e9a0/go.mod h1:t/+CxbaWuS8qzwrVZZefHSNtQf8aK44imB+/rC4uOyw=
+github.com/aserto-dev/azm v0.0.18-0.20231215145029-08d85340740a h1:JKYmrI0RsbsQaHUaYrnT46dIfBUs0yeMgiQXtEprZeo=
+github.com/aserto-dev/azm v0.0.18-0.20231215145029-08d85340740a/go.mod h1:t/+CxbaWuS8qzwrVZZefHSNtQf8aK44imB+/rC4uOyw=
 github.com/aserto-dev/errors v0.0.6 h1:iH5fkJwBGFPbcdS4B8mwvNdwODlhDEXXPduZtjLh6vo=
 github.com/aserto-dev/errors v0.0.6/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-directory v0.30.6 h1:JdxofQIHyqrHJxn1L/vxiYamCYFX6rGeuMUkkQkai7g=
@@ -114,7 +110,6 @@ github.com/mitchellh/hashstructure/v2 v2.0.2 h1:vGKWl0YJqUNxE8d+h8f6NJLcCJrgbhC4
 github.com/mitchellh/hashstructure/v2 v2.0.2/go.mod h1:MG3aRVU/N29oo/V/IhBX8GR/zz4kQkprJgF2EVszyDE=
 github.com/nsf/jsondiff v0.0.0-20230430225905-43f6cf3098c1 h1:dOYG7LS/WK00RWZc8XGgcUTlTxpp3mKhdR2Q9z9HbXM=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
-github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
 github.com/onsi/ginkgo v1.16.5 h1:8xi0RTUf59SOSfEtZMvwTvXYMzG4gV23XVHOZiXNtnE=
 github.com/onsi/ginkgo/v2 v2.13.0 h1:0jY9lJquiL8fcf3M4LAXN5aMlS/b2BV86HFFPCPMgE4=
 github.com/onsi/gomega v1.28.0 h1:i2rg/p9n/UqIDAMFUJ6qIUUMcsqOuUHgbpbu235Vr1c=
@@ -258,7 +253,6 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=
-gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.8/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.4.0 h1:D8xgwECY7CYvx+Y2n4sBz93Jn9JRvxdiyyo8CTfuKaY=
