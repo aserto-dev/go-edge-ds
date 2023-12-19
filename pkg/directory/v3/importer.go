@@ -153,6 +153,11 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	if err := s.store.MC().ValidateRelation(req); err != nil {
+		// The relation violates the model.
+		return err
+	}
+
 	etag := ds.Relation(req).Hash()
 
 	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req)

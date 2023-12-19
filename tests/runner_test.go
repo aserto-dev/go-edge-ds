@@ -105,6 +105,8 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 
 	ctx := context.Background()
 
+	t.Run("set manifest", testSetManifest(client, "./manifest_v3_test.yaml"))
+
 	var apply func(proto.Message)
 
 	for _, tc := range tcs {
