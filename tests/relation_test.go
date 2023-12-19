@@ -85,6 +85,7 @@ var relationTestCasesWithID = []*TestCase{
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
+			require.NoError(t, tErr)
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
 			case *dsw2.SetRelationResponse:
