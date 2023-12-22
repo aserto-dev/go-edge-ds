@@ -35,26 +35,33 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	resp := &dsw3.SetObjectResponse{}
 
 	if err := s.v.Validate(req); err != nil {
+		// invalid proto message.
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	etag := ds.Object(req.Object).Hash()
+	obj := ds.Object(req.Object)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		// The object violates the model.
+		return resp, err
+	}
+
+	etag := obj.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
+		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
 		if err != nil {
 			return err
 		}
 
 		if etag == updReq.Etag {
-			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+			s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("set_object")
 			resp.Result = updReq
 			return nil
 		}
 
 		updReq.Etag = etag
 
-		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), updReq)
+		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, obj.Key(), updReq)
 		if err != nil {
 			return err
 		}
@@ -73,16 +80,21 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
+
+	if err := objIdent.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objIdent := &dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()}
-		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(objIdent).Key()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, objIdent.Key()); err != nil {
 			return err
 		}
 
 		if req.GetWithRelations() {
 			{
 				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(objIdent).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -100,7 +112,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 			}
 			{
 				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(objIdent).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -134,33 +146,33 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if err := s.store.MC().ValidateRelation(req.Relation); err != nil {
-		// The relation violates the model.
+	relation := ds.Relation(req.Relation)
+	if err := relation.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
-	etag := ds.Relation(req.Relation).Hash()
+	etag := relation.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
+		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
 
 		if etag == updReq.Etag {
-			s.logger.Trace().Str("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+			s.logger.Trace().Str("key", relation.ObjKey()).Str("etag-equal", etag).Msg("set_relation")
 			resp.Result = updReq
 			return nil
 		}
 
 		updReq.Etag = etag
 
-		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updReq)
+		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updReq)
 		if err != nil {
 			return err
 		}
 
-		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), updReq); err != nil {
+		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updReq); err != nil {
 			return err
 		}
 
@@ -179,15 +191,19 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	rel := ds.Relation(&dsc3.Relation{
+		ObjectType:      req.ObjectType,
+		ObjectId:        req.ObjectId,
+		Relation:        req.Relation,
+		SubjectType:     req.SubjectType,
+		SubjectId:       req.SubjectId,
+		SubjectRelation: req.SubjectRelation,
+	})
+	if err := rel.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		rel := ds.Relation(&dsc3.Relation{
-			ObjectType:      req.ObjectType,
-			ObjectId:        req.ObjectId,
-			Relation:        req.Relation,
-			SubjectType:     req.SubjectType,
-			SubjectId:       req.SubjectId,
-			SubjectRelation: req.SubjectRelation,
-		})
 
 		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 			return err

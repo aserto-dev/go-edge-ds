@@ -37,9 +37,13 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
+	if err := objIdent.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	// TODO handle pagination request.
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
 		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
 		if err != nil {
 			return err
@@ -84,7 +88,7 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 
 	// validate all object identifiers first.
 	for _, i := range req.Param {
-		if ok, err := ds.ObjectIdentifier(i).Validate(); !ok {
+		if err := ds.ObjectIdentifier(i).Validate(s.store.MC()); err != nil {
 			return resp, err
 		}
 	}
@@ -152,7 +156,12 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	path, filter, err := ds.GetRelation(req).PathAndFilter()
+	getRelation := ds.GetRelation(req)
+	if err := getRelation.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
+	path, filter, err := getRelation.PathAndFilter()
 	if err != nil {
 		return resp, err
 	}
@@ -214,7 +223,12 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		req.Page = &dsc3.PaginationRequest{Size: 100}
 	}
 
-	path, keyFilter, valueFilter := ds.GetRelations(req).Filter()
+	getRelations := ds.GetRelations(req)
+	if err := getRelations.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
+	path, keyFilter, valueFilter := getRelations.Filter()
 
 	opts := []bdb.ScanOption{
 		bdb.WithPageToken(req.Page.Token),
@@ -277,9 +291,14 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	check := ds.Check(req)
+	if err := check.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.Check(req).Exec(ctx, tx, s.store.MC())
+		resp, err = check.Exec(ctx, tx, s.store.MC())
 		return err
 	})
 
@@ -294,9 +313,14 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	check := ds.CheckPermission(req)
+	if err := check.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckPermission(req).Exec(ctx, tx, s.store.MC())
+		resp, err = check.Exec(ctx, tx, s.store.MC())
 		return err
 	})
 
@@ -311,9 +335,14 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	check := ds.CheckRelation(req)
+	if err := check.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = ds.CheckRelation(req).Exec(ctx, tx, s.store.MC())
+		resp, err = check.Exec(ctx, tx, s.store.MC())
 		return err
 	})
 
@@ -328,9 +357,14 @@ func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3
 		return &dsr3.GetGraphResponse{}, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	getGraph := ds.GetGraph(req)
+	if err := getGraph.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		results, err := ds.GetGraph(req).Exec(ctx, tx)
+		results, err := getGraph.Exec(ctx, tx)
 		if err != nil {
 			return err
 		}

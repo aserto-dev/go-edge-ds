@@ -31,34 +31,16 @@ func (i *object) Key() string {
 	return i.GetType() + TypeIDSeparator + i.GetId()
 }
 
-func (i *object) Validate(mc *cache.Cache) (bool, error) {
-	if i.Object == nil {
-		return false, ErrInvalidArgumentObject.Msg(objectIdentifierNil)
-	}
-
-	// #1 check is type field is set.
-	if IsNotSet(i.GetType()) {
-		return false, ErrInvalidArgumentObject.Msg(objectIdentifierType)
-	}
-
-	// #2 check if id field is set.
-	if IsNotSet(i.GetId()) {
-		return false, ErrInvalidArgumentObject.Msg(objectIdentifierID)
-	}
-
+func (i *object) Validate(mc *cache.Cache) error {
 	if i.Properties == nil {
 		i.Properties = pb.NewStruct()
 	}
 
-	if mc == nil {
-		return true, nil
+	if mc != nil && !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
+		return derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
 	}
 
-	if !mc.ObjectExists(model.ObjectName(i.Object.Type)) {
-		return false, derr.ErrObjectTypeNotFound.Msg(i.Object.Type)
-	}
-
-	return true, nil
+	return nil
 }
 
 func (i *object) Hash() string {
@@ -100,25 +82,27 @@ type objectIdentifier struct {
 
 func ObjectIdentifier(i *dsc3.ObjectIdentifier) *objectIdentifier { return &objectIdentifier{i} }
 
-func (i *objectIdentifier) Validate() (bool, error) {
+func (i *objectIdentifier) Validate(mc *cache.Cache) error {
 	if i.ObjectIdentifier == nil {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierNil)
+		return ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierNil)
 	}
 
 	// #1 check is type field is set.
 	if IsNotSet(i.GetObjectType()) {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierType)
+		return ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierType)
 	}
 
 	// #2 check if id field is set.
 	if IsNotSet(i.GetObjectId()) {
-		return false, ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierID)
+		return ErrInvalidArgumentObjectIdentifier.Msg(objectIdentifierID)
 	}
 
-	// #3 validate that type is defined in the type system.
-	// TODO: validate type existence against TypeSystem model.
+	// #3 check if type exists.
+	if mc != nil && !mc.ObjectExists(model.ObjectName(i.ObjectIdentifier.ObjectType)) {
+		return derr.ErrObjectTypeNotFound.Msg(i.ObjectIdentifier.ObjectType)
+	}
 
-	return true, nil
+	return nil
 }
 
 func (i *objectIdentifier) Key() string {
@@ -144,28 +128,24 @@ func ObjectSelector(i *dsc3.ObjectIdentifier) *objectSelector { return &objectSe
 // - empty object
 // - type only
 // - type + key.
-func (i *objectSelector) Validate() (bool, error) {
+func (i *objectSelector) Validate(mc *cache.Cache) error {
 	// nil not allowed
 	if i.ObjectIdentifier == nil {
-		return false, ErrInvalidArgumentObjectTypeSelector.Msg(objectIdentifierNil)
+		return ErrInvalidArgumentObjectTypeSelector.Msg(objectIdentifierNil)
 	}
 
-	// empty object
-	if IsNotSet(i.GetObjectType()) && IsNotSet(i.GetObjectId()) {
-		return true, nil
+	switch {
+	case IsSet(i.GetObjectType()):
+		// check if type exists.
+		if mc != nil && !mc.ObjectExists(model.ObjectName(i.ObjectIdentifier.ObjectType)) {
+			return derr.ErrObjectTypeNotFound.Msg(i.ObjectIdentifier.ObjectType)
+		}
+	case IsSet(i.GetObjectId()):
+		// can't have id without type.
+		return ErrInvalidArgumentObjectTypeSelector.Msg(objectIdentifierType)
 	}
 
-	// type only
-	if IsSet(i.GetObjectType()) && IsNotSet(i.GetObjectId()) {
-		return true, nil
-	}
-
-	// type + key
-	if IsSet(i.GetObjectType()) && IsSet(i.GetObjectId()) {
-		return true, nil
-	}
-
-	return false, nil
+	return nil
 }
 
 func (i *objectSelector) IsComplete() bool {

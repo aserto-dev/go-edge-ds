@@ -14,6 +14,7 @@ import (
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
+	"github.com/bufbuild/protovalidate-go"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -24,13 +25,16 @@ type Importer struct {
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 	i3     dsi3.ImporterServer
+	v      *protovalidate.Validator
 }
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB, i3 *v3.Importer) *Importer {
+	v, _ := protovalidate.New()
 	return &Importer{
 		logger: logger,
 		store:  store,
 		i3:     i3,
+		v:      v,
 	}
 }
 
@@ -86,16 +90,18 @@ func (s *Importer) objectHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.Obj
 	s.logger.Debug().Interface("object", req).Msg("import_object")
 
 	req3 := convert.ObjectToV3(req)
-
-	if req3 == nil {
-		return derr.ErrInvalidObject.Msg("nil")
+	if err := s.v.Validate(req3); err != nil {
+		// invalid proto message
+		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if ok, err := ds.Object(req3).Validate(s.store.MC()); !ok {
+	obj := ds.Object(req3)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		// The object violates the model.
 		return err
 	}
 
-	if _, err := bdb.Set[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.Object(req3).Key(), req3); err != nil {
+	if _, err := bdb.Set[dsc3.Object](ctx, tx, bdb.ObjectsPath, obj.Key(), req3); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -106,16 +112,21 @@ func (s *Importer) relationHandler(ctx context.Context, tx *bolt.Tx, req *dsc2.R
 	s.logger.Debug().Interface("relation", req).Msg("import_relation")
 
 	req3 := convert.RelationToV3(req)
-
-	if req3 == nil {
-		return derr.ErrInvalidRelation.Msg("nil")
+	if err := s.v.Validate(req3); err != nil {
+		// invalid proto message
+		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.Relation(req3).ObjKey(), req3); err != nil {
+	rel := ds.Relation(req3)
+	if err := rel.Validate(s.store.MC()); err != nil {
+		return err
+	}
+
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req3); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, ds.Relation(req3).SubKey(), req3); err != nil {
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, rel.SubKey(), req3); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

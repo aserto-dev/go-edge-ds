@@ -17,9 +17,14 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Relation.
+// Relation identifier.
 type relation struct {
 	*dsc3.Relation
+}
+
+// Relation selector.
+type relations struct {
+	relation
 }
 
 func Relation(i *dsc3.Relation) *relation { return &relation{i} }
@@ -35,15 +40,15 @@ func GetRelation(i *dsr3.GetRelationRequest) *relation {
 	}}
 }
 
-func GetRelations(i *dsr3.GetRelationsRequest) *relation {
-	return &relation{&dsc3.Relation{
+func GetRelations(i *dsr3.GetRelationsRequest) *relations {
+	return &relations{relation{&dsc3.Relation{
 		ObjectType:      i.ObjectType,
 		ObjectId:        i.ObjectId,
 		Relation:        i.Relation,
 		SubjectType:     i.SubjectType,
 		SubjectId:       i.SubjectId,
 		SubjectRelation: i.SubjectRelation,
-	}}
+	}}}
 }
 
 func (i *relation) Key() string {
@@ -82,45 +87,64 @@ func (i *relation) SubKey() string {
 		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
 }
 
-func (i *relation) Validate(mc *cache.Cache) (bool, error) {
-
-	if i == nil {
-		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
-	}
-
-	if i.Relation == nil {
-		return false, ErrInvalidArgumentRelation.Msg("relation not set (nil)")
+func (i *relation) Validate(mc *cache.Cache) error {
+	if i == nil || i.Relation == nil {
+		return ErrInvalidArgumentRelation.Msg("relation not set (nil)")
 	}
 
 	if IsNotSet(i.GetRelation()) {
-		return false, ErrInvalidArgumentRelation.Msg("relation")
+		return ErrInvalidArgumentRelation.Msg("relation")
 	}
 
-	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
-	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
 	if mc == nil {
-		return true, nil
+		return nil
 	}
 
-	if !mc.ObjectExists(model.ObjectName(i.GetObjectType())) {
-		return false, derr.ErrObjectNotFound.Msg(i.GetObjectType())
+	return mc.ValidateRelation(i.Relation)
+}
+
+func (i *relations) Validate(mc *cache.Cache) error {
+	if i == nil || i.Relation == nil {
+		return ErrInvalidArgumentRelation.Msg("relation not set (nil)")
 	}
 
-	if !mc.ObjectExists(model.ObjectName(i.GetSubjectType())) {
-		return false, derr.ErrObjectNotFound.Msg(i.GetSubjectType())
+	if err := ObjectSelector(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
-	if !mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
-		return false, derr.ErrRelationNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
+	if err := ObjectSelector(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
-	return true, nil
+	if IsSet(i.GetRelation()) {
+		if IsNotSet(i.GetObjectType()) {
+			return ErrInvalidArgumentRelation.Msg("object type not set")
+		}
+
+		if mc != nil && !mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
+			return derr.ErrRelationNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
+		}
+	}
+
+	if IsSet(i.GetSubjectRelation()) {
+		if IsNotSet(i.GetSubjectType()) {
+			return ErrInvalidArgumentRelation.Msg("subject type not set")
+		}
+
+		if mc != nil && !mc.RelationExists(model.ObjectName(i.GetSubjectType()), model.RelationName(i.GetSubjectRelation())) {
+			return derr.ErrRelationNotFound.Msg(i.GetSubjectType() + ":" + i.GetSubjectRelation())
+		}
+	}
+
+	return nil
 }
 
 func (i *relation) Hash() string {
