@@ -85,7 +85,7 @@ func CreateBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, _ *bolt.DB, rwDB *bolt.DB) error {
-		log.Info().Str("path", strings.Join(path, "/")).Msg("CreateBucket")
+		log.Info().Str("path", strings.Join(path, "/")).Msg("DeleteBucket")
 
 		if err := rwDB.Update(func(tx *bolt.Tx) error {
 			if len(path) == 1 {
