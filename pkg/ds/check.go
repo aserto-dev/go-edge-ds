@@ -36,24 +36,24 @@ func (i *check) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-func (i *check) Validate(mc *cache.Cache) (bool, error) {
+func (i *check) Validate(mc *cache.Cache) error {
 	if i == nil || i.CheckRequest == nil {
-		return false, ErrInvalidRequest.Msg("check")
+		return ErrInvalidRequest.Msg("check")
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.ObjectType)) {
-		return false, ErrObjectNotFound.Msgf("object_type: %s", i.ObjectType)
+		return ErrObjectNotFound.Msgf("object_type: %s", i.ObjectType)
 	}
 
 	if !mc.ObjectExists(model.ObjectName(i.SubjectType)) {
-		return false, ErrObjectNotFound.Msgf("subject_type: %s", i.SubjectType)
+		return ErrObjectNotFound.Msgf("subject_type: %s", i.SubjectType)
 	}
 
 	if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
-		return false, ErrRelationNotFound.Msgf("relation: %s%s%s", i.ObjectType, RelationSeparator, i.Relation)
+		return ErrRelationNotFound.Msgf("relation: %s%s%s", i.ObjectType, RelationSeparator, i.Relation)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {

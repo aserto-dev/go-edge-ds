@@ -100,18 +100,25 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 	}
 
 	if err := s.v.Validate(req); err != nil {
+		// invalid proto message
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	etag := ds.Object(req).Hash()
+	obj := ds.Object(req)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		// The object violates the model.
+		return err
+	}
 
-	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req)
+	etag := obj.Hash()
+
+	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req)
 	if err != nil {
 		return err
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", ds.Object(req).Key()).Str("etag-equal", etag).Msg("ImportObject")
+		s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
 		return nil
 	}
 
@@ -135,7 +142,12 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key()); err != nil {
+	obj := ds.Object(req)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		return err
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
 		return derr.ErrInvalidObject.Msg("delete")
 	}
 
@@ -150,23 +162,24 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	}
 
 	if err := s.v.Validate(req); err != nil {
+		// invalid proto message
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if err := s.store.MC().ValidateRelation(req); err != nil {
-		// The relation violates the model.
+	rel := ds.Relation(req)
+	if err := rel.Validate(s.store.MC()); err != nil {
 		return err
 	}
 
-	etag := ds.Relation(req).Hash()
+	etag := rel.Hash()
 
-	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req)
+	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req)
 	if err != nil {
 		return err
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", ds.Relation(req).ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
+		s.logger.Trace().Str("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
 		return nil
 	}
 
@@ -194,11 +207,16 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 		return derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey()); err != nil {
+	rel := ds.Relation(req)
+	if err := rel.Validate(s.store.MC()); err != nil {
+		return err
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 		return derr.ErrInvalidRelation.Msg("delete")
 	}
 
-	if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, ds.Relation(req).SubKey()); err != nil {
+	if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
 		return derr.ErrInvalidRelation.Msg("delete")
 	}
 

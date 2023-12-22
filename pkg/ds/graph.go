@@ -44,31 +44,31 @@ func (i *getGraph) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-func (i *getGraph) Validate(mc *cache.Cache) (bool, error) {
+func (i *getGraph) Validate(mc *cache.Cache) error {
 	if i == nil || i.GetGraphRequest == nil {
-		return false, ErrInvalidRequest.Msg("get_graph")
+		return ErrInvalidRequest.Msg("get_graph")
 	}
 
 	// anchor must be defined, hence use an ObjectIdentifier.
-	if ok, err := ObjectIdentifier(i.Anchor()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Anchor()).Validate(mc); err != nil {
+		return err
 	}
 
 	// Object can be optional, hence the use of an ObjectSelector.
-	if ok, err := ObjectSelector(i.Object()).Validate(); !ok {
-		return ok, err
+	if err := ObjectSelector(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
 	// Relation can be optional, hence the use of a RelationTypeSelector.
 	if i.GetRelation() != "" {
 		if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
-			return false, ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
+			return ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
 		}
 	}
 
 	// Subject can be option, hence the use of an ObjectSelector.
-	if ok, err := ObjectSelector(i.Subject()).Validate(); !ok {
-		return ok, err
+	if err := ObjectSelector(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
 	// either Object or Subject must be equal to the Anchor to indicate the directionality of the graph walk.
@@ -76,10 +76,10 @@ func (i *getGraph) Validate(mc *cache.Cache) (bool, error) {
 	// Anchor == Object ==> object->subject
 	if !ObjectIdentifier(i.Anchor()).Equal(i.Object()) &&
 		!ObjectIdentifier(i.Anchor()).Equal(i.Subject()) {
-		return false, ErrGraphDirectionality
+		return ErrGraphDirectionality
 	}
 
-	return true, nil
+	return nil
 }
 
 func (i *getGraph) Exec(ctx context.Context, tx *bolt.Tx /*, resolver *cache.Cache*/) ([]*dsc3.ObjectDependency, error) {

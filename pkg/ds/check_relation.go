@@ -42,24 +42,24 @@ func (i *checkRelation) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-func (i *checkRelation) Validate(mc *cache.Cache) (bool, error) {
+func (i *checkRelation) Validate(mc *cache.Cache) error {
 	if i == nil || i.CheckRelationRequest == nil {
-		return false, ErrInvalidRequest.Msg("check_relation")
+		return ErrInvalidRequest.Msg("check_relation")
 	}
 
-	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
-	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
 	if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
-		return false, ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
+		return ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckRelationResponse, error) {
