@@ -134,6 +134,11 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	if err := s.store.MC().ValidateRelation(req.Relation); err != nil {
+		// The relation violates the model.
+		return resp, err
+	}
+
 	etag := ds.Relation(req.Relation).Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
