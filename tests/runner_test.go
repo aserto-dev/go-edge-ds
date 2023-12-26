@@ -49,6 +49,7 @@ func TestMain(m *testing.M) {
 		DBPath:         dbPath,
 		RequestTimeout: time.Second * 2,
 		Seed:           true,
+		EnableV2:       true,
 	}
 
 	client, closer = server.NewTestEdgeServer(ctx, &logger, &cfg)
