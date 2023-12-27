@@ -8,7 +8,7 @@ go 1.20
 
 require (
 	github.com/Masterminds/semver v1.5.0
-	github.com/aserto-dev/azm v0.0.18-0.20231219183923-e16ead528b5a
+	github.com/aserto-dev/azm v0.0.18-0.20231227204629-4f6f0bf970ed
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.30.7
 	github.com/bufbuild/protovalidate-go v0.4.3
@@ -34,7 +34,6 @@ require (
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.5.0 // indirect
-	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/gonvenience/bunt v1.3.5 // indirect
 	github.com/gonvenience/neat v1.3.12 // indirect
