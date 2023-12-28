@@ -67,7 +67,9 @@ func (s *Stats) CountRelations(ctx context.Context, tx *bolt.Tx) error {
 func (s *Stats) incObject(obj *dsc3.Object) {
 	ot, ok := s.ObjectTypes[model.ObjectName(obj.Type)]
 	if !ok {
-		ot.Relations = stats.Relations{}
+		ot = &stats.ObjectType{
+			Relations: stats.Relations{},
+		}
 		s.ObjectTypes[model.ObjectName(obj.Type)] = ot
 	}
 
@@ -84,36 +86,40 @@ func (s *Stats) incRelation(rel *dsc3.Relation) {
 	}
 
 	// object_types
-	ot, ok := s.ObjectTypes[objType]
-	if !ok {
+	ot := s.ObjectTypes[objType]
+	if ot == nil {
+		ot = &stats.ObjectType{
+			Relations: stats.Relations{},
+		}
 		s.ObjectTypes[objType] = ot
 	}
 	atomic.AddInt32(&ot.Count, 1)
 
-	if ot.Relations == nil {
-		ot.Relations = stats.Relations{}
-	}
-
 	// relations
-	re, ok := ot.Relations[relation]
-	if !ok {
-		re.SubjectTypes = stats.SubjectTypes{}
+	re := ot.Relations[relation]
+	if re == nil {
+		re = &stats.Relation{
+			SubjectTypes: stats.SubjectTypes{},
+		}
 		ot.Relations[relation] = re
 	}
 	atomic.AddInt32(&re.Count, 1)
 
 	// subject_types
-	st, ok := re.SubjectTypes[subType]
-	if !ok {
-		st.SubjectRelations = stats.SubjectRelations{}
+	st := re.SubjectTypes[subType]
+	if st == nil {
+		st = &stats.SubjectType{
+			SubjectRelations: stats.SubjectRelations{},
+		}
 		re.SubjectTypes[subType] = st
 	}
 	atomic.AddInt32(&st.Count, 1)
 
 	// subject_relations
 	if subRel != "" {
-		sr, ok := st.SubjectRelations[subRel]
-		if !ok {
+		sr := st.SubjectRelations[subRel]
+		if sr == nil {
+			sr = &stats.SubjectRelation{}
 			st.SubjectRelations[subRel] = sr
 		}
 		atomic.AddInt32(&sr.Count, 1)

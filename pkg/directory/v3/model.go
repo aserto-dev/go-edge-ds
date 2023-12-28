@@ -195,6 +195,15 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
+		stats, err := ds.CalculateStats(stream.Context(), tx)
+		if err != nil {
+			return derr.ErrUnknown.Msgf("failed to calculate stats: %s", err.Error())
+		}
+
+		if err := s.store.MC().CanUpdate(m, stats); err != nil {
+			return err
+		}
+
 		if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
 			return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
 		}
