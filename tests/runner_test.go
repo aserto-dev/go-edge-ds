@@ -17,7 +17,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
 
 	"github.com/rs/zerolog"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -64,7 +64,7 @@ func TestGetObjectTypes(t *testing.T) {
 	t.Cleanup(closer)
 
 	resp, err := client.V2.Reader.GetObjectTypes(context.Background(), &dsr2.GetObjectTypesRequest{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("object_type: %s", v.Name)
 	}
@@ -78,7 +78,7 @@ func TestGetRelationTypes(t *testing.T) {
 		Param: &dsc2.ObjectTypeIdentifier{},
 		Page:  &dsc2.PaginationRequest{},
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("relation_type: %s:%s", v.ObjectType, v.Name)
 	}
@@ -89,7 +89,7 @@ func TestGetPermissions(t *testing.T) {
 	t.Cleanup(closer)
 
 	resp, err := client.V2.Reader.GetPermissions(context.Background(), &dsr2.GetPermissionsRequest{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	for _, v := range resp.Results {
 		t.Logf("permission: %s", v.Name)
 	}
@@ -105,7 +105,11 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 
 	ctx := context.Background()
 
-	t.Run("set manifest", testSetManifest(client, "./manifest_v3_test.yaml"))
+	manifest, err := os.ReadFile("./manifest_v3_test.yaml")
+	require.NoError(t, err)
+
+	require.NoError(t, deleteManifest(client))
+	require.NoError(t, setManifest(client, manifest))
 
 	var apply func(proto.Message)
 

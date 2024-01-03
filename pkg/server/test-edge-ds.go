@@ -15,6 +15,7 @@ import (
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 
+	"github.com/aserto-dev/aserto-grpc/grpcutil/middlewares/gerr"
 	eds "github.com/aserto-dev/go-edge-ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/rs/zerolog"
@@ -55,7 +56,11 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 		logger.Error().Err(err).Msg("failed to start edge directory server")
 	}
 
-	s := grpc.NewServer()
+	errMiddleware := gerr.NewErrorMiddleware()
+	s := grpc.NewServer(
+		grpc.UnaryInterceptor(errMiddleware.Unary()),
+		grpc.StreamInterceptor(errMiddleware.Stream()),
+	)
 	dsr2.RegisterReaderServer(s, edgeDirServer.Reader2())
 	dsw2.RegisterWriterServer(s, edgeDirServer.Writer2())
 	dse2.RegisterExporterServer(s, edgeDirServer.Exporter2())
