@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aserto-dev/azm/cache"
-	"github.com/aserto-dev/azm/model"
+	"github.com/aserto-dev/azm/safe"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
@@ -15,45 +15,11 @@ import (
 )
 
 type check struct {
-	*dsr3.CheckRequest
+	*safe.SafeCheck
 }
 
 func Check(i *dsr3.CheckRequest) *check {
-	return &check{i}
-}
-
-func (i *check) Object() *dsc3.ObjectIdentifier {
-	return &dsc3.ObjectIdentifier{
-		ObjectType: i.ObjectType,
-		ObjectId:   i.ObjectId,
-	}
-}
-
-func (i *check) Subject() *dsc3.ObjectIdentifier {
-	return &dsc3.ObjectIdentifier{
-		ObjectType: i.SubjectType,
-		ObjectId:   i.SubjectId,
-	}
-}
-
-func (i *check) Validate(mc *cache.Cache) error {
-	if i == nil || i.CheckRequest == nil {
-		return ErrInvalidRequest.Msg("check")
-	}
-
-	if !mc.ObjectExists(model.ObjectName(i.ObjectType)) {
-		return ErrObjectNotFound.Msgf("object_type: %s", i.ObjectType)
-	}
-
-	if !mc.ObjectExists(model.ObjectName(i.SubjectType)) {
-		return ErrObjectNotFound.Msgf("subject_type: %s", i.SubjectType)
-	}
-
-	if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
-		return ErrRelationNotFound.Msgf("relation: %s%s%s", i.ObjectType, RelationSeparator, i.Relation)
-	}
-
-	return nil
+	return &check{safe.Check(i)}
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {

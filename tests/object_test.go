@@ -233,6 +233,7 @@ var objectTestCasesWithoutID = []*TestCase{
 					case *dsw2.SetObjectRequest:
 						r.Object.Hash = lastHash
 					}
+					t.Logf("propagated hash:%s", lastHash)
 				}
 			}
 			return func(req proto.Message) {}
@@ -270,6 +271,7 @@ var objectTestCasesWithoutID = []*TestCase{
 					case *dsw2.SetObjectRequest:
 						r.Object.Hash = lastHash
 					}
+					t.Logf("propagated hash:%s", lastHash)
 				}
 			}
 			return func(req proto.Message) {}

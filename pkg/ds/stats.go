@@ -32,7 +32,7 @@ type Stats struct {
 }
 
 func NewStats() *Stats {
-	return &Stats{Stats: &stats.Stats{ObjectTypes: stats.ObjectTypes{}}}
+	return &Stats{stats.NewStats()}
 }
 
 func (s *Stats) CountObjects(ctx context.Context, tx *bolt.Tx) error {
