@@ -26,8 +26,9 @@ type relations struct {
 
 func Relation(i *dsc3.Relation) *relation { return &relation{safe.Relation(i)} }
 
-func GetRelation(i *dsr3.GetRelationRequest) *relation {
-	return &relation{safe.GetRelation(i)}
+func GetRelation(i *dsr3.GetRelationRequest) *relations {
+	r := safe.GetRelation(i)
+	return &relations{r, relation{r.SafeRelation}}
 }
 
 func GetRelations(i *dsr3.GetRelationsRequest) *relations {
