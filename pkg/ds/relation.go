@@ -3,15 +3,11 @@ package ds
 // model contains relation related items.
 
 import (
-	"hash/fnv"
-	"strconv"
 	"strings"
 
-	"github.com/aserto-dev/azm/cache"
-	"github.com/aserto-dev/azm/model"
+	"github.com/aserto-dev/azm/safe"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	"github.com/rs/zerolog/log"
@@ -19,54 +15,28 @@ import (
 
 // Relation identifier.
 type relation struct {
-	*dsc3.Relation
+	*safe.SafeRelation
 }
 
 // Relation selector.
 type relations struct {
-	relation
+	*safe.SafeRelations // implements Validate
+	relation            // implements Filter
 }
 
-func Relation(i *dsc3.Relation) *relation { return &relation{i} }
+func Relation(i *dsc3.Relation) *relation { return &relation{safe.Relation(i)} }
 
 func GetRelation(i *dsr3.GetRelationRequest) *relation {
-	return &relation{&dsc3.Relation{
-		ObjectType:      i.ObjectType,
-		ObjectId:        i.ObjectId,
-		Relation:        i.Relation,
-		SubjectType:     i.SubjectType,
-		SubjectId:       i.SubjectId,
-		SubjectRelation: i.SubjectRelation,
-	}}
+	return &relation{safe.GetRelation(i)}
 }
 
 func GetRelations(i *dsr3.GetRelationsRequest) *relations {
-	return &relations{relation{&dsc3.Relation{
-		ObjectType:      i.ObjectType,
-		ObjectId:        i.ObjectId,
-		Relation:        i.Relation,
-		SubjectType:     i.SubjectType,
-		SubjectId:       i.SubjectId,
-		SubjectRelation: i.SubjectRelation,
-	}}}
+	r := safe.GetRelations(i)
+	return &relations{r, relation{r.SafeRelation}}
 }
 
 func (i *relation) Key() string {
 	return i.ObjKey()
-}
-
-func (i *relation) Object() *dsc3.ObjectIdentifier {
-	return &dsc3.ObjectIdentifier{
-		ObjectType: i.GetObjectType(),
-		ObjectId:   i.GetObjectId(),
-	}
-}
-
-func (i *relation) Subject() *dsc3.ObjectIdentifier {
-	return &dsc3.ObjectIdentifier{
-		ObjectType: i.GetSubjectType(),
-		ObjectId:   i.GetSubjectId(),
-	}
 }
 
 func (i *relation) ObjKey() string {
@@ -85,94 +55,6 @@ func (i *relation) SubKey() string {
 		InstanceSeparator +
 		i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
 		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
-}
-
-func (i *relation) Validate(mc *cache.Cache) error {
-	if i == nil || i.Relation == nil {
-		return ErrInvalidArgumentRelation.Msg("relation not set (nil)")
-	}
-
-	if IsNotSet(i.GetRelation()) {
-		return ErrInvalidArgumentRelation.Msg("relation")
-	}
-
-	if err := ObjectIdentifier(i.Object()).Validate(mc); err != nil {
-		return err
-	}
-
-	if err := ObjectIdentifier(i.Subject()).Validate(mc); err != nil {
-		return err
-	}
-
-	if mc == nil {
-		return nil
-	}
-
-	return mc.ValidateRelation(i.Relation)
-}
-
-func (i *relations) Validate(mc *cache.Cache) error {
-	if i == nil || i.Relation == nil {
-		return ErrInvalidArgumentRelation.Msg("relation not set (nil)")
-	}
-
-	if err := ObjectSelector(i.Object()).Validate(mc); err != nil {
-		return err
-	}
-
-	if err := ObjectSelector(i.Subject()).Validate(mc); err != nil {
-		return err
-	}
-
-	if IsSet(i.GetRelation()) {
-		if IsNotSet(i.GetObjectType()) {
-			return ErrInvalidArgumentRelation.Msg("object type not set")
-		}
-
-		if mc != nil && !mc.RelationExists(model.ObjectName(i.GetObjectType()), model.RelationName(i.GetRelation())) {
-			return derr.ErrRelationNotFound.Msg(i.GetObjectType() + ":" + i.GetRelation())
-		}
-	}
-
-	if IsSet(i.GetSubjectRelation()) {
-		if IsNotSet(i.GetSubjectType()) {
-			return ErrInvalidArgumentRelation.Msg("subject type not set")
-		}
-
-		if mc != nil && !mc.RelationExists(model.ObjectName(i.GetSubjectType()), model.RelationName(i.GetSubjectRelation())) {
-			return derr.ErrRelationNotFound.Msg(i.GetSubjectType() + ":" + i.GetSubjectRelation())
-		}
-	}
-
-	return nil
-}
-
-func (i *relation) Hash() string {
-	h := fnv.New64a()
-	h.Reset()
-
-	if i != nil && i.Relation != nil {
-		if _, err := h.Write([]byte(i.GetObjectId())); err != nil {
-			return DefaultHash
-		}
-		if _, err := h.Write([]byte(i.GetObjectType())); err != nil {
-			return DefaultHash
-		}
-		if _, err := h.Write([]byte(i.GetRelation())); err != nil {
-			return DefaultHash
-		}
-		if _, err := h.Write([]byte(i.GetSubjectId())); err != nil {
-			return DefaultHash
-		}
-		if _, err := h.Write([]byte(i.GetSubjectType())); err != nil {
-			return DefaultHash
-		}
-		if _, err := h.Write([]byte(i.GetSubjectRelation())); err != nil {
-			return DefaultHash
-		}
-	}
-
-	return strconv.FormatUint(h.Sum64(), 10)
 }
 
 func (i *relation) PathAndFilter() ([]string, string, error) {
@@ -323,7 +205,8 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 		})
 	}
 
-	if fv := i.GetSubjectRelation(); fv != "" {
+	if i.HasSubjectRelation {
+		fv := i.GetSubjectRelation()
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
 			log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")

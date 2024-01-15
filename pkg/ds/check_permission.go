@@ -135,10 +135,8 @@ func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 }
 
 func (c *permissionChecker) isMatch(relation *dsc3.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
-		return true
-	}
-	return false
+	return lo.Contains(c.filter, model.RelationName(relation.Relation)) &&
+		pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject())
 }
 
 func (c *permissionChecker) isCandidate(r *dsc3.Relation) bool {

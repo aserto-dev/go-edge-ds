@@ -12,7 +12,9 @@ import (
 
 	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
 	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
 
@@ -114,133 +116,108 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 	var apply func(proto.Message)
 
 	for _, tc := range tcs {
-		t.Logf("%s", tc.Name)
-
-		switch req := tc.Req.(type) {
-		case *dsr2.GetObjectRequest:
+		t.Run(tc.Name, func(t *testing.T) {
 			if apply != nil {
-				apply(req)
+				apply(tc.Req)
 			}
+			runTestCase(ctx, t, tc)
+		})
 
-			resp, err := client.V2.Reader.GetObject(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.SetObjectRequest:
-			if apply != nil {
-				apply(req)
-				t.Logf("propagated hash:%s", req.Object.Hash)
-			}
-
-			resp, err := client.V2.Writer.SetObject(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.DeleteObjectRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Writer.DeleteObject(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsr2.GetObjectTypeRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Reader.GetObjectType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.SetObjectTypeRequest:
-			if apply != nil {
-				apply(req)
-				t.Logf("propagated hash:%s", req.ObjectType.Hash)
-			}
-
-			resp, err := client.V2.Writer.SetObjectType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.DeleteObjectTypeRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Writer.DeleteObjectType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsr2.GetPermissionRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Reader.GetPermission(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.SetPermissionRequest:
-			if apply != nil {
-				apply(req)
-				t.Logf("propagated hash:%s", req.Permission.Hash)
-			}
-
-			resp, err := client.V2.Writer.SetPermission(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.DeletePermissionRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Writer.DeletePermission(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsr2.GetRelationRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Reader.GetRelation(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.SetRelationRequest:
-			if apply != nil {
-				apply(req)
-				t.Logf("propagated hash:%s", req.Relation.Hash)
-			}
-
-			resp, err := client.V2.Writer.SetRelation(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.DeleteRelationRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Writer.DeleteRelation(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsr2.GetRelationTypeRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Reader.GetRelationType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.SetRelationTypeRequest:
-			if apply != nil {
-				apply(req)
-				t.Logf("propagated hash:%s", req.RelationType.Hash)
-			}
-
-			resp, err := client.V2.Writer.SetRelationType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-
-		case *dsw2.DeleteRelationTypeRequest:
-			if apply != nil {
-				apply(req)
-			}
-
-			resp, err := client.V2.Writer.DeleteRelationType(ctx, req)
-			apply = tc.Checks(t, resp, err)
-		}
 	}
+}
+
+func runTestCase(ctx context.Context, t *testing.T, tc *TestCase) func(proto.Message) {
+	switch req := tc.Req.(type) {
+	case *dsr2.GetObjectRequest:
+		resp, err := client.V2.Reader.GetObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.SetObjectRequest:
+		resp, err := client.V2.Writer.SetObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.DeleteObjectRequest:
+		resp, err := client.V2.Writer.DeleteObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr2.GetObjectTypeRequest:
+		resp, err := client.V2.Reader.GetObjectType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.SetObjectTypeRequest:
+		resp, err := client.V2.Writer.SetObjectType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.DeleteObjectTypeRequest:
+		resp, err := client.V2.Writer.DeleteObjectType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr2.GetPermissionRequest:
+		resp, err := client.V2.Reader.GetPermission(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.SetPermissionRequest:
+		resp, err := client.V2.Writer.SetPermission(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.DeletePermissionRequest:
+		resp, err := client.V2.Writer.DeletePermission(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr2.GetRelationRequest:
+		resp, err := client.V2.Reader.GetRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.SetRelationRequest:
+		resp, err := client.V2.Writer.SetRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.DeleteRelationRequest:
+		resp, err := client.V2.Writer.DeleteRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr2.GetRelationTypeRequest:
+		resp, err := client.V2.Reader.GetRelationType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.SetRelationTypeRequest:
+		resp, err := client.V2.Writer.SetRelationType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw2.DeleteRelationTypeRequest:
+		resp, err := client.V2.Writer.DeleteRelationType(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	// V3
+	///////////////////////////////////////////////////////////////
+	case *dsr3.GetObjectRequest:
+		resp, err := client.V3.Reader.GetObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw3.SetObjectRequest:
+		resp, err := client.V3.Writer.SetObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw3.DeleteObjectRequest:
+		resp, err := client.V3.Writer.DeleteObject(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr3.GetRelationRequest:
+		resp, err := client.V3.Reader.GetRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw3.SetRelationRequest:
+		resp, err := client.V3.Writer.SetRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsw3.DeleteRelationRequest:
+		resp, err := client.V3.Writer.DeleteRelation(ctx, req)
+		return tc.Checks(t, resp, err)
+
+	case *dsr3.GetRelationsRequest:
+		resp, err := client.V3.Reader.GetRelations(ctx, req)
+		return tc.Checks(t, resp, err)
+	}
+
+	return func(proto.Message) {}
 }
