@@ -37,6 +37,7 @@ type Config struct {
 	DBPath         string        `json:"db_path"`
 	RequestTimeout time.Duration `json:"request_timeout"`
 	Seed           bool          `json:"seed_metadata"`
+	EnableV2       bool          `json:"enable_v2"`
 }
 
 type Directory struct {
@@ -110,10 +111,13 @@ func New(ctx context.Context, config *Config, logger *zerolog.Logger) (*Director
 		writer3:   writer3,
 		exporter3: exporter3,
 		importer3: importer3,
-		exporter2: v2.NewExporter(logger, store, exporter3),
-		importer2: v2.NewImporter(logger, store, importer3),
-		reader2:   v2.NewReader(logger, store, reader3),
-		writer2:   v2.NewWriter(logger, store, writer3),
+	}
+
+	if config.EnableV2 {
+		dir.exporter2 = v2.NewExporter(logger, store, exporter3)
+		dir.importer2 = v2.NewImporter(logger, store, importer3)
+		dir.reader2 = v2.NewReader(logger, store, reader3)
+		dir.writer2 = v2.NewWriter(logger, store, writer3)
 	}
 
 	if err := store.LoadModel(); err != nil {
@@ -168,4 +172,9 @@ func (s *Directory) Writer3() dsw3.WriterServer {
 
 func (s *Directory) Logger() *zerolog.Logger {
 	return s.logger
+}
+
+// Config, returns read-only copy of directory configuration data.
+func (s *Directory) Config() Config {
+	return *s.config
 }
