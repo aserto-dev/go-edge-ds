@@ -313,14 +313,26 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	check := ds.CheckPermission(req)
-	if err := check.Validate(s.store.MC()); err != nil {
+	if err := ds.CheckPermission(req).Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
+	check := ds.Check(&dsr3.CheckRequest{
+		ObjectType:  req.GetObjectType(),
+		ObjectId:    req.GetObjectId(),
+		Relation:    req.GetPermission(),
+		SubjectType: req.GetSubjectType(),
+		SubjectId:   req.GetSubjectId(),
+		Trace:       req.GetTrace(),
+	})
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = check.Exec(ctx, tx, s.store.MC())
+		r, err := check.Exec(ctx, tx, s.store.MC())
+		if err == nil {
+			resp.Check = r.Check
+			resp.Trace = r.Trace
+		}
 		return err
 	})
 
@@ -335,14 +347,26 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	check := ds.CheckRelation(req)
-	if err := check.Validate(s.store.MC()); err != nil {
+	if err := ds.CheckRelation(req).Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
+	check := ds.Check(&dsr3.CheckRequest{
+		ObjectType:  req.GetObjectType(),
+		ObjectId:    req.GetObjectId(),
+		Relation:    req.GetRelation(),
+		SubjectType: req.GetSubjectType(),
+		SubjectId:   req.GetSubjectId(),
+		Trace:       req.GetTrace(),
+	})
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		resp, err = check.Exec(ctx, tx, s.store.MC())
+		r, err := check.Exec(ctx, tx, s.store.MC())
+		if err == nil {
+			resp.Check = r.Check
+			resp.Trace = r.Trace
+		}
 		return err
 	})
 
