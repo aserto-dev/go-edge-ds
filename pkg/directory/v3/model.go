@@ -236,6 +236,19 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		if ifMatchHeader != "" {
+			dbMd := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
+			manifest, err := ds.Manifest(dbMd).Get(ctx, tx)
+			if err != nil {
+				return nil
+			}
+
+			if ifMatchHeader != manifest.Metadata.Etag {
+				return derr.ErrHashMismatch
+			}
+		}
+
 		if err := ds.Manifest(&dsm3.Metadata{}).Delete(ctx, tx); err != nil {
 			return derr.ErrUnknown.Msgf("failed to delete manifest: %s", err.Error())
 		}
