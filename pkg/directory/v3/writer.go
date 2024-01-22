@@ -4,10 +4,13 @@ import (
 	"context"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/go-http-utils/headers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -46,6 +49,12 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 			return err
 		}
 
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// if the updReq.Etag == "" this means the this is an insert
+		if ifMatchHeader != "" && updReq.Etag != "" && ifMatchHeader != updReq.Etag {
+			return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updReq.Type, updReq.Id)
+		}
+
 		if etag == updReq.Etag {
 			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
 			resp.Result = updReq
@@ -74,15 +83,29 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objIdent := &dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()}
-		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(objIdent).Key()); err != nil {
+		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
+
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		if ifMatchHeader != "" {
+			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
+			if err != nil {
+				return err
+			}
+
+			// when obj.Etag == "" we have an insert
+			if obj.Etag != "" && ifMatchHeader != obj.Etag {
+				return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", obj.Type, obj.Id)
+			}
+		}
+
+		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, objIdent.Key()); err != nil {
 			return err
 		}
 
 		if req.GetWithRelations() {
 			{
 				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(ds.ObjectIdentifier(objIdent).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -100,7 +123,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 			}
 			{
 				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(ds.ObjectIdentifier(objIdent).Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
 				if err != nil {
 					return err
 				}
@@ -140,6 +163,12 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
 		if err != nil {
 			return err
+		}
+
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// if the updReq.Etag == "" this means the this is an insert
+		if ifMatchHeader != "" && updReq.Etag != "" && ifMatchHeader != updReq.Etag {
+			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updReq.ObjectType, updReq.ObjectId, updReq.Relation, updReq.SubjectType, updReq.SubjectId)
 		}
 
 		if etag == updReq.Etag {
@@ -184,6 +213,18 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			SubjectRelation: req.SubjectRelation,
 		})
 
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		if ifMatchHeader != "" {
+			etag, err := extractRelationEtagFromDB(ctx, tx, req)
+			if err != nil {
+				return err
+			}
+
+			if ifMatchHeader != etag {
+				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
+			}
+		}
+
 		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 			return err
 		}
@@ -197,4 +238,34 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	})
 
 	return resp, err
+}
+
+func extractRelationEtagFromDB(ctx context.Context, tx *bolt.Tx, req *dsw3.DeleteRelationRequest) (string, error) {
+	relationRequest := &dsr3.GetRelationRequest{
+		ObjectType:  req.ObjectType,
+		ObjectId:    req.ObjectId,
+		Relation:    req.Relation,
+		SubjectType: req.SubjectType,
+		SubjectId:   req.SubjectId,
+	}
+
+	path, filter, err := ds.GetRelation(relationRequest).PathAndFilter()
+	if err != nil {
+		return "", err
+	}
+
+	relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter)
+	if err != nil {
+		return "", err
+	}
+
+	if len(relations) == 0 {
+		return "", bdb.ErrKeyNotFound
+	}
+	if len(relations) != 1 {
+		return "", bdb.ErrMultipleResults
+	}
+	relationFromDB := relations[0]
+
+	return relationFromDB.Etag, nil
 }
