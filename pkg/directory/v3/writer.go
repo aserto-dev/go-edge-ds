@@ -4,7 +4,6 @@ import (
 	"context"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
-	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -87,14 +86,14 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
+			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
+			updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
 			if err != nil {
 				return err
 			}
 
-			// when obj.Etag == "" we have an insert
-			if obj.Etag != "" && ifMatchHeader != obj.Etag {
-				return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", obj.Type, obj.Id)
+			if ifMatchHeader != updReq.Etag {
+				return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updReq.Type, updReq.Id)
 			}
 		}
 
@@ -204,24 +203,26 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		rel := ds.Relation(&dsc3.Relation{
+		protoRel := &dsc3.Relation{
 			ObjectType:      req.ObjectType,
 			ObjectId:        req.ObjectId,
 			Relation:        req.Relation,
 			SubjectType:     req.SubjectType,
 			SubjectId:       req.SubjectId,
 			SubjectRelation: req.SubjectRelation,
-		})
+		}
+
+		rel := ds.Relation(protoRel)
 
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			etag, err := extractRelationEtagFromDB(ctx, tx, req)
+			updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(protoRel).ObjKey(), protoRel)
 			if err != nil {
 				return err
 			}
 
-			if ifMatchHeader != etag {
-				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
+			if ifMatchHeader != updReq.Etag {
+				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", protoRel.ObjectType, protoRel.ObjectId, protoRel.Relation, protoRel.SubjectType, protoRel.SubjectId)
 			}
 		}
 
@@ -238,34 +239,4 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	})
 
 	return resp, err
-}
-
-func extractRelationEtagFromDB(ctx context.Context, tx *bolt.Tx, req *dsw3.DeleteRelationRequest) (string, error) {
-	relationRequest := &dsr3.GetRelationRequest{
-		ObjectType:  req.ObjectType,
-		ObjectId:    req.ObjectId,
-		Relation:    req.Relation,
-		SubjectType: req.SubjectType,
-		SubjectId:   req.SubjectId,
-	}
-
-	path, filter, err := ds.GetRelation(relationRequest).PathAndFilter()
-	if err != nil {
-		return "", err
-	}
-
-	relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter)
-	if err != nil {
-		return "", err
-	}
-
-	if len(relations) == 0 {
-		return "", bdb.ErrKeyNotFound
-	}
-	if len(relations) != 1 {
-		return "", bdb.ErrMultipleResults
-	}
-	relationFromDB := relations[0]
-
-	return relationFromDB.Etag, nil
 }
