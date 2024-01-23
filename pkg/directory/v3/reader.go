@@ -8,6 +8,10 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/go-http-utils/headers"
+	"github.com/samber/lo"
+	"google.golang.org/grpc"
+	grpcmd "google.golang.org/grpc/metadata"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
@@ -47,6 +51,14 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
 		if err != nil {
 			return err
+		}
+
+		inMD, _ := grpcmd.FromIncomingContext(ctx)
+		// optimistic concurrency check
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), obj.Etag) {
+			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
+
+			return nil
 		}
 
 		if req.GetWithRelations() {
@@ -179,12 +191,20 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 			return bdb.ErrMultipleResults
 		}
 
-		result := relations[0]
-		resp.Result = result
+		dbRel := relations[0]
+		resp.Result = dbRel
+
+		inMD, _ := grpcmd.FromIncomingContext(ctx)
+		// optimistic concurrency check
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.Etag) {
+			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
+
+			return nil
+		}
 
 		if req.GetWithObjects() {
 			objects := map[string]*dsc3.Object{}
-			rel := ds.Relation(result)
+			rel := ds.Relation(dbRel)
 
 			sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
 			if err != nil {

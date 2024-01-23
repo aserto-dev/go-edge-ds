@@ -8,6 +8,8 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/go-http-utils/headers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/bufbuild/protovalidate-go"
@@ -48,20 +50,27 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	etag := obj.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
+		updObj, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
 		if err != nil {
 			return err
 		}
 
-		if etag == updReq.Etag {
-			s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("set_object")
-			resp.Result = updReq
+		// optimistic concurrency check
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// if the updReq.Etag == "" this means the this is an insert
+		if ifMatchHeader != "" && updObj.Etag != "" && ifMatchHeader != updObj.Etag {
+			return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updObj.Type, updObj.Id)
+		}
+
+		if etag == updObj.Etag {
+			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+			resp.Result = updObj
 			return nil
 		}
 
-		updReq.Etag = etag
+		updObj.Etag = etag
 
-		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, obj.Key(), updReq)
+		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, obj.Key(), updObj)
 		if err != nil {
 			return err
 		}
@@ -87,6 +96,22 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
+		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
+
+		// optimistic concurrency check
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		if ifMatchHeader != "" {
+			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
+			updObj, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
+			if err != nil {
+				return err
+			}
+
+			if ifMatchHeader != updObj.Etag {
+				return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updObj.Type, updObj.Id)
+			}
+		}
+
 		if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, objIdent.Key()); err != nil {
 			return err
 		}
@@ -154,25 +179,32 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 	etag := relation.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
+		updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
 
-		if etag == updReq.Etag {
-			s.logger.Trace().Str("key", relation.ObjKey()).Str("etag-equal", etag).Msg("set_relation")
-			resp.Result = updReq
+		// optimistic concurrency check
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// if the updReq.Etag == "" this means the this is an insert
+		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
+			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
+		}
+
+		if etag == updRel.Etag {
+			s.logger.Trace().Str("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+			resp.Result = updRel
 			return nil
 		}
 
-		updReq.Etag = etag
+		updRel.Etag = etag
 
-		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updReq)
+		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel)
 		if err != nil {
 			return err
 		}
 
-		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updReq); err != nil {
+		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updRel); err != nil {
 			return err
 		}
 
@@ -204,6 +236,18 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
+		// optimistic concurrency check
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		if ifMatchHeader != "" {
+			updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel)
+			if err != nil {
+				return err
+			}
+
+			if ifMatchHeader != updRel.Etag {
+				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
+			}
+		}
 
 		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 			return err
