@@ -48,6 +48,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 			return err
 		}
 
+		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updObj.Etag != "" && ifMatchHeader != updObj.Etag {
@@ -84,6 +85,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
 
+		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
@@ -164,6 +166,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return err
 		}
 
+		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
@@ -214,6 +217,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 
 		dsRel := ds.Relation(rel)
 
+		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, dsRel.ObjKey(), rel)

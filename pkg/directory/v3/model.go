@@ -81,6 +81,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 			return err
 		}
 
+		// optimistic concurrency check
 		inMD, _ := metadata.FromIncomingContext(stream.Context())
 		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.Etag) {
 			return nil
@@ -145,6 +146,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	logger := s.logger.With().Str("method", "SetManifest").Logger()
 	logger.Trace().Send()
 
+	// optimistic concurrency check
 	etag := metautils.ExtractIncoming(stream.Context()).Get(headers.IfMatch)
 	if etag != "" && etag != s.store.MC().Metadata().ETag {
 		return derr.ErrHashMismatch
@@ -236,6 +238,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
+		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			dbMd := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
