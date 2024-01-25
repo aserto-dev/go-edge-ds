@@ -123,9 +123,16 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 
 	etag := ds.Object(req).Hash()
 
+	reqEtag := req.Etag
 	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req)
 	if err != nil {
 		return err
+	}
+
+	// optimistic concurrency check
+	// updReq.Etag == "" means this is an insert
+	if reqEtag != "" && updReq.Etag != "" && reqEtag != updReq.Etag {
+		return derr.ErrHashMismatch
 	}
 
 	if etag == updReq.Etag {
@@ -151,6 +158,19 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 
 	if err := s.v.Validate(req); err != nil {
 		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	reqEtag := req.Etag
+	// optimistic concurrency check
+	if reqEtag != "" {
+		updObj, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key(), req)
+		if err != nil {
+			return err
+		}
+
+		if reqEtag != updObj.Etag {
+			return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updObj.Type, updObj.Id)
+		}
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, ds.Object(req).Key()); err != nil {
