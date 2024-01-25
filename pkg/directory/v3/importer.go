@@ -143,7 +143,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 	updReq.Etag = etag
 
 	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
-		return derr.ErrInvalidObject.Msg("set")
+		return derr.ErrInvalidObject.Msgf("for object with type [%s] and id [%s]", updReq.Type, updReq.Id)
 	}
 
 	return nil
@@ -193,9 +193,18 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	etag := ds.Relation(req).Hash()
 
+	reqEtag := req.Etag
 	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req)
 	if err != nil {
 		return err
+	}
+
+	// optimistic concurrency check
+	// updReq.Etag == "" means this is an insert
+	if reqEtag != "" && updReq.Etag != "" && reqEtag != updReq.Etag {
+		return derr.ErrHashMismatch.
+			Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+				updReq.ObjectType, updReq.ObjectId, updReq.Relation, updReq.SubjectType, updReq.SubjectId)
 	}
 
 	if etag == updReq.Etag {
@@ -225,6 +234,21 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 
 	if err := s.v.Validate(req); err != nil {
 		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	reqEtag := req.Etag
+	// optimistic concurrency check
+	if reqEtag != "" {
+		updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey(), req)
+		if err != nil {
+			return err
+		}
+
+		if reqEtag != updRel.Etag {
+			return derr.ErrHashMismatch.
+				Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+					updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
+		}
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, ds.Relation(req).ObjKey()); err != nil {

@@ -170,7 +170,9 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
-			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
+			return derr.ErrHashMismatch.
+				Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+					updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
 		}
 
 		if etag == updRel.Etag {
@@ -226,7 +228,9 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			}
 
 			if ifMatchHeader != updRel.Etag {
-				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
+				return derr.ErrHashMismatch.
+					Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+						rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
 			}
 		}
 
