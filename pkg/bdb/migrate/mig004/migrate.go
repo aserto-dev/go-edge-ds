@@ -29,6 +29,7 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 
 	mig.CreateBucket(bdb.ObjectsPath),
 	mig.CreateBucket(bdb.RelationsObjPath),
+	mig.CreateBucket(bdb.RelationsSubPath),
 }
 
 func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
