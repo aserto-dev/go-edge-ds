@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aserto-dev/azm/cache"
+	azmcheck "github.com/aserto-dev/azm/check"
 	"github.com/aserto-dev/azm/safe"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
@@ -23,7 +24,11 @@ func Check(i *dsr3.CheckRequest) *check {
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {
-	return mc.Check(i.CheckRequest, func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
+	return mc.Check(i.CheckRequest, getRelations(ctx, tx))
+}
+
+func getRelations(ctx context.Context, tx *bolt.Tx) azmcheck.RelationReader {
+	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
 		path, keyFilter, valueFilter := Relation(r).Filter()
 		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, keyFilter)
 		if err != nil {
@@ -33,6 +38,5 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 		return lo.Filter(relations, func(r *dsc3.Relation, _ int) bool {
 			return valueFilter(r)
 		}), nil
-
-	})
+	}
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/convert"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/rs/zerolog"
@@ -266,27 +268,23 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr2.CheckRelationReque
 
 // Get object dependency graph.
 func (s *Reader) GetGraph(ctx context.Context, req *dsr2.GetGraphRequest) (*dsr2.GetGraphResponse, error) {
-	r3, err := s.r3.GetGraph(ctx, convert.GetGraphRequestToV3(req))
-	if err != nil {
-		return &dsr2.GetGraphResponse{}, err
+	resp := &dsr2.GetGraphResponse{}
+
+	getGraph := ds.GetGraphV2(req)
+	if err := getGraph.Validate(s.store.MC()); err != nil {
+		return resp, err
 	}
 
-	r2 := &dsr2.GetGraphResponse{
-		Results: []*dsc2.ObjectDependency{},
-	}
+	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		var err error
+		results, err := getGraph.Exec(ctx, tx)
+		if err != nil {
+			return err
+		}
 
-	for _, v := range r3.Results {
-		r2.Results = append(r2.Results, &dsc2.ObjectDependency{
-			ObjectType:  v.GetObjectType(),
-			ObjectKey:   v.GetObjectId(),
-			Relation:    v.GetRelation(),
-			SubjectType: v.GetSubjectType(),
-			SubjectKey:  v.GetSubjectId(),
-			Depth:       v.GetDepth(),
-			IsCycle:     v.GetIsCycle(),
-			Path:        v.GetPath(),
-		})
-	}
+		resp.Results = results
+		return nil
+	})
 
-	return r2, err
+	return resp, err
 }

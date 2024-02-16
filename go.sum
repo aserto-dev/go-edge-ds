@@ -16,10 +16,14 @@ github.com/aserto-dev/azm v0.0.18-0.20240115224901-ba17d4698b57 h1:zI7zX5swsQOlA
 github.com/aserto-dev/azm v0.0.18-0.20240115224901-ba17d4698b57/go.mod h1:m42yapoABuB2D+I+699p85AOhEZsvPaUrJWIQVQ2XgY=
 github.com/aserto-dev/azm v0.0.18-0.20240117162310-ed3fac92bf97 h1:SyhTDVMFSFENtBE+IBh5hXagts774W5cQYUGP+xacdI=
 github.com/aserto-dev/azm v0.0.18-0.20240117162310-ed3fac92bf97/go.mod h1:m42yapoABuB2D+I+699p85AOhEZsvPaUrJWIQVQ2XgY=
+github.com/aserto-dev/azm v0.1.1-0.20240216170218-7eeb5d86f8e3 h1:T0Mje07FZpBthtm9PjCfR5H5o4N7p8SmzTMENoim138=
+github.com/aserto-dev/azm v0.1.1-0.20240216170218-7eeb5d86f8e3/go.mod h1:ZbIqG8XOvuiVvfn4GuXiz1Q3349ftvlSMKTk+HPltrc=
 github.com/aserto-dev/errors v0.0.6 h1:iH5fkJwBGFPbcdS4B8mwvNdwODlhDEXXPduZtjLh6vo=
 github.com/aserto-dev/errors v0.0.6/go.mod h1:kenI1gamsemaR2wS+M2un0kXIJ9exTrmeRT/fCFwlWc=
 github.com/aserto-dev/go-directory v0.30.10 h1:g4j5lzNndQOG6Uv+oc1Q4UzyZdtgCnGftHNIpahzcos=
 github.com/aserto-dev/go-directory v0.30.10/go.mod h1:XW9IRp2u3TTkaqxcZG4sFXttJO4sia2S0j79CYkJfUg=
+github.com/aserto-dev/go-directory v0.30.12-0.20240216170044-f77a10fc9bd2 h1:qVLl26XFu+q1dkv1jy6Ujgucx0Ym0BhCa4TgsWiivpA=
+github.com/aserto-dev/go-directory v0.30.12-0.20240216170044-f77a10fc9bd2/go.mod h1:XW9IRp2u3TTkaqxcZG4sFXttJO4sia2S0j79CYkJfUg=
 github.com/aserto-dev/header v0.0.5 h1:nEvYNgBoIwomxuvo14JuQ/ZqGGHU67NKuZyNdW4n4FU=
 github.com/aserto-dev/logger v0.0.3 h1:lBB5LMdOsHCJKfEej2xY7s4OzCWUWCBhkhUU6RJ4LbM=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
