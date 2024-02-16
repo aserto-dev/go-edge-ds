@@ -408,12 +408,12 @@ func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
-		results, err := getGraph.Exec(ctx, tx)
+		results, err := getGraph.Exec(ctx, tx, s.store.MC())
 		if err != nil {
 			return err
 		}
 
-		resp.Results = results
+		resp = results
 		return nil
 	})
 
