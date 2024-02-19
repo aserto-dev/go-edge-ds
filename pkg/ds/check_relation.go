@@ -14,6 +14,12 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
+// value type to be used as a key in a map.
+type ot struct {
+	ObjectType string
+	ObjectID   string
+}
+
 type checkRelation struct {
 	*dsr3.CheckRelationRequest
 }
@@ -36,24 +42,24 @@ func (i *checkRelation) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-func (i *checkRelation) Validate(mc *cache.Cache) (bool, error) {
+func (i *checkRelation) Validate(mc *cache.Cache) error {
 	if i == nil || i.CheckRelationRequest == nil {
-		return false, ErrInvalidRequest.Msg("check_relation")
+		return ErrInvalidRequest.Msg("check_relation")
 	}
 
-	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
-	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
 	if !mc.RelationExists(model.ObjectName(i.ObjectType), model.RelationName(i.Relation)) {
-		return false, ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
+		return ErrRelationNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Relation)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (i *checkRelation) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckRelationResponse, error) {
@@ -133,10 +139,8 @@ func (c *relationChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 }
 
 func (c *relationChecker) isMatch(relation *dsc3.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
-		return true
-	}
-	return false
+	return lo.Contains(c.filter, model.RelationName(relation.Relation)) &&
+		pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject())
 }
 
 func (c *relationChecker) isCandidate(r *dsc3.Relation) bool {

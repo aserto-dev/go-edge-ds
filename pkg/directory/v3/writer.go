@@ -37,13 +37,20 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	resp := &dsw3.SetObjectResponse{}
 
 	if err := s.v.Validate(req); err != nil {
+		// invalid proto message.
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	etag := ds.Object(req.Object).Hash()
+	obj := ds.Object(req.Object)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		// The object violates the model.
+		return resp, err
+	}
+
+	etag := obj.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updObj, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), req.Object)
+		updObj, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
 		if err != nil {
 			return err
 		}
@@ -63,7 +70,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 
 		updObj.Etag = etag
 
-		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(req.Object).Key(), updObj)
+		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, obj.Key(), updObj)
 		if err != nil {
 			return err
 		}
@@ -80,6 +87,12 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 
 	if err := s.v.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
+
+	if err := objIdent.Validate(s.store.MC()); err != nil {
+		return resp, err
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
@@ -158,10 +171,15 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	etag := ds.Relation(req.Relation).Hash()
+	relation := ds.Relation(req.Relation)
+	if err := relation.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
+	etag := relation.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), req.Relation)
+		updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
@@ -181,12 +199,12 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 
 		updRel.Etag = etag
 
-		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(req.Relation).ObjKey(), updRel)
+		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel)
 		if err != nil {
 			return err
 		}
 
-		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(req.Relation).SubKey(), updRel); err != nil {
+		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updRel); err != nil {
 			return err
 		}
 
@@ -205,22 +223,23 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
+	rel := ds.Relation(&dsc3.Relation{
+		ObjectType:      req.ObjectType,
+		ObjectId:        req.ObjectId,
+		Relation:        req.Relation,
+		SubjectType:     req.SubjectType,
+		SubjectId:       req.SubjectId,
+		SubjectRelation: req.SubjectRelation,
+	})
+	if err := rel.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		rel := &dsc3.Relation{
-			ObjectType:      req.ObjectType,
-			ObjectId:        req.ObjectId,
-			Relation:        req.Relation,
-			SubjectType:     req.SubjectType,
-			SubjectId:       req.SubjectId,
-			SubjectRelation: req.SubjectRelation,
-		}
-
-		dsRel := ds.Relation(rel)
-
 		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, dsRel.ObjKey(), rel)
+			updRel, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel)
 			if err != nil {
 				return err
 			}
@@ -230,11 +249,11 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			}
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, dsRel.ObjKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 			return err
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, dsRel.SubKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
 			return err
 		}
 

@@ -8,7 +8,9 @@ model:
 # object type definitions
 types:
   #  user represents a user that can be granted role(s)
-  user: {}
+  user:
+    relations:
+      manager: user
 
   # group represents a collection of users and/or (nested) groups
   group:

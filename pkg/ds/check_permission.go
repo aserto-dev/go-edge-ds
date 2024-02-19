@@ -36,24 +36,24 @@ func (i *checkPermission) Subject() *dsc3.ObjectIdentifier {
 	}
 }
 
-func (i *checkPermission) Validate(mc *cache.Cache) (bool, error) {
+func (i *checkPermission) Validate(mc *cache.Cache) error {
 	if i == nil || i.CheckPermissionRequest == nil {
-		return false, ErrInvalidRequest.Msg("check_permission")
+		return ErrInvalidRequest.Msg("check_permission")
 	}
 
-	if ok, err := ObjectIdentifier(i.Object()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Object()).Validate(mc); err != nil {
+		return err
 	}
 
-	if ok, err := ObjectIdentifier(i.Subject()).Validate(); !ok {
-		return ok, err
+	if err := ObjectIdentifier(i.Subject()).Validate(mc); err != nil {
+		return err
 	}
 
-	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.PermissionName(i.Permission)) {
-		return false, ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
+	if !mc.PermissionExists(model.ObjectName(i.ObjectType), model.RelationName(i.Permission)) {
+		return ErrPermissionNotFound.Msgf("%s%s%s", i.ObjectType, RelationSeparator, i.Permission)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckPermissionResponse, error) {
@@ -72,7 +72,7 @@ func (i *checkPermission) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache
 func (i *checkPermission) newChecker(ctx context.Context, tx *bolt.Tx, path []string, mc *cache.Cache) (*permissionChecker, error) {
 	relations := mc.ExpandPermission(
 		model.ObjectName(i.GetObjectType()),
-		model.PermissionName(i.GetPermission()))
+		model.RelationName(i.GetPermission()))
 
 	userSet, err := CreateUserSet(ctx, tx, i.Subject())
 	if err != nil {
@@ -135,10 +135,8 @@ func (c *permissionChecker) check(root *dsc3.ObjectIdentifier) (bool, error) {
 }
 
 func (c *permissionChecker) isMatch(relation *dsc3.Relation) bool {
-	if lo.Contains(c.filter, model.RelationName(relation.Relation)) && pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject()) {
-		return true
-	}
-	return false
+	return lo.Contains(c.filter, model.RelationName(relation.Relation)) &&
+		pb.Contains[*dsc3.ObjectIdentifier](c.userSet, Relation(relation).Subject())
 }
 
 func (c *permissionChecker) isCandidate(r *dsc3.Relation) bool {
