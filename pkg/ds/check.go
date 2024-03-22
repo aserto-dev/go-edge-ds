@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aserto-dev/azm/cache"
-	azmcheck "github.com/aserto-dev/azm/check"
+	"github.com/aserto-dev/azm/graph"
 	"github.com/aserto-dev/azm/safe"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
@@ -27,7 +27,7 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 	return mc.Check(i.CheckRequest, getRelations(ctx, tx))
 }
 
-func getRelations(ctx context.Context, tx *bolt.Tx) azmcheck.RelationReader {
+func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
 	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
 		path, keyFilter, valueFilter := Relation(r).Filter()
 		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, keyFilter)

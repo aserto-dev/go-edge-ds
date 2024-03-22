@@ -9,7 +9,7 @@ go 1.20
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/aserto-grpc v0.2.2
-	github.com/aserto-dev/azm v0.1.1
+	github.com/aserto-dev/azm v0.1.4
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.31.0
 	github.com/bufbuild/protovalidate-go v0.4.3
@@ -22,7 +22,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.31.0
 	github.com/samber/lo v1.39.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	go.etcd.io/bbolt v1.3.8
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
@@ -57,10 +57,10 @@ require (
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20231211222908-989df2bf70f3 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231212172506-995d672761c0 // indirect
