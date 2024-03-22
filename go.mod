@@ -9,7 +9,7 @@ go 1.20
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/aserto-grpc v0.2.2
-	github.com/aserto-dev/azm v0.1.4-0.20240319215714-8af7485b15f3
+	github.com/aserto-dev/azm v0.1.4-0.20240322202320-adb1321e1ad0
 	github.com/aserto-dev/errors v0.0.6
 	github.com/aserto-dev/go-directory v0.31.0
 	github.com/bufbuild/protovalidate-go v0.4.3
