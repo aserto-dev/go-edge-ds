@@ -1,12 +1,17 @@
 package mig
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/aserto-dev/azm/model"
+	v3 "github.com/aserto-dev/azm/v3"
+	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 	"github.com/rs/zerolog"
@@ -227,4 +232,44 @@ func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) 
 		return nil, err
 	}
 	return db, nil
+}
+
+func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
+	// skip when roDB is nil.
+	if roDB == nil {
+		log.Debug().Msg("SKIP MigrateModel")
+		return nil
+	}
+
+	ctx := context.Background()
+	m, err := loadModel(ctx, roDB)
+	if err != nil {
+		return err
+	}
+
+	if err := rwDB.Update(func(tx *bolt.Tx) error {
+		_, err := bdb.SetAny(ctx, tx, bdb.ManifestPath, bdb.ModelKey, m)
+		return err
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loadModel(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
+	var m *model.Model
+	if err := roDB.View(func(rtx *bolt.Tx) error {
+		manifestBody, err := bdb.Get[dsm3.Body](ctx, rtx, bdb.ManifestPath, bdb.BodyKey)
+		if err != nil {
+			return err
+		}
+
+		m, err = v3.Load(bytes.NewReader(manifestBody.Data))
+		return err
+	}); err != nil {
+		return m, err
+	}
+
+	return m, nil
 }

@@ -1,4 +1,4 @@
-package mig005
+package mig006
 
 import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
@@ -8,11 +8,11 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// mig005
+// mig006
 //
 // reload model from manifest and write new model back to db.
 const (
-	Version string = "0.0.5"
+	Version string = "0.0.6"
 )
 
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
