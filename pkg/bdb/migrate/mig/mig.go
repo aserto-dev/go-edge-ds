@@ -234,7 +234,7 @@ func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) 
 	return db, nil
 }
 
-func MigrateModel(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
+func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	// skip when roDB is nil.
 	if roDB == nil {
 		log.Debug().Msg("SKIP MigrateModel")
