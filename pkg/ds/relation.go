@@ -9,9 +9,9 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/samber/lo"
 
 	"github.com/rs/zerolog/log"
+	"github.com/samber/lo"
 )
 
 // Relation identifier.
