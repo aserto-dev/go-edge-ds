@@ -8,13 +8,13 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/go-http-utils/headers"
-	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
-	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/bufbuild/protovalidate-go"
+	"github.com/go-http-utils/headers"
+	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Writer struct {

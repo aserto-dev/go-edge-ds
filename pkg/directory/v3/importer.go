@@ -10,8 +10,8 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
-	"github.com/bufbuild/protovalidate-go"
 
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
