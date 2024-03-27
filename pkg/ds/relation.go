@@ -9,6 +9,7 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
+	"github.com/samber/lo"
 
 	"github.com/rs/zerolog/log"
 )
@@ -46,7 +47,7 @@ func (i *relation) ObjKey() string {
 		i.GetRelation() +
 		InstanceSeparator +
 		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
-		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
+		lo.Ternary(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
 }
 
 func (i *relation) SubKey() string {
@@ -55,7 +56,7 @@ func (i *relation) SubKey() string {
 		i.GetRelation() +
 		InstanceSeparator +
 		i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
-		Iff(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
+		lo.Ternary(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
 }
 
 func (i *relation) PathAndFilter() ([]string, string, error) {
