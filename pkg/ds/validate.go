@@ -11,10 +11,3 @@ func IsSet(s string) bool {
 func IsNotSet(s string) bool {
 	return strings.TrimSpace(s) == ""
 }
-
-func Iff[T any](condition bool, trueVal, falseVal T) T {
-	if condition {
-		return trueVal
-	}
-	return falseVal
-}
