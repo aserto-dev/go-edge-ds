@@ -8,21 +8,29 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/pb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/bufbuild/protovalidate-go"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
 type Exporter struct {
-	logger *zerolog.Logger
-	store  *bdb.BoltDB
+	logger    *zerolog.Logger
+	store     *bdb.BoltDB
+	validator *protovalidate.Validator
 }
 
-func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB) *Exporter {
+func NewExporter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Exporter {
 	return &Exporter{
-		logger: logger,
-		store:  store,
+		logger:    logger,
+		store:     store,
+		validator: validator,
 	}
+}
+
+func (s *Exporter) Validate(msg proto.Message) error {
+	return s.validator.Validate(msg)
 }
 
 func (s *Exporter) Export(req *dse3.ExportRequest, stream dse3.Exporter_ExportServer) error {

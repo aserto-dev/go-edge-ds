@@ -78,6 +78,7 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 		}
 	}()
 
+	// nolint: staticcheck // bufConn does not seem to work with the default DNS provided by grpc.NewClient.
 	conn, _ := grpc.DialContext(ctx, "", grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())

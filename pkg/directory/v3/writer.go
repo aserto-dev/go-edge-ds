@@ -14,29 +14,33 @@ import (
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Writer struct {
-	logger *zerolog.Logger
-	store  *bdb.BoltDB
-	v      *protovalidate.Validator
+	logger    *zerolog.Logger
+	store     *bdb.BoltDB
+	validator *protovalidate.Validator
 }
 
-func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
-	v, _ := protovalidate.New()
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Writer {
 	return &Writer{
-		logger: logger,
-		store:  store,
-		v:      v,
+		logger:    logger,
+		store:     store,
+		validator: validator,
 	}
+}
+
+func (s *Writer) Validate(msg proto.Message) error {
+	return s.validator.Validate(msg)
 }
 
 // object methods.
 func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*dsw3.SetObjectResponse, error) {
 	resp := &dsw3.SetObjectResponse{}
 
-	if err := s.v.Validate(req); err != nil {
+	if err := s.Validate(req); err != nil {
 		// invalid proto message.
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
@@ -85,7 +89,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest) (*dsw3.DeleteObjectResponse, error) {
 	resp := &dsw3.DeleteObjectResponse{}
 
-	if err := s.v.Validate(req); err != nil {
+	if err := s.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
@@ -167,7 +171,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) (*dsw3.SetRelationResponse, error) {
 	resp := &dsw3.SetRelationResponse{}
 
-	if err := s.v.Validate(req); err != nil {
+	if err := s.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
@@ -219,7 +223,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationRequest) (*dsw3.DeleteRelationResponse, error) {
 	resp := &dsw3.DeleteRelationResponse{}
 
-	if err := s.v.Validate(req); err != nil {
+	if err := s.Validate(req); err != nil {
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 

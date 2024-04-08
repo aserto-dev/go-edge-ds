@@ -14,10 +14,10 @@ bin:
 go:
   sver:
     importPath: "github.com/aserto-dev/sver/cmd/sver"
-    version: "v1.3.11"
+    version: "v1.3.13"
   gotestsum:
     importPath: "gotest.tools/gotestsum"
-    version: "v1.10.1"
+    version: "v1.11.0"
   golangci-lint:
     importPath: "github.com/golangci/golangci-lint/cmd/golangci-lint"
-    version: "v1.53.3"
+    version: "v1.56.2"
