@@ -133,7 +133,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 
 	etag := obj.Hash()
 
-	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.ObjectsPath, obj.Key(), req)
+	updReq, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 
 	updReq.Etag = etag
 
-	if _, err := bdb.Set(ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
+	if _, err := bdb.SetObject(ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -194,7 +194,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	etag := rel.Hash()
 
-	updReq, err := bdb.UpdateMetadata(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req)
+	updReq, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req)
 	if err != nil {
 		return err
 	}
@@ -206,11 +206,11 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	updReq.Etag = etag
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
+	if _, err := bdb.SetRelation(ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
+	if _, err := bdb.SetRelation(ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
