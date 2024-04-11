@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-edge-ds/magefiles
 
-go 1.20
+go 1.19
 
 require (
 	github.com/aserto-dev/mage-loot v0.8.15
