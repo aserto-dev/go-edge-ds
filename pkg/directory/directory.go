@@ -18,6 +18,8 @@ import (
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 
+	dsc "github.com/aserto-dev/go-directory/pkg/datasync"
+
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
@@ -209,6 +211,10 @@ func (s *Directory) Logger() *zerolog.Logger {
 // Config, returns read-only copy of directory configuration data.
 func (s *Directory) Config() Config {
 	return *s.config
+}
+
+func (s *Directory) DataSyncClient() dsc.Client {
+	return nil
 }
 
 func validator() (*protovalidate.Validator, error) {

@@ -3,7 +3,7 @@ module github.com/aserto-dev/go-edge-ds
 go 1.19
 
 // replace github.com/aserto-dev/azm => ../azm
-// replace github.com/aserto-dev/go-directory => ../go-directory
+replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
