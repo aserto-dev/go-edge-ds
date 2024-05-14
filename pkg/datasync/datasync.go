@@ -41,6 +41,7 @@ func (c *Client) Sync(ctx context.Context, conn *grpc.ClientConn, opts ...dsc.Op
 
 	case dsc.Has(options.Mode, dsc.Watermark):
 		c.logger.Info().Str("mode", "watermark").Msg("datasync.sync")
+
 	default:
 		return fmt.Errorf("unknown sync mode")
 	}
