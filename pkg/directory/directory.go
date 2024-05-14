@@ -22,6 +22,7 @@ import (
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
+	"github.com/aserto-dev/go-edge-ds/pkg/datasync"
 	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
@@ -214,7 +215,7 @@ func (s *Directory) Config() Config {
 }
 
 func (s *Directory) DataSyncClient() dsc.Client {
-	return nil
+	return datasync.New(s.logger)
 }
 
 func validator() (*protovalidate.Validator, error) {
