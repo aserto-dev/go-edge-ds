@@ -47,6 +47,7 @@ func New(config *Config, logger *zerolog.Logger) (*BoltDB, error) {
 		logger: &newLogger,
 		mc:     cache.New(&model.Model{}),
 	}
+
 	return &db, nil
 }
 

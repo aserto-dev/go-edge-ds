@@ -77,10 +77,6 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 
 	c := b.Cursor()
 	for key, value := c.First(); key != nil; key, value = c.Next() {
-		if key == nil {
-			break
-		}
-
 		i, err := Unmarshal[T, M](value)
 		if err != nil {
 			return []M{}, err
