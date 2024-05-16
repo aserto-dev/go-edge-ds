@@ -53,11 +53,11 @@ func (c *Client) Sync(ctx context.Context, conn *grpc.ClientConn, opts ...Option
 const (
 	syncScheduler  string = "scheduler"
 	syncOnDemand   string = "on-demand"
-	syncTask       string = "sync-task"
 	syncRun        string = "sync-run"
 	syncProducer   string = "producer"
 	syncSubscriber string = "subscriber"
 	syncDifference string = "difference"
+	syncManifest   string = "manifest"
 	status         string = "status"
 	started        string = "started"
 	stage          string = "stage"

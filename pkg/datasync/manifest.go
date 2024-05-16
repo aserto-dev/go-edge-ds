@@ -6,6 +6,7 @@ import (
 	"hash/fnv"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/aserto-dev/azm/model"
 	manifest "github.com/aserto-dev/azm/v3"
@@ -22,6 +23,9 @@ import (
 )
 
 func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
+	runStartTime := time.Now().UTC()
+	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.String()).Msg(syncManifest)
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -58,7 +62,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 		return err
 	}
 
-	s.logger.Info().Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).Bool("identical", localMD.Etag == remoteMD.Etag).Msg("datasync.sync.manifest")
+	s.logger.Debug().Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).Bool("identical", localMD.Etag == remoteMD.Etag).Msg(syncManifest)
 	if localMD.Etag == remoteMD.Etag {
 		return nil
 	}
@@ -67,6 +71,9 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	if err != nil {
 		return err
 	}
+
+	runEndTime := time.Now().UTC()
+	s.logger.Info().Str(status, finished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
 
 	return s.store.MC().UpdateModel(m)
 }
