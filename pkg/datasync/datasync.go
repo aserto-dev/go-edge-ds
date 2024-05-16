@@ -45,7 +45,7 @@ func (c *Client) Sync(ctx context.Context, conn *grpc.ClientConn, opts ...Option
 		f(options)
 	}
 
-	c.logger.Info().Str("mode", options.Mode.String()).Msg("datasync.sync")
+	c.logger.Debug().Str("mode", options.Mode.String()).Msg("sync")
 
 	return newSync(c, options).Run(ctx, conn)
 }
@@ -85,10 +85,9 @@ func newSync(c *Client, o *Options) *Sync {
 }
 
 func (s *Sync) Run(ctx context.Context, conn *grpc.ClientConn) error {
-	s.logger.Info().Str("mode", s.options.Mode.String()).Msg("datasync.sync")
+	s.logger.Info().Str("mode", s.options.Mode.String()).Msg(syncRun)
 
 	if Has(s.options.Mode, Manifest) {
-		s.logger.Info().Str("mode", s.options.Mode.String()).Msg("datasync.sync")
 		if err := s.syncManifest(ctx, conn); err != nil {
 			return err
 		}
