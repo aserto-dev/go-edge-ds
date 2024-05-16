@@ -254,10 +254,6 @@ func updateObjects(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) erro
 
 			c := b.Cursor()
 			for key, value := c.First(); key != nil; key, value = c.Next() {
-				if key == nil {
-					break
-				}
-
 				o2, err := bdb.Unmarshal[dsc2.Object](value)
 				if err != nil {
 					return err
@@ -312,10 +308,6 @@ func updateRelations(path bdb.Path, d ds.Direction) func(*zerolog.Logger, *bolt.
 
 			c := b.Cursor()
 			for key, value := c.First(); key != nil; key, value = c.Next() {
-				if key == nil {
-					break
-				}
-
 				r2, err := bdb.Unmarshal[dsc2.Relation](value)
 				if err != nil {
 					return err
@@ -358,10 +350,6 @@ func relationMap(roDB *bolt.DB) (*migrate.ObjRelSubContainer, error) {
 
 		c := b.Cursor()
 		for key, value := c.First(); key != nil; key, value = c.Next() {
-			if key == nil {
-				break
-			}
-
 			r2, err := bdb.Unmarshal[dsc2.Relation](value)
 			if err != nil {
 				return err

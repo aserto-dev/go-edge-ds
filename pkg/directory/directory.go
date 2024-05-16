@@ -18,8 +18,6 @@ import (
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 
-	dsc "github.com/aserto-dev/go-directory/pkg/datasync"
-
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
 	"github.com/aserto-dev/go-edge-ds/pkg/datasync"
@@ -214,8 +212,8 @@ func (s *Directory) Config() Config {
 	return *s.config
 }
 
-func (s *Directory) DataSyncClient() dsc.Client {
-	return datasync.New(s.logger)
+func (s *Directory) DataSyncClient() datasync.SyncClient {
+	return datasync.New(s.logger, s.store, s.validator)
 }
 
 func validator() (*protovalidate.Validator, error) {

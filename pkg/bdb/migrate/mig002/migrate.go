@@ -116,10 +116,6 @@ func updateModelTypes[T modelType](path bdb.Path, v T) func(*zerolog.Logger, *bo
 
 			c := b.Cursor()
 			for key, value := c.First(); key != nil; key, value = c.Next() {
-				if key == nil {
-					break
-				}
-
 				if err := pb.BufToProto(bytes.NewReader(value), any(v).(proto.Message)); err != nil {
 					return err
 				}
@@ -175,10 +171,6 @@ func updateObjects[T objectType](path bdb.Path, v T) func(*zerolog.Logger, *bolt
 
 			c := b.Cursor()
 			for key, value := c.First(); key != nil; key, value = c.Next() {
-				if key == nil {
-					break
-				}
-
 				if err := pb.BufToProto(bytes.NewReader(value), any(v).(proto.Message)); err != nil {
 					return err
 				}
@@ -222,10 +214,6 @@ func updateRelations[T relationType](path bdb.Path, v T, d ds.Direction) func(*z
 
 			c := b.Cursor()
 			for key, value := c.First(); key != nil; key, value = c.Next() {
-				if key == nil {
-					break
-				}
-
 				if err := pb.BufToProto(bytes.NewReader(value), any(v).(proto.Message)); err != nil {
 					return err
 				}
