@@ -21,16 +21,6 @@ type watermark struct {
 	RelationCount uint                   `json:"rel_count,omitempty"`
 }
 
-type Counter struct {
-	Received  int32 // producer # of incoming messages (Object+Relations)
-	Upserts   int32 // subscriber # of Set requests (Object+Relations)
-	Deletes   int32 // diff # of Delete requests
-	Errors    int32 // product, subscriber, diff # error
-	Manifests int32 // manifest # of Set Manifest
-	Objects   int32 // subscriber # of Set Objects - diff # of Delete Objects
-	Relations int32 // subscriber # of Set Relations - diff # of Delete Relations
-}
-
 func newWatermark() *watermark {
 	return &watermark{
 		LastUpdated:   "",
@@ -93,12 +83,6 @@ func (s *Sync) getWatermark() *watermark {
 	if err := dec.Decode(&wm); err != nil {
 		return newWatermark()
 	}
-
-	// re-calc watermark timestamp value on each full sync.
-	// if Has(s.options.Mode, Full) {
-	// wm.Timestamp.Seconds = 0
-	// wm.Timestamp.Nanos = 0
-	// }
 
 	return &wm
 }

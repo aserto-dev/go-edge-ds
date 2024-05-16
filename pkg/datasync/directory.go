@@ -77,7 +77,7 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 	s.logger.Info().Str(status, started).Msg(syncProducer)
 
-	var recvCtr, objCtr, relCtr int32
+	var recvCtr, objCtr, relCtr atomic.Int32
 
 	defer func() {
 		s.logger.Debug().Msg("producer closed export channel")
@@ -116,16 +116,16 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 			return err
 		}
 
-		atomic.AddInt32(&recvCtr, 1)
+		recvCtr.Add(1)
 
 		switch m := msg.Msg.(type) {
 		case *dse3.ExportResponse_Object:
-			atomic.AddInt32(&objCtr, 1)
+			objCtr.Add(1)
 			if Has(s.options.Mode, Diff) {
 				s.filter.Insert(getObjectKey(m.Object))
 			}
 		case *dse3.ExportResponse_Relation:
-			atomic.AddInt32(&relCtr, 1)
+			relCtr.Add(1)
 			if Has(s.options.Mode, Diff) {
 				s.filter.Insert(getRelationKey(m.Relation))
 			}
@@ -138,9 +138,9 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	s.logger.Info().Str(status, finished).
-		Int32("received", recvCtr).
-		Int32("objects", objCtr).
-		Int32("relations", relCtr).
+		Int32("received", recvCtr.Load()).
+		Int32("objects", objCtr.Load()).
+		Int32("relations", relCtr.Load()).
 		Msg(syncProducer)
 
 	return nil
@@ -149,7 +149,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 func (s *Sync) subscriber(ctx context.Context) error {
 	s.logger.Info().Str(status, started).Msg(syncSubscriber)
 
-	var recvCtr, objCtr, relCtr, errCtr int32
+	var recvCtr, objCtr, relCtr, errCtr atomic.Int32
 	ts := &timestamppb.Timestamp{}
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -166,26 +166,26 @@ func (s *Sync) subscriber(ctx context.Context) error {
 				break
 			}
 
-			atomic.AddInt32(&recvCtr, 1)
+			recvCtr.Add(1)
 
 			switch m := msg.Msg.(type) {
 			case *dse3.ExportResponse_Object:
 				if err := s.objectSetHandler(ctx, tx, m.Object); err == nil {
 					ts = maxTS(ts, m.Object.GetUpdatedAt())
-					atomic.AddInt32(&objCtr, 1)
+					objCtr.Add(1)
 				} else {
 					s.logger.Error().Err(err).Msgf("failed to set object %v", m.Object)
-					atomic.AddInt32(&errCtr, 1)
+					errCtr.Add(1)
 					s.errChan <- err
 				}
 
 			case *dse3.ExportResponse_Relation:
 				if err := s.relationSetHandler(ctx, tx, m.Relation); err == nil {
 					ts = maxTS(ts, m.Relation.GetUpdatedAt())
-					atomic.AddInt32(&relCtr, 1)
+					relCtr.Add(1)
 				} else {
 					s.logger.Error().Err(err).Msgf("failed to set object %v", m.Relation)
-					atomic.AddInt32(&errCtr, 1)
+					errCtr.Add(1)
 					s.errChan <- err
 				}
 
@@ -203,10 +203,10 @@ func (s *Sync) subscriber(ctx context.Context) error {
 	s.tsChan <- ts
 
 	s.logger.Info().Str(status, finished).
-		Int32("received", recvCtr).
-		Int32("objects", objCtr).
-		Int32("relations", relCtr).
-		Int32("errors", errCtr).
+		Int32("received", recvCtr.Load()).
+		Int32("objects", objCtr.Load()).
+		Int32("relations", relCtr.Load()).
+		Int32("errors", errCtr.Load()).
 		Msg(syncSubscriber)
 
 	return nil
@@ -219,7 +219,7 @@ func (s *Sync) diff(ctx context.Context) error {
 		return errors.New("filter not initialized") //nolint:goerr113
 	}
 
-	var objCtr, relCtr, errCtr int32
+	var objCtr, relCtr, errCtr atomic.Int32
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -238,10 +238,10 @@ func (s *Sync) diff(ctx context.Context) error {
 				if !s.filter.Lookup(getObjectKey(obj)) {
 					s.logger.Trace().Str("key", string(getObjectKey(obj))).Msg("delete")
 					if err := s.objectDeleteHandler(ctx, tx, obj); err == nil {
-						atomic.AddInt32(&objCtr, 1)
+						objCtr.Add(1)
 					} else {
 						s.logger.Error().Err(err).Msgf("failed to delete object %v", obj)
-						atomic.AddInt32(&errCtr, 1)
+						errCtr.Add(1)
 						s.errChan <- err
 					}
 				}
@@ -261,11 +261,11 @@ func (s *Sync) diff(ctx context.Context) error {
 				if !s.filter.Lookup(getRelationKey(rel)) {
 					s.logger.Trace().Str("key", string(getRelationKey(rel))).Msg("delete")
 					if err := s.relationDeleteHandler(ctx, tx, rel); err == nil {
-						atomic.AddInt32(&relCtr, 1)
+						relCtr.Add(1)
 					} else {
 						s.logger.Error().Err(err).Msgf("failed to delete relation %v", rel)
 						s.errChan <- err
-						atomic.AddInt32(&errCtr, 1)
+						errCtr.Add(1)
 					}
 				}
 			}
@@ -278,9 +278,9 @@ func (s *Sync) diff(ctx context.Context) error {
 	}
 
 	s.logger.Info().Str(status, finished).
-		Int32("delete_objects", objCtr).
-		Int32("deleted_relations", relCtr).
-		Int32("errors", errCtr).
+		Int32("delete_objects", objCtr.Load()).
+		Int32("deleted_relations", relCtr.Load()).
+		Int32("errors", errCtr.Load()).
 		Msg(syncDifference)
 
 	return nil
