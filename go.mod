@@ -8,7 +8,7 @@ go 1.21
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/aserto-grpc v0.2.2
-	github.com/aserto-dev/azm v0.1.8
+	github.com/aserto-dev/azm v0.1.9
 	github.com/aserto-dev/errors v0.0.7
 	github.com/aserto-dev/go-directory v0.31.3
 	github.com/bufbuild/protovalidate-go v0.6.2
