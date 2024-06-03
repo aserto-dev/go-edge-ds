@@ -4,11 +4,6 @@ import (
 	"context"
 	"net"
 
-	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
-
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
@@ -26,15 +21,7 @@ import (
 )
 
 type TestEdgeClient struct {
-	V2 ClientV2
 	V3 ClientV3
-}
-
-type ClientV2 struct {
-	Reader   dsr2.ReaderClient
-	Writer   dsw2.WriterClient
-	Importer dsi2.ImporterClient
-	Exporter dse2.ExporterClient
 }
 
 type ClientV3 struct {
@@ -61,10 +48,6 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 		grpc.UnaryInterceptor(errMiddleware.Unary()),
 		grpc.StreamInterceptor(errMiddleware.Stream()),
 	)
-	dsr2.RegisterReaderServer(s, edgeDirServer.Reader2())
-	dsw2.RegisterWriterServer(s, edgeDirServer.Writer2())
-	dse2.RegisterExporterServer(s, edgeDirServer.Exporter2())
-	dsi2.RegisterImporterServer(s, edgeDirServer.Importer2())
 
 	dsm3.RegisterModelServer(s, edgeDirServer.Model3())
 	dsr3.RegisterReaderServer(s, edgeDirServer.Reader3())
@@ -84,12 +67,6 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 	}), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 
 	client := TestEdgeClient{
-		V2: ClientV2{
-			Reader:   dsr2.NewReaderClient(conn),
-			Writer:   dsw2.NewWriterClient(conn),
-			Importer: dsi2.NewImporterClient(conn),
-			Exporter: dse2.NewExporterClient(conn),
-		},
 		V3: ClientV3{
 			Model:    dsm3.NewModelClient(conn),
 			Reader:   dsr3.NewReaderClient(conn),

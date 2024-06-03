@@ -22,7 +22,7 @@ import (
 
 const (
 	versionKey  string = "version"
-	baseVersion string = "0.0.0"
+	baseVersion string = "0.0.4"
 )
 
 func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {

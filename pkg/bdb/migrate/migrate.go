@@ -7,9 +7,6 @@ import (
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig001"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig002"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig003"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig004"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig005"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig006"
@@ -25,9 +22,6 @@ type Migration func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 // list of migration steps, keyed by version.
 var migMap = map[string]Migration{
-	mig001.Version: mig001.Migrate,
-	mig002.Version: mig002.Migrate,
-	mig003.Version: mig003.Migrate,
 	mig004.Version: mig004.Migrate,
 	mig005.Version: mig005.Migrate,
 	mig006.Version: mig006.Migrate,

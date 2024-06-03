@@ -6,11 +6,6 @@ import (
 	"sync"
 	"time"
 
-	dse2 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v2"
-	dsi2 "github.com/aserto-dev/go-directory/aserto/directory/importer/v2"
-	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
-
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
@@ -21,7 +16,6 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
 	"github.com/aserto-dev/go-edge-ds/pkg/datasync"
-	v2 "github.com/aserto-dev/go-edge-ds/pkg/directory/v2"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/Masterminds/semver"
@@ -51,10 +45,6 @@ type Directory struct {
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator
-	exporter2 dse2.ExporterServer
-	importer2 dsi2.ImporterServer
-	reader2   dsr2.ReaderServer
-	writer2   dsw2.WriterServer
 	exporter3 dse3.ExporterServer
 	importer3 dsi3.ImporterServer
 	model3    dsm3.ModelServer
@@ -146,13 +136,6 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		importer3: importer3,
 	}
 
-	if config.EnableV2 {
-		dir.exporter2 = v2.NewExporter(logger, store, exporter3)
-		dir.importer2 = v2.NewImporter(logger, store, importer3)
-		dir.reader2 = v2.NewReader(logger, store, reader3)
-		dir.writer2 = v2.NewWriter(logger, store, writer3)
-	}
-
 	if err := store.LoadModel(); err != nil {
 		return nil, err
 	}
@@ -165,22 +148,6 @@ func (s *Directory) Close() {
 		s.store.Close()
 		s.store = nil
 	}
-}
-
-func (s *Directory) Exporter2() dse2.ExporterServer {
-	return s.exporter2
-}
-
-func (s *Directory) Importer2() dsi2.ImporterServer {
-	return s.importer2
-}
-
-func (s *Directory) Reader2() dsr2.ReaderServer {
-	return s.reader2
-}
-
-func (s *Directory) Writer2() dsw2.WriterServer {
-	return s.writer2
 }
 
 func (s *Directory) Exporter3() dse3.ExporterServer {
