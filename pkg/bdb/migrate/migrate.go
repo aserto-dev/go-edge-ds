@@ -12,7 +12,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig006"
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"

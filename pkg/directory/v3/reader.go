@@ -141,6 +141,10 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	}
 
 	if req.GetObjectType() != "" {
+		if err := ds.ObjectSelector(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType}).Validate(s.store.MC()); err != nil {
+			return resp, err
+		}
+
 		opts = append(opts, bdb.WithKeyFilter(req.GetObjectType()+ds.TypeIDSeparator))
 	}
 

@@ -18,7 +18,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/datasync"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"

@@ -16,7 +16,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 	"github.com/rs/zerolog"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	bolt "go.etcd.io/bbolt"
 )
 

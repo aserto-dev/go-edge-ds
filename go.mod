@@ -8,7 +8,7 @@ toolchain go1.22.2
 // replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.10
 	github.com/aserto-dev/errors v0.0.8
