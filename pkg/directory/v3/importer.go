@@ -91,6 +91,12 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 			return err
 		}
 
+		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
+			err = s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
+			res.Object = updateCounter(res.Object, req.OpCode, err)
+			return err
+		}
+
 		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
 
 	case *dsi3.ImportRequest_Relation:
@@ -104,6 +110,10 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
 			res.Relation = updateCounter(res.Relation, req.OpCode, err)
 			return err
+		}
+
+		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
+			return derr.ErrInvalidOpCode.Msgf("%s for type relation", req.OpCode.Enum().String)
 		}
 
 		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
@@ -170,6 +180,68 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
 		return derr.ErrInvalidObject.Msg("delete")
+	}
+
+	return nil
+}
+
+func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
+	s.logger.Debug().Interface("object", req).Msg("ImportObject")
+
+	if req == nil {
+		return derr.ErrInvalidObject.Msg("nil")
+	}
+
+	if err := s.Validate(req); err != nil {
+		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	obj := ds.Object(req)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		return err
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
+		return derr.ErrInvalidObject.Msg("delete")
+	}
+
+	{
+		// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		if err != nil {
+			return err
+		}
+
+		for iter.Next() {
+			rel := ds.Relation(iter.Value())
+			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+				return err
+			}
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+				return err
+			}
+		}
+	}
+
+	{
+		// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		if err != nil {
+			return err
+		}
+
+		for iter.Next() {
+			rel := ds.Relation(iter.Value())
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+				return err
+			}
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil

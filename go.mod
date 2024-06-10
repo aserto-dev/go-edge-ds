@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.2
 
 // replace github.com/aserto-dev/azm => ../azm
-// replace github.com/aserto-dev/go-directory => ../go-directory
+replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
