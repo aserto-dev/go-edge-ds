@@ -5,14 +5,14 @@ go 1.22
 toolchain go1.22.2
 
 // replace github.com/aserto-dev/azm => ../azm
-replace github.com/aserto-dev/go-directory => ../go-directory
+// replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver v1.5.0
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.10
 	github.com/aserto-dev/errors v0.0.8
-	github.com/aserto-dev/go-directory v0.31.4
+	github.com/aserto-dev/go-directory v0.31.4-0.20240610180806-a2f4e47efed7
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
