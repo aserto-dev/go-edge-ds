@@ -247,6 +247,68 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 	return nil
 }
 
+func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Object) error {
+	s.logger.Debug().Interface("object", req).Msg("ImportObject")
+
+	if req == nil {
+		return derr.ErrInvalidObject.Msg("nil")
+	}
+
+	if err := s.Validate(req); err != nil {
+		return derr.ErrProtoValidate.Msg(err.Error())
+	}
+
+	obj := ds.Object(req)
+	if err := obj.Validate(s.store.MC()); err != nil {
+		return err
+	}
+
+	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
+		return derr.ErrInvalidObject.Msg("delete")
+	}
+
+	{
+		// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		if err != nil {
+			return err
+		}
+
+		for iter.Next() {
+			rel := ds.Relation(iter.Value())
+			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+				return err
+			}
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+				return err
+			}
+		}
+	}
+
+	{
+		// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		if err != nil {
+			return err
+		}
+
+		for iter.Next() {
+			rel := ds.Relation(iter.Value())
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+				return err
+			}
+
+			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Relation) error {
 	s.logger.Debug().Interface("relation", req).Msg("ImportRelation")
 
