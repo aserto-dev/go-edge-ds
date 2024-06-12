@@ -97,7 +97,7 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 			return err
 		}
 
-		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.String(), int32(req.OpCode))
 
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
@@ -113,10 +113,10 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
-			return derr.ErrInvalidOpCode.Msgf("%s for type relation", req.OpCode.Enum().String)
+			return derr.ErrInvalidOpCode.Msgf("%s for type relation", req.OpCode.String())
 		}
 
-		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.Enum().String, int32(req.OpCode))
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.String(), int32(req.OpCode))
 
 	default:
 		return derr.ErrUnknown.Msgf("import request")
