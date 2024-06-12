@@ -12,7 +12,7 @@ require (
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.10
 	github.com/aserto-dev/errors v0.0.8
-	github.com/aserto-dev/go-directory v0.31.4-0.20240610180806-a2f4e47efed7
+	github.com/aserto-dev/go-directory v0.31.5
 	github.com/bufbuild/protovalidate-go v0.6.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
@@ -27,7 +27,7 @@ require (
 	go.etcd.io/bbolt v1.3.10
 	golang.org/x/sync v0.7.0
 	google.golang.org/grpc v1.64.0
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/protobuf v1.34.2
 )
 
 require (
