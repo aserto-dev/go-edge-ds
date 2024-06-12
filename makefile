@@ -6,13 +6,12 @@ ERR_COLOR  		:= \033[31;01m
 WARN_COLOR 		:= \033[36;01m
 ATTN_COLOR 		:= \033[33;01m
 
-GOOS			:= $(shell go env GOOS)
-GOARCH			:= $(shell go env GOARCH)
-GOPRIVATE		:= "github.com/aserto-dev"
+GOOS			    := $(shell go env GOOS)
+GOARCH        := $(shell go env GOARCH)
+GOPRIVATE     := "github.com/aserto-dev"
 DOCKER_BUILDKIT	:= 1
 
-BIN_DIR			:= ./bin
-EXT_DIR			:= ./.ext
+EXT_DIR			  := ./.ext
 EXT_BIN_DIR		:= ${EXT_DIR}/bin
 EXT_TMP_DIR		:= ${EXT_DIR}/tmp
 
@@ -23,19 +22,12 @@ GOLANGCI-LINT_VERSION := 1.56.2
 GORELEASER_VERSION := 1.24.0
 WIRE_VERSION	:= 0.6.0
 
-BUF_USER		:= $(shell ${EXT_BIN_DIR}/vault kv get -field ASERTO_BUF_USER kv/buf.build)
-BUF_TOKEN		:= $(shell ${EXT_BIN_DIR}/vault kv get -field ASERTO_BUF_TOKEN kv/buf.build)
-BUF_REPO		:= "buf.build/aserto-dev/directory"
-BUF_LATEST		:= $(shell BUF_BETA_SUPPRESS_WARNINGS=1 ${EXT_BIN_DIR}/buf beta registry tag list buf.build/aserto-dev/directory --format json --reverse | jq -r '.results[0].name')
-BUF_DEV_IMAGE	:= "../pb-directory/bin/directory.bin"
-BUF_VERSION 	:= 1.30.0
-
 RELEASE_TAG		:= $$(svu)
 
 .DEFAULT_GOAL 	:= build
 
 .PHONY: deps
-deps: info install-vault install-buf install-svu install-goreleaser install-golangci-lint install-gotestsum install-wire 
+deps: info install-vault install-svu install-goreleaser install-golangci-lint install-gotestsum
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 
 .PHONY: build
@@ -68,18 +60,10 @@ lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@${EXT_BIN_DIR}/golangci-lint run --config ${PWD}/.golangci.yaml
 
-# github.com/aserto-dev/topaz/pkg/app/tests/$PKGS
-PKGS = authz builtin manifest policy query
 .PHONY: test
-test: $(PKGS) test-xdg
-$(PKGS):
-	@echo -e "$(ATTN_COLOR)==> test github.com/aserto-dev/topaz/pkg/app/tests/$@/... $(NO_COLOR)"
-	@${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -parallel=1 -v -coverprofile=cover.out -coverpkg=./... github.com/aserto-dev/topaz/pkg/app/tests/$@/...;
-
-.PHONY: test-xdg
-test-xdg:
-	@echo -e "$(ATTN_COLOR)==> test github.com/aserto-dev/topaz/pkg/cli/xdg/... $(NO_COLOR)"
-	@${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -parallel=1 -v -coverprofile=cover.out -coverpkg=./... github.com/adrg/xdg/...;
+test:
+	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@${EXT_BIN_DIR}/gotestsum --format short-verbose -- -count=1 -parallel=1 -v -coverprofile=cover.out -coverpkg=./... ./...;
 
 .PHONY: write-version
 write-version:
@@ -91,60 +75,15 @@ vault-login:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@vault login -method=github token=$$(gh auth token)
 
-.PHONY: buf-login
-buf-login:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@echo ${BUF_TOKEN} | ${EXT_BIN_DIR}/buf registry login --username ${BUF_USER} --token-stdin
-
-.PHONY: buf-lint
-buf-lint:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf lint proto
-
-.PHONY: buf-breaking
-buf-breaking:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf breaking proto --against "https://github.com/d5s-io/directory.git#branch=main"
-
-.PHONY: buf-build
-buf-build: ${BIN_DIR}
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf build proto --output ${BIN_DIR}/directory.bin
-
-.PHONY: buf-push
-buf-push:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf push proto --tag ${RELEASE_TAG}
-
-.PHONY: buf-mod-update
-buf-mod-update:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update proto
-
-.PHONY: buf-generate
-buf-generate:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update .
-	@${EXT_BIN_DIR}/buf generate ${BUF_REPO}:${BUF_LATEST}
-
-.PHONY: buf-generate-dev
-buf-generate-dev:
-	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@${EXT_BIN_DIR}/buf mod update .
-	@${EXT_BIN_DIR}/buf generate "../pb-directory/bin/directory.bin"
-
 .PHONY: info
 info:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
 	@echo "GOOS:        ${GOOS}"
 	@echo "GOARCH:      ${GOARCH}"
-	@echo "BIN_DIR:     ${BIN_DIR}"
 	@echo "EXT_DIR:     ${EXT_DIR}"
 	@echo "EXT_BIN_DIR: ${EXT_BIN_DIR}"
 	@echo "EXT_TMP_DIR: ${EXT_TMP_DIR}"
 	@echo "RELEASE_TAG: ${RELEASE_TAG}"
-	@echo "BUF_REPO:    ${BUF_REPO}"
-	@echo "BUF_LATEST:  ${BUF_LATEST}"
 
 .PHONY: install-vault
 install-vault: ${EXT_BIN_DIR} ${EXT_TMP_DIR}

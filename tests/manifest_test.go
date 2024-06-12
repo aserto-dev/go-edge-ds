@@ -27,7 +27,7 @@ import (
 const blockSize = 1024 // test with 1KiB block size to exercise chunking.
 
 func TestManifestV2(t *testing.T) {
-	client, closer := testInit(t)
+	client, closer := testInit()
 	t.Cleanup(closer)
 
 	manifest, err := os.ReadFile("./manifest_v2_test.yaml")
@@ -39,7 +39,7 @@ func TestManifestV2(t *testing.T) {
 }
 
 func TestManifestV3(t *testing.T) {
-	client, closer := testInit(t)
+	client, closer := testInit()
 	t.Cleanup(closer)
 
 	manifest, err := os.ReadFile("./manifest_v3_test.yaml")
@@ -52,7 +52,7 @@ func TestManifestV3(t *testing.T) {
 }
 
 func TestManifestDiff(t *testing.T) {
-	client, closer := testInit(t)
+	client, closer := testInit()
 	t.Cleanup(closer)
 
 	m1, err := os.ReadFile("./manifest_v3_test.yaml")

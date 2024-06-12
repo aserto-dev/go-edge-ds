@@ -8,7 +8,7 @@ toolchain go1.22.2
 // replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
-	github.com/Masterminds/semver v1.5.0
+	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.10
 	github.com/aserto-dev/errors v0.0.8
@@ -18,7 +18,7 @@ require (
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/homeport/dyff v1.7.1
+	github.com/homeport/dyff v1.8.0
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.33.0
