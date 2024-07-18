@@ -94,7 +94,7 @@ func (s *Sync) Run(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	if Has(s.options.Mode, Full|Diff|Watermark) {
-		if err := s.syncDirectory(ctx, conn, s.options.Mode); err != nil {
+		if err := s.syncDirectory(ctx, conn); err != nil {
 			return err
 		}
 	}
@@ -134,6 +134,17 @@ func (m Mode) String() string {
 	str := []string{}
 	for k, v := range modes {
 		if Has(m, Mode(k)) {
+			str = append(str, v)
+		}
+	}
+	return strings.Join(str, "|")
+}
+
+func (m Mode) RunMode() string {
+	mode := Clear(m, Manifest)
+	str := []string{}
+	for k, v := range modes {
+		if Has(mode, Mode(k)) {
 			str = append(str, v)
 		}
 	}
