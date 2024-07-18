@@ -11,6 +11,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.11
+	github.com/aserto-dev/azm v0.1.11
 	github.com/aserto-dev/errors v0.0.8
 	github.com/aserto-dev/go-directory v0.31.5
 	github.com/bufbuild/protovalidate-go v0.6.3
@@ -31,6 +32,7 @@ require (
 )
 
 require (
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
@@ -62,6 +64,13 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/term v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240624140628-dc46fd24d27d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240624140628-dc46fd24d27d // indirect
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/sys v0.21.0 // indirect
