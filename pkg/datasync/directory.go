@@ -20,9 +20,9 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
+func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn, mode Mode) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.String()).Msg(syncRun)
+	s.logger.Info().Str(status, started).Str("mode", mode.String()).Msg(syncRun)
 
 	defer func() {
 		close(s.errChan)

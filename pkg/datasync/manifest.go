@@ -24,7 +24,7 @@ import (
 
 func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.String()).Msg(syncManifest)
+	s.logger.Info().Str(status, started).Str("mode", Manifest.String()).Msg(syncManifest)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -73,7 +73,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	runEndTime := time.Now().UTC()
-	s.logger.Info().Str(status, finished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
+	s.logger.Info().Str(status, finished).Str("mode", Manifest.String()).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
 
 	return s.store.MC().UpdateModel(m)
 }

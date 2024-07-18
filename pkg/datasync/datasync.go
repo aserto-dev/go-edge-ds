@@ -94,7 +94,7 @@ func (s *Sync) Run(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	if Has(s.options.Mode, Full|Diff|Watermark) {
-		if err := s.syncDirectory(ctx, conn); err != nil {
+		if err := s.syncDirectory(ctx, conn, s.options.Mode); err != nil {
 			return err
 		}
 	}
