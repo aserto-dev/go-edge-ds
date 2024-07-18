@@ -2,7 +2,7 @@ module github.com/aserto-dev/go-edge-ds
 
 go 1.22
 
-toolchain go1.22.2
+toolchain go1.22.5
 
 // replace github.com/aserto-dev/azm => ../azm
 // replace github.com/aserto-dev/go-directory => ../go-directory
@@ -10,10 +10,10 @@ toolchain go1.22.2
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aserto-dev/aserto-grpc v0.2.3
-	github.com/aserto-dev/azm v0.1.10
+	github.com/aserto-dev/azm v0.1.11
 	github.com/aserto-dev/errors v0.0.8
 	github.com/aserto-dev/go-directory v0.31.5
-	github.com/bufbuild/protovalidate-go v0.6.2
+	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.6.0
@@ -22,16 +22,16 @@ require (
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.33.0
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.46.0
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/bbolt v1.3.10
 	golang.org/x/sync v0.7.0
-	google.golang.org/grpc v1.64.0
+	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.1-20240508200655-46a4cf4ba109.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.34.2-20240508200655-46a4cf4ba109.2 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/aserto-dev/header v0.0.7 // indirect
@@ -62,13 +62,13 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/exp v0.0.0-20240525044651-4c93da0ed11d // indirect
-	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/term v0.20.0 // indirect
-	golang.org/x/text v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8 // indirect
+	golang.org/x/net v0.26.0 // indirect
+	golang.org/x/sys v0.21.0 // indirect
+	golang.org/x/term v0.21.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240624140628-dc46fd24d27d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240624140628-dc46fd24d27d // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
