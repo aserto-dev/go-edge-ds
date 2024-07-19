@@ -124,16 +124,27 @@ func Toggle(b, flag Mode) Mode { return b ^ flag }
 func Has(b, flag Mode) bool    { return b&flag != 0 }
 
 var modes = map[int32]string{
-	int32(Manifest):  "manifest",
-	int32(Full):      "full",
-	int32(Diff):      "diff",
-	int32(Watermark): "watermark",
+	int32(Manifest):  "MANIFEST",
+	int32(Full):      "FULL",
+	int32(Diff):      "DIFF",
+	int32(Watermark): "WATERMARK",
 }
 
 func (m Mode) String() string {
 	str := []string{}
 	for k, v := range modes {
 		if Has(m, Mode(k)) {
+			str = append(str, v)
+		}
+	}
+	return strings.Join(str, "|")
+}
+
+func (m Mode) RunMode() string {
+	mode := Clear(m, Manifest)
+	str := []string{}
+	for k, v := range modes {
+		if Has(mode, Mode(k)) {
 			str = append(str, v)
 		}
 	}

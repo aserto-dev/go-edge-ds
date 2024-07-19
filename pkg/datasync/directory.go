@@ -22,7 +22,7 @@ import (
 
 func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.String()).Msg(syncRun)
+	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.RunMode()).Msg(syncRun)
 
 	defer func() {
 		close(s.errChan)
