@@ -79,7 +79,6 @@ func CreateBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 			}
 
 			return nil
-
 		}); err != nil {
 			return err
 		}
@@ -119,7 +118,6 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 			default:
 				return nil
 			}
-
 		}); err != nil {
 			return err
 		}
@@ -210,7 +208,7 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 		}
 	}
 
-	db, err := bolt.Open(cfg.DBPath, 0644, &bolt.Options{
+	db, err := bolt.Open(cfg.DBPath, 0o644, &bolt.Options{
 		Timeout: cfg.RequestTimeout,
 	})
 	if err != nil {
@@ -224,7 +222,7 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 }
 
 func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) {
-	db, err := bolt.Open(BackupFilename(cfg.DBPath, version), 0644, &bolt.Options{
+	db, err := bolt.Open(BackupFilename(cfg.DBPath, version), 0o644, &bolt.Options{
 		ReadOnly: true,
 		Timeout:  cfg.RequestTimeout,
 	})

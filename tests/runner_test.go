@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	logger := zerolog.New(io.Discard)
 
 	dirPath := os.TempDir()
-	if err := os.MkdirAll(dirPath, 0700); err != nil {
+	if err := os.MkdirAll(dirPath, 0o700); err != nil {
 		panic(err)
 	}
 
@@ -84,7 +84,6 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			}
 			runTestCase(ctx, t, tc)
 		})
-
 	}
 }
 

@@ -328,7 +328,6 @@ var relationTestCasesV2 = []*TestCase{
 				assert.NotNil(t, resp)
 			}
 			return func(proto.Message) {}
-
 		},
 	},
 }

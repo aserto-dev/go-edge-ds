@@ -153,7 +153,7 @@ func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testi
 		}
 
 		tempManifest := path.Join(os.TempDir(), "manifest.yaml")
-		if err := os.WriteFile(tempManifest, data.Bytes(), 0600); err != nil {
+		if err := os.WriteFile(tempManifest, data.Bytes(), 0o600); err != nil {
 			require.NoError(t, err)
 		}
 
@@ -210,7 +210,7 @@ func testGetModel(client *server.TestEdgeClient) func(*testing.T) {
 				}
 
 				tempModel := path.Join(os.TempDir(), "model.json")
-				if err := os.WriteFile(tempModel, buf.Bytes(), 0600); err != nil {
+				if err := os.WriteFile(tempModel, buf.Bytes(), 0o600); err != nil {
 					require.NoError(t, err)
 				}
 

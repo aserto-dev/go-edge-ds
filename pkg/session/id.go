@@ -12,9 +12,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-var (
-	ErrMissingHeader = errors.New("missing required header")
-)
+var ErrMissingHeader = errors.New("missing required header")
 
 type HeaderMiddleware struct {
 	DisableValidation bool

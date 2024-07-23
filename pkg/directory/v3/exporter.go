@@ -37,7 +37,6 @@ func (s *Exporter) Export(req *dse3.ExportRequest, stream dse3.Exporter_ExportSe
 	logger := s.logger.With().Str("method", "Export").Interface("req", req).Logger()
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-
 		// stats mode, short circuits when enabled
 		if req.Options&uint32(dse3.Option_OPTION_STATS) != 0 {
 			if err := exportStats(tx, stream, req.Options); err != nil {

@@ -22,7 +22,7 @@ func DirExists(path string) bool {
 
 func EnsureDirPath(path string) error {
 	if !DirExists(path) {
-		return os.MkdirAll(path, 0700)
+		return os.MkdirAll(path, 0o700)
 	}
 	return nil
 }
