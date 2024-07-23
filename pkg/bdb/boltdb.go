@@ -66,7 +66,7 @@ func (s *BoltDB) Open() error {
 		}
 	}
 
-	db, err := bolt.Open(s.config.DBPath, 0644, &bolt.Options{
+	db, err := bolt.Open(s.config.DBPath, 0o644, &bolt.Options{
 		Timeout:      s.config.RequestTimeout,
 		FreelistType: bolt.FreelistArrayType, // WARNING: using bolt.FreelistMapType resulted store corruptions in the migration path
 	})

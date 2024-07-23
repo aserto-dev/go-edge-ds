@@ -76,7 +76,6 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 }
 
 func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
-
 	switch m := req.Msg.(type) {
 	case *dsi3.ImportRequest_Object:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {

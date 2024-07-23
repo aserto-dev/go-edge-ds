@@ -103,7 +103,8 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout,
 		MaxBatchSize:   bolt.DefaultMaxBatchSize,
-		MaxBatchDelay:  bolt.DefaultMaxBatchDelay},
+		MaxBatchDelay:  bolt.DefaultMaxBatchDelay,
+	},
 		&newLogger,
 	)
 	if err != nil {
