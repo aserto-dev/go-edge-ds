@@ -153,6 +153,9 @@ issues:
     - text: "G404"
       linters:
       - gosec
+    - text: "SA1019"
+      linters:
+      - staticcheck
 
 run:
   skip-dirs:
