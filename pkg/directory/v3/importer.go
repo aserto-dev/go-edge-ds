@@ -11,6 +11,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/bufbuild/protovalidate-go"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/google/uuid"
@@ -67,7 +68,23 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 			}
 
 			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
-				s.logger.Err(err).Msg("cannot handle load request")
+				if stat, ok := status.FromError(err); ok {
+					status := &dsi3.ImportStatus{
+						Code: uint32(stat.Code()),
+						Msg:  stat.Message(),
+					}
+
+					switch m := req.Msg.(type) {
+					case *dsi3.ImportRequest_Object:
+						status.Req = &dsi3.ImportStatus_Object{Object: m.Object}
+					case *dsi3.ImportRequest_Relation:
+						status.Req = &dsi3.ImportStatus_Relation{Relation: m.Relation}
+					}
+
+					if err := stream.Send(&dsi3.ImportResponse{Status: status}); err != nil {
+						s.logger.Err(err).Msg("failed to send import status")
+					}
+				}
 			}
 		}
 	})
@@ -130,13 +147,11 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 	}
 
 	if err := s.Validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		// The object violates the model.
 		return err
 	}
 
@@ -169,7 +184,7 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
@@ -192,7 +207,7 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
@@ -254,8 +269,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	}
 
 	if err := s.Validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	rel := ds.Relation(req)
@@ -296,7 +310,7 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	rel := ds.Relation(req)
@@ -326,4 +340,10 @@ func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.I
 		c.Error++
 	}
 	return c
+}
+
+func protoValidateError(e error) error {
+	err := derr.ErrProtoValidate
+	err.Message = e.Error()
+	return err
 }
