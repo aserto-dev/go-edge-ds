@@ -9,12 +9,10 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/aserto-dev/go-edge-ds/pkg/session"
 	"github.com/bufbuild/protovalidate-go"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
@@ -23,13 +21,23 @@ type Importer struct {
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator
+	counter   map[string]*dsi3.ImportCounter
 }
+
+const (
+	object   string = "object"
+	relation string = "relation"
+)
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Importer {
 	return &Importer{
 		logger:    logger,
 		store:     store,
 		validator: validator,
+		counter: map[string]*dsi3.ImportCounter{
+			object:   {Type: object},
+			relation: {Type: relation},
+		},
 	}
 }
 
@@ -38,12 +46,7 @@ func (s *Importer) Validate(msg proto.Message) error {
 }
 
 func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
-	res := &dsi3.ImportResponse{
-		Object:   &dsi3.ImportCounter{},
-		Relation: &dsi3.ImportCounter{},
-	}
-
-	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
+	ctx := stream.Context()
 
 	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
 	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
@@ -58,8 +61,15 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Trace().Interface("res", res).Msg("import stream EOF")
-				return stream.Send(res)
+				s.logger.Trace().Msg("import stream EOF")
+				for _, ctr := range s.counter {
+					_ = stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Counter{Counter: ctr}})
+				}
+				// backwards compatible response.
+				return stream.Send(&dsi3.ImportResponse{
+					Object:   s.counter[object],
+					Relation: s.counter[relation],
+				})
 			}
 
 			if err != nil {
@@ -67,21 +77,15 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 				continue
 			}
 
-			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
+			if err := s.handleImportRequest(ctx, tx, req); err != nil {
 				if stat, ok := status.FromError(err); ok {
 					status := &dsi3.ImportStatus{
 						Code: uint32(stat.Code()),
 						Msg:  stat.Message(),
+						Req:  req,
 					}
 
-					switch m := req.Msg.(type) {
-					case *dsi3.ImportRequest_Object:
-						status.Req = &dsi3.ImportStatus_Object{Object: m.Object}
-					case *dsi3.ImportRequest_Relation:
-						status.Req = &dsi3.ImportStatus_Relation{Relation: m.Relation}
-					}
-
-					if err := stream.Send(&dsi3.ImportResponse{Status: status}); err != nil {
+					if err := stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Status{Status: status}}); err != nil {
 						s.logger.Err(err).Msg("failed to send import status")
 					}
 				}
@@ -92,24 +96,24 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest) (err error) {
 	switch m := req.Msg.(type) {
 	case *dsi3.ImportRequest_Object:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.objectSetHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			s.counter[object] = updateCounter(s.counter[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.objectDeleteHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			s.counter[object] = updateCounter(s.counter[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
 			err = s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			s.counter[object] = updateCounter(s.counter[object], req.OpCode, err)
 			return err
 		}
 
@@ -118,13 +122,13 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.relationSetHandler(ctx, tx, m.Relation)
-			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			s.counter[relation] = updateCounter(s.counter[relation], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
-			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			s.counter[relation] = updateCounter(s.counter[relation], req.OpCode, err)
 			return err
 		}
 

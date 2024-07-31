@@ -9,7 +9,7 @@ require (
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.12-0.20240730215459-7e8c5ea3c653
 	github.com/aserto-dev/errors v0.0.10-0.20240730214636-e65200cadb25
-	github.com/aserto-dev/go-directory v0.31.7
+	github.com/aserto-dev/go-directory v0.31.8-0.20240731170913-129bd7cb29a7
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
