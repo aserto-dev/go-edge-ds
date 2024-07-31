@@ -79,7 +79,7 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 				continue
 			}
 
-			if err := s.handleImportRequest(ctx, tx, req); err != nil {
+			if err := s.handleImportRequest(ctx, tx, req, ctr); err != nil {
 				if stat, ok := status.FromError(err); ok {
 					status := &dsi3.ImportStatus{
 						Code: uint32(stat.Code()),
