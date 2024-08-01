@@ -85,7 +85,7 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 				if stat, ok := status.FromError(err); ok {
 					status := &dsi3.ImportStatus{
 						Code: uint32(stat.Code()),
-						Msg:  stat.Message(),
+						Msg:  err.Error(),
 						Req:  req,
 					}
 
