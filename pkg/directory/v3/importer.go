@@ -282,7 +282,6 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
-		s.logger.Info().Str("msg", err.Error()).Msg("err")
 		return err
 	}
 
