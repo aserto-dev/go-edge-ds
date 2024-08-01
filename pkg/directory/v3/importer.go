@@ -339,14 +339,18 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 
 func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.ImportCounter {
 	c.Recv++
-	if opCode == dsi3.Opcode_OPCODE_SET {
+
+	switch {
+	case err != nil:
+		c.Error++
+	case opCode == dsi3.Opcode_OPCODE_SET:
 		c.Set++
-	} else if opCode == dsi3.Opcode_OPCODE_DELETE {
+	case opCode == dsi3.Opcode_OPCODE_DELETE:
+		c.Delete++
+	case opCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS:
 		c.Delete++
 	}
-	if err != nil {
-		c.Error++
-	}
+
 	return c
 }
 
