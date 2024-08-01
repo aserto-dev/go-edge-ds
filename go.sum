@@ -14,10 +14,14 @@ github.com/aserto-dev/azm v0.1.11 h1:cYpIsmeI7DpwnjqKTKUlz4CqhODpx+zncM97G0kSYu8
 github.com/aserto-dev/azm v0.1.11/go.mod h1:p0O2nWcmIsGphsST7QrGzOIalafw6SOtNQeyhN2TnUo=
 github.com/aserto-dev/azm v0.1.12-0.20240730215459-7e8c5ea3c653 h1:R87gsk0Lv+yLb4u7eiA1e2lUT+tpTUpL+hp5gd5ewoM=
 github.com/aserto-dev/azm v0.1.12-0.20240730215459-7e8c5ea3c653/go.mod h1:p0O2nWcmIsGphsST7QrGzOIalafw6SOtNQeyhN2TnUo=
+github.com/aserto-dev/azm v0.1.12 h1:Zxp/Bz172L3t3ZmQ8q5ylDmovDQV+ifbTWjKo9FIIG0=
+github.com/aserto-dev/azm v0.1.12/go.mod h1:jHU+j/Mgmvt8K5iB6/LbEYF0tG1JCwKRgNOu2Kvfyfo=
 github.com/aserto-dev/errors v0.0.9 h1:Pi6UT/v+0DYc25AKVFgazkz7Sua3zyU3KWl5VsoRPKk=
 github.com/aserto-dev/errors v0.0.9/go.mod h1:mk3xXE6e9cA5NFk2B3KdNuUcSR+dVGbIlvbaT5ZTOtQ=
 github.com/aserto-dev/errors v0.0.10-0.20240730214636-e65200cadb25 h1:TDxwN57bCXXQ11+YTSDYJNduiRjjz12HiSDsxkLeENI=
 github.com/aserto-dev/errors v0.0.10-0.20240730214636-e65200cadb25/go.mod h1:mk3xXE6e9cA5NFk2B3KdNuUcSR+dVGbIlvbaT5ZTOtQ=
+github.com/aserto-dev/errors v0.0.10 h1:tNf2imOyQJfBfYw1dkbsQfS58FKnql2W4XInGqCqhPk=
+github.com/aserto-dev/errors v0.0.10/go.mod h1:9g5ofm7u5rl9LKPh7WQvZZZ22tEYOiDmW+bwFQwIshA=
 github.com/aserto-dev/go-directory v0.31.7 h1:cK2XKOhXe7rMqAvRmYzXh9eZbcjqD1qNAvhbsJtKP9s=
 github.com/aserto-dev/go-directory v0.31.7/go.mod h1:T125gQBcPXrLUh7bMPFHzsXRHUnZb++DzhPk8o8tc4k=
 github.com/aserto-dev/go-directory v0.31.8-0.20240731170913-129bd7cb29a7 h1:2CbLKZtPgtA8Z+lzptC4hzVakWucT9Cdapb9sChIVUI=
@@ -96,6 +100,8 @@ github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 h1:UH//fgunKIs4JdUbpDl1VZCDa
 github.com/grpc-ecosystem/go-grpc-middleware v1.4.0/go.mod h1:g5qyo/la0ALbONm6Vbp88Yd8NsDy6rZz+RcrMPxvld8=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 h1:bkypFPDjIYGfCYD5mRBvpqxfYX1YCS1PXdKYWi8FsN0=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0/go.mod h1:P+Lt/0by1T8bfcF3z737NnSbmxQAppXMRziHUxPOC8k=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 h1:CWyXh/jylQWp2dtiV33mY4iSSp6yf4lmn+c7/tN+ObI=
+github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0/go.mod h1:nCLIt0w3Ept2NwF8ThLmrppXsfT07oC8k0XNDxd8sVU=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY2I=
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
@@ -258,8 +264,12 @@ google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98
 google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215/go.mod h1:55QSHmfGQM9UVYDPBsyGGes0y52j32PQ3BqQfXhyH3c=
 google.golang.org/genproto/googleapis/api v0.0.0-20240722135656-d784300faade h1:WxZOF2yayUHpHSbUE6NMzumUzBxYc3YGwo0YHnbzsJY=
 google.golang.org/genproto/googleapis/api v0.0.0-20240722135656-d784300faade/go.mod h1:mw8MG/Qz5wfgYr6VqVCiZcHe/GJEfI+oGGDCohaVgB0=
+google.golang.org/genproto/googleapis/api v0.0.0-20240723171418-e6d459c13d2a h1:YIa/rzVqMEokBkPtydCkx1VLmv3An1Uw7w1P1m6EhOY=
+google.golang.org/genproto/googleapis/api v0.0.0-20240723171418-e6d459c13d2a/go.mod h1:AHT0dDg3SoMOgZGnZk29b5xTbPHMoEC8qthmBLJCpys=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade h1:oCRSWfwGXQsqlVdErcyTt4A93Y8fo0/9D4b1gnI++qo=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade/go.mod h1:Ue6ibwXGpU+dqIcODieyLOcgj7z8+IcskoNIgZxtrFY=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf h1:liao9UHurZLtiEwBgT9LMOnKYsHze6eA6w1KQCMVN2Q=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf/go.mod h1:Ue6ibwXGpU+dqIcODieyLOcgj7z8+IcskoNIgZxtrFY=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.23.0/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyacEbxg=
 google.golang.org/grpc v1.25.1/go.mod h1:c3i+UQWmh7LiEpx4sFZnkU36qjEYZ0imhYfXVyQciAY=

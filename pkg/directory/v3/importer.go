@@ -2,6 +2,8 @@ package v3
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
@@ -280,6 +282,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
+		s.logger.Info().Str("msg", err.Error()).Msg("err")
 		return err
 	}
 
@@ -350,6 +353,16 @@ func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.I
 
 func protoValidateError(e error) error {
 	err := derr.ErrProtoValidate
+
+	var valErr *protovalidate.ValidationError
+	if ok := errors.As(e, &valErr); ok {
+		err.Message = fmt.Sprintf("validation error: %s (%s)",
+			valErr.Violations[0].GetConstraintId(),
+			valErr.Violations[0].GetMessage(),
+		)
+		return err
+	}
+
 	err.Message = e.Error()
 	return err
 }
