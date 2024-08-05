@@ -2,20 +2,22 @@ package v3
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"io"
 
+	aerr "github.com/aserto-dev/errors"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/aserto-dev/go-edge-ds/pkg/session"
-	"github.com/bufbuild/protovalidate-go"
-	"google.golang.org/protobuf/proto"
 
-	"github.com/google/uuid"
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type Importer struct {
@@ -23,6 +25,13 @@ type Importer struct {
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator
 }
+
+const (
+	object   string = "object"
+	relation string = "relation"
+)
+
+type counters map[string]*dsi3.ImportCounter
 
 func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Importer {
 	return &Importer{
@@ -37,12 +46,12 @@ func (s *Importer) Validate(msg proto.Message) error {
 }
 
 func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
-	res := &dsi3.ImportResponse{
-		Object:   &dsi3.ImportCounter{},
-		Relation: &dsi3.ImportCounter{},
-	}
+	ctx := stream.Context()
 
-	ctx := session.ContextWithSessionID(stream.Context(), uuid.NewString())
+	ctr := counters{
+		object:   {Type: object},
+		relation: {Type: relation},
+	}
 
 	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
 	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
@@ -57,8 +66,15 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 
 			req, err := stream.Recv()
 			if err == io.EOF {
-				s.logger.Trace().Interface("res", res).Msg("import stream EOF")
-				return stream.Send(res)
+				s.logger.Trace().Msg("import stream EOF")
+				for _, c := range ctr {
+					_ = stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Counter{Counter: c}})
+				}
+				// backwards compatible response.
+				return stream.Send(&dsi3.ImportResponse{
+					Object:   ctr[object],
+					Relation: ctr[relation],
+				})
 			}
 
 			if err != nil {
@@ -66,8 +82,18 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 				continue
 			}
 
-			if err := s.handleImportRequest(ctx, tx, req, res); err != nil {
-				s.logger.Err(err).Msg("cannot handle load request")
+			if err := s.handleImportRequest(ctx, tx, req, ctr); err != nil {
+				if stat, ok := status.FromError(err); ok {
+					status := &dsi3.ImportStatus{
+						Code: uint32(stat.Code()),
+						Msg:  stat.Message(),
+						Req:  req,
+					}
+
+					if err := stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Status{Status: status}}); err != nil {
+						s.logger.Err(err).Msg("failed to send import status")
+					}
+				}
 			}
 		}
 	})
@@ -75,24 +101,24 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, res *dsi3.ImportResponse) (err error) {
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, ctr counters) (err error) {
 	switch m := req.Msg.(type) {
 	case *dsi3.ImportRequest_Object:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.objectSetHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.objectDeleteHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
 			err = s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
-			res.Object = updateCounter(res.Object, req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
 
@@ -101,13 +127,13 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err = s.relationSetHandler(ctx, tx, m.Relation)
-			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err = s.relationDeleteHandler(ctx, tx, m.Relation)
-			res.Relation = updateCounter(res.Relation, req.OpCode, err)
+			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
 			return err
 		}
 
@@ -130,14 +156,12 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 	}
 
 	if err := s.Validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		// The object violates the model.
-		return err
+		return modelValidateError(err)
 	}
 
 	etag := obj.Hash()
@@ -169,12 +193,12 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
@@ -192,12 +216,12 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
@@ -254,13 +278,12 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	}
 
 	if err := s.Validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	etag := rel.Hash()
@@ -296,12 +319,12 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 	}
 
 	if err := s.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return protoValidateError(err)
 	}
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
@@ -317,13 +340,49 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 
 func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.ImportCounter {
 	c.Recv++
-	if opCode == dsi3.Opcode_OPCODE_SET {
+
+	switch {
+	case err != nil:
+		c.Error++
+	case opCode == dsi3.Opcode_OPCODE_SET:
 		c.Set++
-	} else if opCode == dsi3.Opcode_OPCODE_DELETE {
+	case opCode == dsi3.Opcode_OPCODE_DELETE:
+		c.Delete++
+	case opCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS:
 		c.Delete++
 	}
-	if err != nil {
-		c.Error++
-	}
+
 	return c
+}
+
+func protoValidateError(e error) error {
+	err := derr.ErrProtoValidate
+
+	var valErr *protovalidate.ValidationError
+	if ok := errors.As(e, &valErr); ok {
+		err.Message = fmt.Sprintf("%q %s",
+			valErr.Violations[0].GetConstraintId(),
+			valErr.Violations[0].GetMessage(),
+		)
+		return err
+	}
+
+	err.Message = e.Error()
+	return err
+}
+
+func modelValidateError(e error) error {
+	var x *aerr.AsertoError
+	if ok := errors.As(e, &x); ok {
+		dataMsg, ok := x.Fields()[aerr.MessageKey].(string)
+		if ok {
+			if x.Message != "" {
+				x.Message = fmt.Sprintf("%q: %s", dataMsg, x.Message)
+			} else {
+				x.Message = dataMsg
+			}
+		}
+	}
+
+	return e
 }

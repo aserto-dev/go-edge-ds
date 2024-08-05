@@ -4,28 +4,25 @@ go 1.22
 
 toolchain go1.22.5
 
-// replace github.com/aserto-dev/azm => ../azm
-// replace github.com/aserto-dev/go-directory => ../go-directory
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/aserto-dev/aserto-grpc v0.2.3
-	github.com/aserto-dev/azm v0.1.11
-	github.com/aserto-dev/errors v0.0.9
-	github.com/aserto-dev/go-directory v0.31.6
+	github.com/aserto-dev/azm v0.1.12
+	github.com/aserto-dev/errors v0.0.10
+	github.com/aserto-dev/go-directory v0.31.9
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/homeport/dyff v1.8.0
+	github.com/homeport/dyff v1.8.1
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.33.0
 	github.com/samber/lo v1.46.0
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/bbolt v1.3.10
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.8.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )
@@ -46,7 +43,7 @@ require (
 	github.com/gonvenience/wrap v1.2.0 // indirect
 	github.com/google/cel-go v0.20.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.21.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -64,11 +61,11 @@ require (
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240722135656-d784300faade // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240722135656-d784300faade // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240730163845-b1a4ccb954bf // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240730163845-b1a4ccb954bf // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

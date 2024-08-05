@@ -186,6 +186,7 @@ func (s *Directory) DataSyncClient() datasync.SyncClient {
 
 func validator() (*protovalidate.Validator, error) {
 	return protovalidate.New(
+		protovalidate.WithFailFast(true),
 		protovalidate.WithDisableLazy(true),
 		protovalidate.WithMessages(
 			&dsc3.Object{},
