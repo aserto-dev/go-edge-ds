@@ -6,17 +6,18 @@ import (
 	"fmt"
 	"io"
 
+	aerr "github.com/aserto-dev/errors"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
-	"github.com/bufbuild/protovalidate-go"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 
+	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 )
 
 type Importer struct {
@@ -85,7 +86,7 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 				if stat, ok := status.FromError(err); ok {
 					status := &dsi3.ImportStatus{
 						Code: uint32(stat.Code()),
-						Msg:  err.Error(),
+						Msg:  stat.Message(),
 						Req:  req,
 					}
 
@@ -160,7 +161,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	etag := obj.Hash()
@@ -197,7 +198,7 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
@@ -220,7 +221,7 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 
 	obj := ds.Object(req)
 	if err := obj.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.ObjectsPath, obj.Key()); err != nil {
@@ -282,7 +283,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	etag := rel.Hash()
@@ -323,7 +324,7 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 
 	rel := ds.Relation(req)
 	if err := rel.Validate(s.store.MC()); err != nil {
-		return err
+		return modelValidateError(err)
 	}
 
 	if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
@@ -359,7 +360,7 @@ func protoValidateError(e error) error {
 
 	var valErr *protovalidate.ValidationError
 	if ok := errors.As(e, &valErr); ok {
-		err.Message = fmt.Sprintf("validation error: %s (%s)",
+		err.Message = fmt.Sprintf("%q %s",
 			valErr.Violations[0].GetConstraintId(),
 			valErr.Violations[0].GetMessage(),
 		)
@@ -368,4 +369,20 @@ func protoValidateError(e error) error {
 
 	err.Message = e.Error()
 	return err
+}
+
+func modelValidateError(e error) error {
+	var x *aerr.AsertoError
+	if ok := errors.As(e, &x); ok {
+		dataMsg, ok := x.Fields()[aerr.MessageKey].(string)
+		if ok {
+			if x.Message != "" {
+				x.Message = fmt.Sprintf("%q: %s", dataMsg, x.Message)
+			} else {
+				x.Message = dataMsg
+			}
+		}
+	}
+
+	return e
 }

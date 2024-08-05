@@ -9,7 +9,7 @@ require (
 	github.com/aserto-dev/aserto-grpc v0.2.3
 	github.com/aserto-dev/azm v0.1.12
 	github.com/aserto-dev/errors v0.0.10
-	github.com/aserto-dev/go-directory v0.31.8
+	github.com/aserto-dev/go-directory v0.31.9
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
@@ -22,7 +22,7 @@ require (
 	github.com/samber/lo v1.46.0
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/bbolt v1.3.10
-	golang.org/x/sync v0.7.0
+	golang.org/x/sync v0.8.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 )
@@ -61,7 +61,7 @@ require (
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/sys v0.23.0 // indirect
 	golang.org/x/term v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240730163845-b1a4ccb954bf // indirect
