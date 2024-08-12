@@ -2,20 +2,18 @@ module github.com/aserto-dev/go-edge-ds
 
 go 1.22
 
-toolchain go1.22.5
-
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
-	github.com/aserto-dev/aserto-grpc v0.2.4
-	github.com/aserto-dev/azm v0.1.12
-	github.com/aserto-dev/errors v0.0.10
-	github.com/aserto-dev/go-directory v0.31.9
+	github.com/aserto-dev/aserto-grpc v0.2.5
+	github.com/aserto-dev/azm v0.1.13
+	github.com/aserto-dev/errors v0.0.11
+	github.com/aserto-dev/go-directory v0.31.11
 	github.com/bufbuild/protovalidate-go v0.6.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
-	github.com/homeport/dyff v1.8.1
+	github.com/homeport/dyff v1.9.0
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.33.0
@@ -57,13 +55,13 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa // indirect
 	golang.org/x/net v0.28.0 // indirect
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240730163845-b1a4ccb954bf // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240808171019-573a1156607a // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240812133136-8ffd90a71988 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240812133136-8ffd90a71988 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
