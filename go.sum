@@ -10,8 +10,8 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/aserto-dev/aserto-grpc v0.2.5 h1:SZ4RaUjqvI9E4tlxa0xuatlgkaOYwFojJ0tAs4DL5Yk=
 github.com/aserto-dev/aserto-grpc v0.2.5/go.mod h1:dGcAac+jwA1skVGyD/EIOFBBwQjL4zjmB67fSu00eAg=
-github.com/aserto-dev/azm v0.1.13 h1:YXDdU07zuaKr9ENQeRjVCy/7Q6U6r2HF2vEWIbyEXdc=
-github.com/aserto-dev/azm v0.1.13/go.mod h1:gMdMvXNcdvlzDXjEG3Tt0vLCarTAVeROa2T48FwkOD4=
+github.com/aserto-dev/azm v0.1.15 h1:vIBW8s2K+MluvG/lh3pboPvmkvoueiC2c9CAsIvWR2o=
+github.com/aserto-dev/azm v0.1.15/go.mod h1:gMdMvXNcdvlzDXjEG3Tt0vLCarTAVeROa2T48FwkOD4=
 github.com/aserto-dev/errors v0.0.11 h1:CXo+Uwmh09doG2HvL1SC8Fnne8f9VPrGyEQPtogAfyY=
 github.com/aserto-dev/errors v0.0.11/go.mod h1:T1YQOtcxpgBriPTn5HXJkD/QukYz5YojYOIzGMo0ybM=
 github.com/aserto-dev/go-directory v0.31.11 h1:3MtLwvnMS5U8Rq3w4n1y/+/WBmvEoBLIQFETuWfXPGs=
