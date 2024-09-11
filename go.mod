@@ -3,14 +3,15 @@ module github.com/aserto-dev/go-edge-ds
 go 1.22
 
 replace github.com/aserto-dev/azm => ../azm
+
 replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.1.15
+	github.com/aserto-dev/azm v0.1.16-0.20240911105403-fadfae668c86
 	github.com/aserto-dev/errors v0.0.11
-	github.com/aserto-dev/go-directory v0.31.12-0.20240908085919-a60c0ba4a828
+	github.com/aserto-dev/go-directory v0.31.12-0.20240911105251-5f39873b6d53
 	github.com/bufbuild/protovalidate-go v0.6.5
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
