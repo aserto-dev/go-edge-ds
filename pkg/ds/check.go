@@ -10,6 +10,7 @@ import (
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/pkg/derr"
 
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
@@ -39,4 +40,35 @@ func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
 			return valueFilter(r)
 		}), nil
 	}
+}
+
+func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error {
+	if exists := i.relationIdentifierExist(
+		ctx, tx, bdb.RelationsSubPath,
+		ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: i.SubjectType, ObjectId: i.SubjectId}).Key(),
+	); !exists {
+		return derr.ErrObjectNotFound.Msgf("subject %s:%s", i.SubjectType, i.SubjectId)
+	}
+
+	if exists := i.relationIdentifierExist(
+		ctx, tx, bdb.RelationsObjPath,
+		ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: i.ObjectType, ObjectId: i.ObjectId}).Key(),
+	); !exists {
+		return derr.ErrObjectNotFound.Msgf("object %s:%s", i.ObjectType, i.ObjectId)
+	}
+
+	return nil
+}
+
+func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter string) bool {
+	scan, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, path, bdb.WithPageSize(1), bdb.WithKeyFilter(keyFilter))
+	if err != nil {
+		return false
+	}
+
+	if scan.Next() {
+		return true
+	}
+
+	return false
 }
