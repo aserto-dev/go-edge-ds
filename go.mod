@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.22
+go 1.22.0
 
 // replace github.com/aserto-dev/azm => ../azm
 // replace github.com/aserto-dev/go-directory => ../go-directory
@@ -8,9 +8,9 @@ go 1.22
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.1.17-0.20240912101548-36472d1964dc
+	github.com/aserto-dev/azm v0.1.17
 	github.com/aserto-dev/errors v0.0.11
-	github.com/aserto-dev/go-directory v0.31.12-0.20240912101324-b22fec59953f
+	github.com/aserto-dev/go-directory v0.31.13
 	github.com/bufbuild/protovalidate-go v0.6.5
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
@@ -24,7 +24,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/bbolt v1.3.11
 	golang.org/x/sync v0.8.0
-	google.golang.org/grpc v1.66.0
+	google.golang.org/grpc v1.66.2
 	google.golang.org/protobuf v1.34.2
 )
 
@@ -58,7 +58,7 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/exp v0.0.0-20240904232852-e7e105dedf7e // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/term v0.24.0 // indirect
