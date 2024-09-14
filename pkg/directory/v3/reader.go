@@ -6,8 +6,10 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/prop"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/pkg/errors"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
@@ -17,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	grpcmd "google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Reader struct {
@@ -311,26 +314,51 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	return resp, err
 }
 
+func setContextWithReason(err error) *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			prop.Reason: structpb.NewStringValue(err.Error()),
+		},
+	}
+}
+
 // Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
 	resp := &dsr3.CheckResponse{}
 
 	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+		resp.Check = false
+		resp.Context = setContextWithReason(err)
+		return resp, nil
 	}
 
 	check := ds.Check(req)
 	if err := check.Validate(s.store.MC()); err != nil {
-		return resp, err
+		resp.Check = false
+
+		if err := errors.Unwrap(err); err != nil {
+			resp.Context = setContextWithReason(err)
+			return resp, nil
+		}
+
+		resp.Context = setContextWithReason(err)
+		return resp, nil
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		if err := check.RelationIdentifiersExist(ctx, tx); err != nil {
+			return err
+		}
+
 		var err error
 		resp, err = check.Exec(ctx, tx, s.store.MC())
 		return err
 	})
+	if err != nil {
+		resp.Context = setContextWithReason(err)
+	}
 
-	return resp, err
+	return resp, nil
 }
 
 // CheckPermission, check if subject is permitted to access resource (object).
