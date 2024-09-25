@@ -43,14 +43,14 @@ func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
 }
 
 func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error {
-	if i.relationIdentifierExist(
+	if !i.relationIdentifierExist(
 		ctx, tx, bdb.RelationsSubPath,
 		ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: i.SubjectType, ObjectId: i.SubjectId}).Key(),
 	) {
 		return derr.ErrObjectNotFound.Msgf("subject %s:%s", i.SubjectType, i.SubjectId)
 	}
 
-	if i.relationIdentifierExist(
+	if !i.relationIdentifierExist(
 		ctx, tx, bdb.RelationsObjPath,
 		ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: i.ObjectType, ObjectId: i.ObjectId}).Key(),
 	) {
