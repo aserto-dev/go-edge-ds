@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // Error codes returned by failures to parse an expression.
@@ -262,11 +261,4 @@ func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
 	}
 
 	return true, nil
-}
-
-func ErrIsNotFound(err error) bool {
-	if s, ok := status.FromError(err); ok {
-		return s.Code() == codes.NotFound
-	}
-	return false
 }

@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
-
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -36,35 +34,7 @@ func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key s
 		return nil, err
 	}
 
-	return Unmarshal[T, M](buf)
-}
-
-func GetObject(ctx context.Context, tx *bolt.Tx, path Path, key string) (*dsc3.Object, error) {
-	buf, err := GetKey(tx, path, key)
-	if err != nil {
-		return nil, err
-	}
-
-	obj := &dsc3.Object{}
-	if err := unmarshalOpts.Unmarshal(buf, obj); err != nil {
-		return nil, err
-	}
-
-	return obj, nil
-}
-
-func GetRelation(ctx context.Context, tx *bolt.Tx, path Path, key string) (*dsc3.Relation, error) {
-	buf, err := GetKey(tx, path, key)
-	if err != nil {
-		return nil, err
-	}
-
-	rel := &dsc3.Relation{}
-	if err := unmarshalOpts.Unmarshal(buf, rel); err != nil {
-		return nil, err
-	}
-
-	return rel, nil
+	return unmarshal[T, M](buf)
 }
 
 func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M, error) {
@@ -77,7 +47,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 
 	c := b.Cursor()
 	for key, value := c.First(); key != nil; key, value = c.Next() {
-		i, err := Unmarshal[T, M](value)
+		i, err := unmarshal[T, M](value)
 		if err != nil {
 			return []M{}, err
 		}
@@ -89,7 +59,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 }
 
 func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string, t M) (M, error) {
-	buf, err := Marshal(t)
+	buf, err := marshal(t)
 	if err != nil {
 		return nil, err
 	}
@@ -101,41 +71,15 @@ func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key s
 	return t, nil
 }
 
-func SetObject(ctx context.Context, tx *bolt.Tx, path Path, key string, obj *dsc3.Object) (*dsc3.Object, error) {
-	buf, err := marshalOpts.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := SetKey(tx, path, key, buf); err != nil {
-		return nil, err
-	}
-
-	return obj, nil
-}
-
-func SetRelation(ctx context.Context, tx *bolt.Tx, path Path, key string, rel *dsc3.Relation) (*dsc3.Relation, error) {
-	buf, err := marshalOpts.Marshal(rel)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := SetKey(tx, path, key, buf); err != nil {
-		return nil, err
-	}
-
-	return rel, nil
-}
-
 func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
 	return DeleteKey(tx, path, key)
 }
 
-func Marshal[T any, M Message[T]](t M) ([]byte, error) {
+func marshal[T any, M Message[T]](t M) ([]byte, error) {
 	return marshalOpts.Marshal(any(t).(proto.Message))
 }
 
-func Unmarshal[T any, M Message[T]](b []byte) (M, error) {
+func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
 	if err := unmarshalOpts.Unmarshal(b, any(&t).(proto.Message)); err != nil {

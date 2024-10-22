@@ -58,7 +58,7 @@ const (
 	syncSubscriber string = "subscriber"
 	syncDifference string = "difference"
 	syncManifest   string = "manifest"
-	status         string = "status"
+	syncStatus     string = "status"
 	started        string = "started"
 	stage          string = "stage"
 	finished       string = "finished"

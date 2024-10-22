@@ -22,7 +22,7 @@ import (
 
 func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.RunMode()).Msg(syncRun)
+	s.logger.Info().Str(syncStatus, started).Str("mode", s.options.Mode.RunMode()).Msg(syncRun)
 
 	defer func() {
 		close(s.errChan)
@@ -70,12 +70,12 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	runEndTime := time.Now().UTC()
-	s.logger.Info().Str(status, finished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncRun)
+	s.logger.Info().Str(syncStatus, finished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncRun)
 	return nil
 }
 
 func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
-	s.logger.Info().Str(status, started).Msg(syncProducer)
+	s.logger.Info().Str(syncStatus, started).Msg(syncProducer)
 
 	var recvCtr, objCtr, relCtr atomic.Int32
 
@@ -137,7 +137,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 		s.exportChan <- msg
 	}
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, finished).
 		Int32("received", recvCtr.Load()).
 		Int32("objects", objCtr.Load()).
 		Int32("relations", relCtr.Load()).
@@ -147,7 +147,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 }
 
 func (s *Sync) subscriber(ctx context.Context) error {
-	s.logger.Info().Str(status, started).Msg(syncSubscriber)
+	s.logger.Info().Str(syncStatus, started).Msg(syncSubscriber)
 
 	var recvCtr, objCtr, relCtr, errCtr atomic.Int32
 	ts := &timestamppb.Timestamp{}
@@ -202,7 +202,7 @@ func (s *Sync) subscriber(ctx context.Context) error {
 
 	s.tsChan <- ts
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, finished).
 		Int32("received", recvCtr.Load()).
 		Int32("objects", objCtr.Load()).
 		Int32("relations", relCtr.Load()).
@@ -213,7 +213,7 @@ func (s *Sync) subscriber(ctx context.Context) error {
 }
 
 func (s *Sync) diff(ctx context.Context) error {
-	s.logger.Info().Str(status, started).Msg(syncDifference)
+	s.logger.Info().Str(syncStatus, started).Msg(syncDifference)
 
 	if s.filter == nil {
 		return errors.New("filter not initialized") //nolint:goerr113
@@ -277,7 +277,7 @@ func (s *Sync) diff(ctx context.Context) error {
 		return batchErr
 	}
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, finished).
 		Int32("delete_objects", objCtr.Load()).
 		Int32("deleted_relations", relCtr.Load()).
 		Int32("errors", errCtr.Load()).
