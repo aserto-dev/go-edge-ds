@@ -278,7 +278,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 			}
 			resp.Results = append(resp.Results, iter.Value())
 
-			if req.Page.Size == int32(len(resp.Results)) {
+			if req.Page.Size == int32(len(resp.Results)) { //nolint: gosec // G115: integer overflow conversion int -> int32.
 				if iter.Next() {
 					resp.Page.NextToken = iter.Key()
 				}
