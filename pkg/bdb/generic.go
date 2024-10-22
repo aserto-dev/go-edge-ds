@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	bolt "go.etcd.io/bbolt"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -14,16 +13,29 @@ type Message[T any] interface {
 	*T
 }
 
+// var (
+// 	marshalOpts = protojson.MarshalOptions{
+// 		Multiline:       false,
+// 		Indent:          "",
+// 		AllowPartial:    false,
+// 		UseProtoNames:   true,
+// 		UseEnumNumbers:  false,
+// 		EmitUnpopulated: false,
+// 	}
+// 	unmarshalOpts = protojson.UnmarshalOptions{
+// 		DiscardUnknown: true,
+// 	}
+// )
+
 var (
-	marshalOpts = protojson.MarshalOptions{
-		Multiline:       false,
-		Indent:          "",
-		AllowPartial:    false,
-		UseProtoNames:   true,
-		UseEnumNumbers:  false,
-		EmitUnpopulated: false,
+	marshalOpts = proto.MarshalOptions{
+		AllowPartial:  false,
+		Deterministic: false,
+		UseCachedSize: false,
 	}
-	unmarshalOpts = protojson.UnmarshalOptions{
+	unmarshalOpts = proto.UnmarshalOptions{
+		Merge:          false,
+		AllowPartial:   false,
 		DiscardUnknown: true,
 	}
 )
@@ -76,7 +88,7 @@ func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
 }
 
 func marshal[T any, M Message[T]](t M) ([]byte, error) {
-	return marshalOpts.Marshal(any(t).(proto.Message))
+	return marshalOpts.Marshal(t)
 }
 
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
@@ -111,14 +123,14 @@ func SetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key string, t *T
 	return t, nil
 }
 
+func marshalAny[T any](v T) ([]byte, error) {
+	return json.Marshal(&v)
+}
+
 func unmarshalAny[T any](buf []byte) (*T, error) {
 	var t T
 	if err := json.Unmarshal(buf, &t); err != nil {
 		return nil, err
 	}
 	return &t, nil
-}
-
-func marshalAny[T any](v T) ([]byte, error) {
-	return json.Marshal(&v)
 }
