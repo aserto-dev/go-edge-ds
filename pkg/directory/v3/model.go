@@ -23,7 +23,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -65,7 +67,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
 		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
 		switch {
-		case bdb.ErrIsNotFound(err):
+		case status.Code(err) == codes.NotFound:
 			if manifest == nil {
 				manifest = ds.Manifest(&dsm3.Metadata{})
 			}
@@ -81,7 +83,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 			return err
 		}
 
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		inMD, _ := metadata.FromIncomingContext(stream.Context())
 		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.Etag) {
 			return nil
@@ -111,7 +113,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		if amr.WithModel() {
 			model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
 			switch {
-			case bdb.ErrIsNotFound(err):
+			case status.Code(err) == codes.NotFound:
 				return derr.ErrNotFound.Msg("model")
 			case err != nil:
 				return errors.Errorf("failed to get model")
@@ -146,7 +148,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	logger := s.logger.With().Str("method", "SetManifest").Logger()
 	logger.Trace().Send()
 
-	// optimistic concurrency check
+	// optimistic concurrency check.
 	etag := metautils.ExtractIncoming(stream.Context()).Get(headers.IfMatch)
 	if etag != "" && etag != s.store.MC().Metadata().ETag {
 		return derr.ErrHashMismatch
@@ -247,7 +249,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			dbMd := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
