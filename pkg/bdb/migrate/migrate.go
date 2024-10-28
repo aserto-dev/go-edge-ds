@@ -10,6 +10,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig004"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig005"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig006"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig007"
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/Masterminds/semver/v3"
@@ -25,6 +26,7 @@ var migMap = map[string]Migration{
 	mig004.Version: mig004.Migrate,
 	mig005.Version: mig005.Migrate,
 	mig006.Version: mig006.Migrate,
+	mig007.Version: mig007.Migrate,
 }
 
 var (
@@ -171,13 +173,6 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 	if err != nil {
 		return err
 	}
-	defer func() {
-		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
-		if err := rwDB.Close(); err != nil {
-			log.Error().Err(err).Msg("close rwDB")
-		}
-		rwDB = nil
-	}()
 
 	if err := mig.Backup(rwDB, curVersion); err != nil {
 		return err
@@ -193,6 +188,25 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 			log.Error().Err(err).Msg("close roDB")
 		}
 		roDB = nil
+	}()
+
+	rwDB.Close()
+	rwDB = nil
+	// remove original when version is 0.0.6+.
+	if curVersion.GreaterThanEqual(semver.MustParse("0.0.6")) {
+		_ = os.Remove(config.DBPath)
+	}
+
+	rwDB, err = mig.OpenDB(config)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
+		if err := rwDB.Close(); err != nil {
+			log.Error().Err(err).Msg("close rwDB")
+		}
+		rwDB = nil
 	}()
 
 	if err := execute(log, roDB, rwDB, nextVersion); err != nil {

@@ -59,9 +59,9 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 			return err
 		}
 
-		// optimistic concurrency check
+		// optimistic concurrency check.
+		// if the updReq.Etag == "" this means the this is an insert.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
-		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updObj.Etag != "" && ifMatchHeader != updObj.Etag {
 			return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updObj.Type, updObj.Id)
 		}
@@ -102,7 +102,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
 
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
@@ -188,9 +188,9 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return err
 		}
 
-		// optimistic concurrency check
-		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// optimistic concurrency check.
 		// if the updReq.Etag == "" this means the this is an insert
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
 			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
 		}
@@ -201,10 +201,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return nil
 		}
 
-		updRel.Etag = etag
-
-		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel)
-		if err != nil {
+		if _, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel); err != nil {
 			return err
 		}
 
@@ -212,7 +209,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return err
 		}
 
-		resp.Result = objRel
+		resp.Result = updRel
 
 		return nil
 	})
@@ -240,7 +237,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel.Relation)
