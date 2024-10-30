@@ -5,7 +5,3 @@ const (
 	InstanceSeparator string = "|"
 	RelationSeparator string = "#"
 )
-
-const (
-	maxDepth = 1024
-)

@@ -3,9 +3,9 @@ package tests_test
 import (
 	"testing"
 
-	dsc2 "github.com/aserto-dev/go-directory/aserto/directory/common/v2"
-	dsr2 "github.com/aserto-dev/go-directory/aserto/directory/reader/v2"
-	dsw2 "github.com/aserto-dev/go-directory/aserto/directory/writer/v2"
+	dsc "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-directory/pkg/pb"
 
 	"github.com/stretchr/testify/assert"
@@ -26,133 +26,127 @@ func TestObjects(t *testing.T) {
 var objectTestCasesWithID = []*TestCase{
 	{
 		Name: "create test-obj-1",
-		Req: &dsw2.SetObjectRequest{
-			Object: &dsc2.Object{
+		Req: &dsw.SetObjectRequest{
+			Object: &dsc.Object{
 				Type:        "user",
-				Key:         "test-user@acmecorp.com",
+				Id:          "test-user@acmecorp.com",
 				DisplayName: "test obj 1",
 				Properties:  pb.NewStruct(),
-				Hash:        "",
+				Etag:        "",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.SetObjectResponse:
+			case *dsw.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.Equal(t, "3016620182482667549", resp.Result.Etag)
 			}
 			return func(proto.Message) {}
 		},
 	},
 	{
 		Name: "get test-obj-1",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr2.GetObjectResponse:
+			case *dsr.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "3016620182482667549", resp.Result.Hash)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.Equal(t, "3016620182482667549", resp.Result.Etag)
 			}
 			return func(req proto.Message) {}
 		},
 	},
 	{
 		Name: "update test-obj-1",
-		Req: &dsw2.SetObjectRequest{
-			Object: &dsc2.Object{
+		Req: &dsw.SetObjectRequest{
+			Object: &dsc.Object{
 				Type:        "user",
-				Key:         "test-user-11@acmecorp.com",
+				Id:          "test-user-11@acmecorp.com",
 				DisplayName: "test obj 11",
-				Hash:        "3016620182482667549",
+				Etag:        "3016620182482667549",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.SetObjectResponse:
+			case *dsw.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.Equal(t, "2708540687187161441", resp.Result.Etag)
 			}
 			return func(req proto.Message) {}
 		},
 	},
 	{
 		Name: "get updated test-obj-11",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-11@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-11@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr2.GetObjectResponse:
+			case *dsr.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.Equal(t, "2708540687187161441", resp.Result.Hash)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.Equal(t, "2708540687187161441", resp.Result.Etag)
 			}
 			return func(req proto.Message) {}
 		},
 	},
 	{
 		Name: "delete test-obj-11",
-		Req: &dsw2.DeleteObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-11@acmecorp.com"),
-			},
+		Req: &dsw.DeleteObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-11@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.DeleteObjectResponse:
+			case *dsw.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -162,11 +156,9 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-obj-11",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-11@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-11@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
@@ -177,16 +169,14 @@ var objectTestCasesWithID = []*TestCase{
 	},
 	{
 		Name: "delete deleted test-obj-11 by id",
-		Req: &dsw2.DeleteObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-11@acmecorp.com"),
-			},
+		Req: &dsw.DeleteObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-11@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.DeleteObjectResponse:
+			case *dsw.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -200,38 +190,38 @@ var objectTestCasesWithID = []*TestCase{
 var objectTestCasesWithoutID = []*TestCase{
 	{
 		Name: "create test-obj-2 with no-id",
-		Req: &dsw2.SetObjectRequest{
-			Object: &dsc2.Object{
+		Req: &dsw.SetObjectRequest{
+			Object: &dsc.Object{
 				Type:        "user",
-				Key:         "test-user-2@acmecorp.com",
+				Id:          "test-user-2@acmecorp.com",
 				DisplayName: "test obj 2",
 				Properties:  pb.NewStruct(),
-				Hash:        "",
+				Etag:        "",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.SetObjectResponse:
+			case *dsw.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.True(t, len(resp.Result.Etag) > 4)
 
 				return func(req proto.Message) {
-					lastHash := resp.Result.Hash
+					lastHash := resp.Result.Etag
 
 					switch r := req.(type) {
-					case *dsw2.SetObjectRequest:
-						r.Object.Hash = lastHash
+					case *dsw.SetObjectRequest:
+						r.Object.Etag = lastHash
 					}
 					t.Logf("propagated hash:%s", lastHash)
 				}
@@ -241,35 +231,33 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "get test-obj-2",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-2@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-2@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr2.GetObjectResponse:
+			case *dsr.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.True(t, len(resp.Result.Etag) > 4)
 
 				return func(req proto.Message) {
-					lastHash := resp.Result.Hash
+					lastHash := resp.Result.Etag
 
 					switch r := req.(type) {
-					case *dsw2.SetObjectRequest:
-						r.Object.Hash = lastHash
+					case *dsw.SetObjectRequest:
+						r.Object.Etag = lastHash
 					}
 					t.Logf("propagated hash:%s", lastHash)
 				}
@@ -279,73 +267,69 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "update test-obj-2",
-		Req: &dsw2.SetObjectRequest{
-			Object: &dsc2.Object{
+		Req: &dsw.SetObjectRequest{
+			Object: &dsc.Object{
 				Type:        "user",
-				Key:         "test-user-2@acmecorp.com",
+				Id:          "test-user-2@acmecorp.com",
 				DisplayName: "test obj 22",
 			},
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.SetObjectResponse:
+			case *dsw.SetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.True(t, len(resp.Result.Etag) > 4)
 			}
 			return func(req proto.Message) {}
 		},
 	},
 	{
 		Name: "get updated test-obj-2",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-2@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-2@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsr2.GetObjectResponse:
+			case *dsr.GetObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
-				t.Logf("resp hash:%s", resp.Result.Hash)
+				t.Logf("resp etag:%s", resp.Result.Etag)
 
 				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Key)
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
 				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
 				assert.NotNil(t, resp.Result.Properties)
 				assert.Len(t, resp.Result.Properties.Fields, 0)
-				assert.NotEmpty(t, resp.Result.Hash)
-				assert.True(t, len(resp.Result.Hash) > 4)
+				assert.NotEmpty(t, resp.Result.Etag)
+				assert.True(t, len(resp.Result.Etag) > 4)
 			}
 			return func(req proto.Message) {}
 		},
 	},
 	{
 		Name: "delete test-obj-2",
-		Req: &dsw2.DeleteObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-2@acmecorp.com"),
-			},
+		Req: &dsw.DeleteObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-2@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			require.NotNil(t, msg)
 			switch resp := msg.(type) {
-			case *dsw2.DeleteObjectResponse:
+			case *dsw.DeleteObjectResponse:
 				assert.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.NotNil(t, resp.Result)
@@ -355,11 +339,9 @@ var objectTestCasesWithoutID = []*TestCase{
 	},
 	{
 		Name: "get deleted test-obj-2",
-		Req: &dsr2.GetObjectRequest{
-			Param: &dsc2.ObjectIdentifier{
-				Type: proto.String("user"),
-				Key:  proto.String("test-user-2@acmecorp.com"),
-			},
+		Req: &dsr.GetObjectRequest{
+			ObjectType: "user",
+			ObjectId:   "test-user-2@acmecorp.com",
 		},
 		Checks: func(t *testing.T, msg proto.Message, tErr error) func(proto.Message) {
 			assert.Error(t, tErr)
