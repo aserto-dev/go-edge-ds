@@ -54,7 +54,8 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	})
 
 	if err := g.Wait(); err != nil {
-		s.logger.Debug().Err(err).Msg(syncRun)
+		s.logger.Error().Err(err).Msg(syncRun)
+		return err
 	}
 
 	if Has(s.options.Mode, Diff) {
