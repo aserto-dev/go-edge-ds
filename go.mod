@@ -8,9 +8,9 @@ go 1.22.0
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.1.19-0.20241106213342-b8df93866e1b
+	github.com/aserto-dev/azm v0.1.19
 	github.com/aserto-dev/errors v0.0.11
-	github.com/aserto-dev/go-directory v0.31.14-0.20241106210228-2398d57c8f5f
+	github.com/aserto-dev/go-directory v0.31.14
 	github.com/bufbuild/protovalidate-go v0.7.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
