@@ -38,7 +38,7 @@ var relationTestCasesV3 = []*TestCase{
 			require.NoError(t, tErr)
 			switch resp := msg.(type) {
 			case *dsw3.SetRelationResponse:
-				assert.NoError(t, tErr)
+				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.Equal(t, "group", resp.Result.ObjectType)
 				assert.Equal(t, "parent-group", resp.Result.ObjectId)
@@ -65,7 +65,7 @@ var relationTestCasesV3 = []*TestCase{
 			require.NoError(t, tErr)
 			switch resp := msg.(type) {
 			case *dsw3.SetRelationResponse:
-				assert.NoError(t, tErr)
+				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.Equal(t, "group", resp.Result.ObjectType)
 				assert.Equal(t, "parent-group", resp.Result.ObjectId)
@@ -88,7 +88,7 @@ var relationTestCasesV3 = []*TestCase{
 			require.NoError(t, tErr)
 			switch resp := msg.(type) {
 			case *dsr3.GetRelationsResponse:
-				assert.NoError(t, tErr)
+				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.Len(t, resp.Results, 2)
 			}
@@ -107,7 +107,7 @@ var relationTestCasesV3 = []*TestCase{
 			require.NoError(t, tErr)
 			switch resp := msg.(type) {
 			case *dsr3.GetRelationsResponse:
-				assert.NoError(t, tErr)
+				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
 				assert.Len(t, resp.Results, 1)
 

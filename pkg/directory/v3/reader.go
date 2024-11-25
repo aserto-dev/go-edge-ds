@@ -6,7 +6,6 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-directory/pkg/prop"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/pkg/errors"
@@ -19,7 +18,6 @@ import (
 	"google.golang.org/grpc"
 	grpcmd "google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type Reader struct {
@@ -278,7 +276,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 			}
 			resp.Results = append(resp.Results, iter.Value())
 
-			if req.Page.Size == int32(len(resp.Results)) {
+			if int64(req.Page.Size) == int64(len(resp.Results)) {
 				if iter.Next() {
 					resp.Page.NextToken = iter.Key()
 				}
@@ -314,21 +312,13 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	return resp, err
 }
 
-func setContextWithReason(err error) *structpb.Struct {
-	return &structpb.Struct{
-		Fields: map[string]*structpb.Value{
-			prop.Reason: structpb.NewStringValue(err.Error()),
-		},
-	}
-}
-
 // Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
 	resp := &dsr3.CheckResponse{}
 
 	if err := s.Validate(req); err != nil {
 		resp.Check = false
-		resp.Context = setContextWithReason(err)
+		resp.Context = ds.SetContextWithReason(err)
 		return resp, nil
 	}
 
@@ -337,11 +327,11 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 		resp.Check = false
 
 		if err := errors.Unwrap(err); err != nil {
-			resp.Context = setContextWithReason(err)
+			resp.Context = ds.SetContextWithReason(err)
 			return resp, nil
 		}
 
-		resp.Context = setContextWithReason(err)
+		resp.Context = ds.SetContextWithReason(err)
 		return resp, nil
 	}
 
@@ -355,7 +345,35 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 		return err
 	})
 	if err != nil {
-		resp.Context = setContextWithReason(err)
+		resp.Context = ds.SetContextWithReason(err)
+	}
+
+	return resp, nil
+}
+
+// Checks, execute multiple check requests in parallel.
+func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.ChecksResponse, error) {
+	resp := &dsr3.ChecksResponse{}
+
+	// TODO add ProtoValidate constraints pb-directory and add dsr3.ChecksRequest to protovalidate init func.
+	// if err := s.Validate(req); err != nil {
+	// 	resp.Check = false
+	// 	resp.Context = setContextWithReason(err)
+	// 	return resp, nil
+	// }
+
+	checks := ds.Checks(req)
+	if err := checks.Validate(s.store.MC()); err != nil {
+		return resp, err
+	}
+
+	err := s.store.DB().View(func(tx *bolt.Tx) error {
+		var err error
+		resp, err = checks.Exec(ctx, tx, s.store.MC())
+		return err
+	})
+	if err != nil {
+		return resp, err
 	}
 
 	return resp, nil
