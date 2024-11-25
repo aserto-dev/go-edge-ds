@@ -11,9 +11,11 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/prop"
 
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type check struct {
@@ -67,4 +69,12 @@ func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path b
 	}
 
 	return scan.Next()
+}
+
+func SetContextWithReason(err error) *structpb.Struct {
+	return &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			prop.Reason: structpb.NewStringValue(err.Error()),
+		},
+	}
 }

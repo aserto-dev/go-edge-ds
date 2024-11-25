@@ -169,7 +169,7 @@ func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testi
 		require.NoError(t, err)
 
 		for _, diff := range report.Diffs {
-			t.Logf(diff.Path.ToDotStyle())
+			t.Log(diff.Path.ToDotStyle())
 		}
 	}
 }
