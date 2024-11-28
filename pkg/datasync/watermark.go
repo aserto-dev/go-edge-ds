@@ -76,7 +76,7 @@ func (s *Sync) getWatermark() *watermark {
 	if err != nil {
 		return newWatermark()
 	}
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	var wm watermark
 	dec := json.NewDecoder(r)
@@ -117,7 +117,7 @@ func (s *Sync) setWatermark(ts *timestamppb.Timestamp) error {
 	if err != nil {
 		return err
 	}
-	defer w.Close()
+	defer func() { _ = w.Close() }()
 
 	if err := json.NewEncoder(w).Encode(wm); err != nil {
 		return err

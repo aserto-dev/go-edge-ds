@@ -22,7 +22,7 @@ import (
 
 func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", s.options.Mode.RunMode()).Msg(syncRun)
+	s.logger.Info().Str(syncStatus, syncStarted).Str("mode", s.options.Mode.RunMode()).Msg(syncRun)
 
 	defer func() {
 		close(s.errChan)
@@ -40,7 +40,7 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	g.Go(func() error {
 		err := s.subscriber(ctx)
 		if err != nil {
-			s.logger.Error().Err(err).Str(stage, "subscriber").Msg(syncRun)
+			s.logger.Error().Err(err).Str(syncStage, "subscriber").Msg(syncRun)
 		}
 		return err
 	})
@@ -48,7 +48,7 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	g.Go(func() error {
 		err := s.producer(ctx, conn)
 		if err != nil {
-			s.logger.Error().Err(err).Str(stage, "producer").Msg(syncRun)
+			s.logger.Error().Err(err).Str(syncStage, "producer").Msg(syncRun)
 		}
 		return err
 	})
@@ -60,7 +60,7 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 
 	if Has(s.options.Mode, Diff) {
 		if err := s.diff(ctx); err != nil {
-			s.logger.Error().Err(err).Str(stage, "diff").Msg(syncRun)
+			s.logger.Error().Err(err).Str(syncStage, "diff").Msg(syncRun)
 			return err
 		}
 	}
@@ -71,12 +71,12 @@ func (s *Sync) syncDirectory(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	runEndTime := time.Now().UTC()
-	s.logger.Info().Str(status, finished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncRun)
+	s.logger.Info().Str(syncStatus, syncFinished).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncRun)
 	return nil
 }
 
 func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
-	s.logger.Info().Str(status, started).Msg(syncProducer)
+	s.logger.Info().Str(syncStatus, syncStarted).Msg(syncProducer)
 
 	var recvCtr, objCtr, relCtr atomic.Int32
 
@@ -138,7 +138,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 		s.exportChan <- msg
 	}
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, syncFinished).
 		Int32("received", recvCtr.Load()).
 		Int32("objects", objCtr.Load()).
 		Int32("relations", relCtr.Load()).
@@ -148,7 +148,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 }
 
 func (s *Sync) subscriber(ctx context.Context) error {
-	s.logger.Info().Str(status, started).Msg(syncSubscriber)
+	s.logger.Info().Str(syncStatus, syncStarted).Msg(syncSubscriber)
 
 	var recvCtr, objCtr, relCtr, errCtr atomic.Int32
 	ts := &timestamppb.Timestamp{}
@@ -203,7 +203,7 @@ func (s *Sync) subscriber(ctx context.Context) error {
 
 	s.tsChan <- ts
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, syncFinished).
 		Int32("received", recvCtr.Load()).
 		Int32("objects", objCtr.Load()).
 		Int32("relations", relCtr.Load()).
@@ -214,7 +214,7 @@ func (s *Sync) subscriber(ctx context.Context) error {
 }
 
 func (s *Sync) diff(ctx context.Context) error {
-	s.logger.Info().Str(status, started).Msg(syncDifference)
+	s.logger.Info().Str(syncStatus, syncStarted).Msg(syncDifference)
 
 	if s.filter == nil {
 		return errors.New("filter not initialized") //nolint:goerr113
@@ -278,7 +278,7 @@ func (s *Sync) diff(ctx context.Context) error {
 		return batchErr
 	}
 
-	s.logger.Info().Str(status, finished).
+	s.logger.Info().Str(syncStatus, syncFinished).
 		Int32("delete_objects", objCtr.Load()).
 		Int32("deleted_relations", relCtr.Load()).
 		Int32("errors", errCtr.Load()).
