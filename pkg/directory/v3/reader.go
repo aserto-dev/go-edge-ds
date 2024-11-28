@@ -58,23 +58,22 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 			return err
 		}
 
+		// optimistic concurrency check.
 		inMD, _ := grpcmd.FromIncomingContext(ctx)
-		// optimistic concurrency check
 		if lo.Contains(inMD.Get(headers.IfNoneMatch), obj.Etag) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
-
 			return nil
 		}
 
 		if req.GetWithRelations() {
-			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key).
 			incoming, err := bdb.Scan[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
 			}
 			resp.Relations = append(resp.Relations, incoming...)
 
-			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key).
 			outgoing, err := bdb.Scan[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
@@ -182,38 +181,37 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		return resp, err
 	}
 
-	path, filter, err := getRelation.PathAndFilter()
+	path, keyFilter, err := getRelation.PathAndFilter()
 	if err != nil {
 		return resp, err
 	}
 
 	err = s.store.DB().View(func(tx *bolt.Tx) error {
-		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter)
+		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, keyFilter)
 		if err != nil {
 			return err
 		}
 
-		if len(relations) == 0 {
-			return bdb.ErrKeyNotFound
-		}
-		if len(relations) != 1 {
+		if x := len(relations); x != 1 {
+			if x == 0 {
+				return bdb.ErrKeyNotFound
+			}
 			return bdb.ErrMultipleResults
 		}
 
-		dbRel := relations[0]
-		resp.Result = dbRel
+		rel := relations[0]
+		resp.Result = rel
 
-		inMD, _ := grpcmd.FromIncomingContext(ctx)
 		// optimistic concurrency check
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.Etag) {
+		inMD, _ := grpcmd.FromIncomingContext(ctx)
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), rel.Etag) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
-
 			return nil
 		}
 
 		if req.GetWithObjects() {
 			objects := map[string]*dsc3.Object{}
-			rel := ds.Relation(dbRel)
+			rel := ds.Relation(rel)
 
 			sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
 			if err != nil {

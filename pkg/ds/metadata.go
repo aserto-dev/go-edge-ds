@@ -1,13 +1,15 @@
-package bdb
+package ds
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -16,9 +18,9 @@ func UpdateMetadataObject(ctx context.Context, tx *bolt.Tx, path []string, key s
 	ts := timestamppb.New(time.Now().UTC())
 
 	// get current instance.
-	cur, err := GetObject(ctx, tx, path, key)
+	cur, err := bdb.Get[dsc3.Object](ctx, tx, path, key)
 	switch {
-	case errors.Is(err, ErrKeyNotFound):
+	case status.Code(err) == codes.NotFound:
 		// new instance, set created_at timestamp.
 		msg.CreatedAt = ts
 		// if new instance set Etag to empty string.
@@ -46,9 +48,9 @@ func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key
 	ts := timestamppb.New(time.Now().UTC())
 
 	// get current instance.
-	cur, err := GetRelation(ctx, tx, path, key)
+	cur, err := bdb.Get[dsc3.Relation](ctx, tx, path, key)
 	switch {
-	case errors.Is(err, ErrKeyNotFound):
+	case status.Code(err) == codes.NotFound:
 		// new instance, set created_at timestamp.
 		msg.CreatedAt = ts
 		// if new instance set Etag to empty string.

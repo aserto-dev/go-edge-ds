@@ -54,14 +54,14 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	etag := obj.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updObj, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
+		updObj, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
 		if err != nil {
 			return err
 		}
 
-		// optimistic concurrency check
+		// optimistic concurrency check.
+		// if the updReq.Etag == "" this means the this is an insert.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
-		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updObj.Etag != "" && ifMatchHeader != updObj.Etag {
 			return derr.ErrHashMismatch.Msgf("for object with type [%s] and id [%s]", updObj.Type, updObj.Id)
 		}
@@ -74,7 +74,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 
 		updObj.Etag = etag
 
-		objType, err := bdb.Set(ctx, tx, bdb.ObjectsPath, obj.Key(), updObj)
+		objType, err := bdb.Set[dsc3.Object](ctx, tx, bdb.ObjectsPath, obj.Key(), updObj)
 		if err != nil {
 			return err
 		}
@@ -102,11 +102,11 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
 		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
 
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
-			updObj, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
+			updObj, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
 			if err != nil {
 				return err
 			}
@@ -183,14 +183,14 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 	etag := relation.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updRel, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
+		updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
 
-		// optimistic concurrency check
-		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
+		// optimistic concurrency check.
 		// if the updReq.Etag == "" this means the this is an insert
+		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
 			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
 		}
@@ -201,18 +201,15 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 			return nil
 		}
 
-		updRel.Etag = etag
-
-		objRel, err := bdb.Set(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel)
-		if err != nil {
+		if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), updRel); err != nil {
 			return err
 		}
 
-		if _, err := bdb.Set(ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updRel); err != nil {
+		if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, relation.SubKey(), updRel); err != nil {
 			return err
 		}
 
-		resp.Result = objRel
+		resp.Result = updRel
 
 		return nil
 	})
@@ -240,10 +237,10 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		// optimistic concurrency check
+		// optimistic concurrency check.
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			updRel, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel.Relation)
+			updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel.Relation)
 			if err != nil {
 				return err
 			}
