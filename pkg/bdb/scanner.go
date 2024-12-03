@@ -102,7 +102,7 @@ func (s *ScanIterator[T, M]) Key() string {
 }
 
 func (s *ScanIterator[T, M]) Value() M {
-	msg, err := Unmarshal[T, M](s.value)
+	msg, err := unmarshal[T, M](s.value)
 	if err != nil {
 		var result M
 		return result

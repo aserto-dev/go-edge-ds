@@ -178,7 +178,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 
 	updReq.Etag = etag
 
-	if _, err := bdb.SetObject(ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
+	if _, err := bdb.Set[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.Object(updReq).Key(), updReq); err != nil {
 		return derr.ErrInvalidObject.Msg("set")
 	}
 
@@ -300,11 +300,11 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 
 	updReq.Etag = etag
 
-	if _, err := bdb.SetRelation(ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.SetRelation(ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

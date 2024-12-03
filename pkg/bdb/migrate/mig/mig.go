@@ -192,6 +192,7 @@ func Backup(db *bolt.DB, version *semver.Version) error {
 		if err != nil {
 			return err
 		}
+		defer func() { _ = w.Close() }()
 
 		if _, err := tx.WriteTo(w); err != nil {
 			return err
