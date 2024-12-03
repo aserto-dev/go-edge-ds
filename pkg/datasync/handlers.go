@@ -31,7 +31,7 @@ func (s *Sync) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obje
 
 	etag := obj.Hash()
 
-	updReq, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req)
+	updReq, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (s *Sync) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Re
 
 	etag := rel.Hash()
 
-	updReq, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req)
+	updReq, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), req)
 	if err != nil {
 		return err
 	}
