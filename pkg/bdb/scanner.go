@@ -19,14 +19,13 @@ type Iterator[T any, M Message[T]] interface {
 }
 
 type ScanIterator[T any, M Message[T]] struct {
-	ctx    context.Context
-	tx     *bolt.Tx
-	c      *bolt.Cursor
-	args   *ScanArgs
-	init   bool
-	key    []byte
-	value  []byte
-	filter func(M) bool
+	ctx   context.Context
+	tx    *bolt.Tx
+	c     *bolt.Cursor
+	args  *ScanArgs
+	init  bool
+	key   []byte
+	value []byte
 }
 
 type ScanOption func(*ScanArgs)
@@ -119,17 +118,6 @@ func (s *ScanIterator[T, M]) Delete() error {
 	return nil
 }
 
-func (s *ScanIterator[T, M]) SetFilter(filters []func(M) bool) {
-	s.filter = func(item M) bool {
-		for _, filter := range filters {
-			if !filter(item) {
-				return false
-			}
-		}
-		return true
-	}
-}
-
 type PagedIterator[T any, M Message[T]] interface {
 	Next() bool
 	Value() []M
@@ -188,6 +176,22 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filt
 	var results []M
 	for iter.Next() {
 		results = append(results, iter.Value())
+	}
+	return results, nil
+}
+
+func ScanX[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string, valueFilter func(M) bool) ([]M, error) {
+	iter, err := NewScanIterator[T, M](ctx, tx, path, WithKeyFilter(keyFilter))
+	if err != nil {
+		return nil, err
+	}
+
+	var results []M
+	for iter.Next() {
+		v := iter.Value()
+		if valueFilter(v) {
+			results = append(results, v)
+		}
 	}
 	return results, nil
 }
