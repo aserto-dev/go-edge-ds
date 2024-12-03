@@ -23,7 +23,9 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -65,7 +67,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
 		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
 		switch {
-		case bdb.ErrIsNotFound(err):
+		case status.Code(err) == codes.NotFound:
 			if manifest == nil {
 				manifest = ds.Manifest(&dsm3.Metadata{})
 			}
@@ -111,7 +113,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		if amr.WithModel() {
 			model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
 			switch {
-			case bdb.ErrIsNotFound(err):
+			case status.Code(err) == codes.NotFound:
 				return derr.ErrNotFound.Msg("model")
 			case err != nil:
 				return errors.Errorf("failed to get model")

@@ -58,10 +58,10 @@ const (
 	syncSubscriber string = "subscriber"
 	syncDifference string = "difference"
 	syncManifest   string = "manifest"
-	status         string = "status"
-	started        string = "started"
-	stage          string = "stage"
-	finished       string = "finished"
+	syncStatus     string = "status"
+	syncStarted    string = "started"
+	syncStage      string = "stage"
+	syncFinished   string = "finished"
 	channelSize    int    = 10000
 )
 
