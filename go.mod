@@ -4,8 +4,6 @@ go 1.22.9
 
 toolchain go1.23.3
 
-replace github.com/aserto-dev/azm => ../azm
-
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
