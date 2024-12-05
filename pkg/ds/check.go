@@ -33,7 +33,7 @@ func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
 	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
 		path, keyFilter, valueFilter := Relation(r).Filter()
 
-		return bdb.ScanX[dsc3.Relation](ctx, tx, path, keyFilter, valueFilter)
+		return bdb.ScanWithFilter[dsc3.Relation](ctx, tx, path, keyFilter, valueFilter)
 	}
 }
 
@@ -56,12 +56,11 @@ func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error
 }
 
 func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter string) bool {
-	scan, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, path, bdb.WithPageSize(1), bdb.WithKeyFilter(keyFilter))
+	exists, err := bdb.KeyPrefixExists[dsc3.Relation](ctx, tx, path, keyFilter)
 	if err != nil {
 		return false
 	}
-
-	return scan.Next()
+	return exists
 }
 
 func SetContextWithReason(err error) *structpb.Struct {
