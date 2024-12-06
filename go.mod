@@ -7,7 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.2.2-0.20241204064621-830edfe39225
+	github.com/aserto-dev/azm v0.2.2-0.20241206200521-5da97f2bc092
 	github.com/aserto-dev/errors v0.0.11
 	github.com/aserto-dev/go-directory v0.33.1
 	github.com/bufbuild/protovalidate-go v0.7.3

@@ -190,10 +190,17 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyF
 	return results, nil
 }
 
-func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string, valueFilter func(M) bool) ([]M, error) {
+func ScanWithFilter[T any, M Message[T]](
+	ctx context.Context,
+	tx *bolt.Tx,
+	path Path,
+	keyFilter string,
+	valueFilter func(M) bool,
+	out *[]M,
+) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
-		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+		return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 	}
 
 	c := b.Cursor()
@@ -204,12 +211,12 @@ func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path 
 
 	prefix := []byte(keyFilter)
 
-	var results []M
+	results := *out
 
 	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
 		m, err := unmarshal[T, M](v)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if valueFilter(m) {
@@ -217,7 +224,7 @@ func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path 
 		}
 	}
 
-	return results, nil
+	return nil
 }
 
 func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string) (bool, error) {
