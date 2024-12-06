@@ -224,6 +224,8 @@ func ScanWithFilter[T any, M Message[T]](
 		}
 	}
 
+	*out = results
+
 	return nil
 }
 
