@@ -7,6 +7,7 @@ toolchain go1.23.3
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
+	github.com/aserto-dev/azm v0.2.2-0.20241206214205-05080ab71858
 	github.com/aserto-dev/errors v0.0.11
 	github.com/aserto-dev/go-directory v0.33.1
 	github.com/bufbuild/protovalidate-go v0.7.3
@@ -31,7 +32,6 @@ require (
 	cel.dev/expr v0.18.0 // indirect
 	github.com/BurntSushi/toml v1.4.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/aserto-dev/azm v0.2.2-0.20241206201857-3a4bb962aab6 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
