@@ -196,11 +196,11 @@ func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path 
 		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 	}
 
+	c := b.Cursor()
+
 	if valueFilter == nil {
 		valueFilter = func(_ M) bool { return true }
 	}
-
-	c := b.Cursor()
 
 	prefix := []byte(keyFilter)
 
