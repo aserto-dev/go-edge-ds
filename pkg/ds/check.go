@@ -30,10 +30,10 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 }
 
 func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
-	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
+	return func(r *dsc3.Relation, out *[]*dsc3.Relation) error {
 		path, keyFilter, valueFilter := Relation(r).Filter()
 
-		return bdb.ScanWithFilter[dsc3.Relation](ctx, tx, path, keyFilter, valueFilter)
+		return bdb.ScanWithFilter[dsc3.Relation](ctx, tx, path, keyFilter, valueFilter, out)
 	}
 }
 
