@@ -19,14 +19,13 @@ type Iterator[T any, M Message[T]] interface {
 }
 
 type ScanIterator[T any, M Message[T]] struct {
-	ctx    context.Context
-	tx     *bolt.Tx
-	c      *bolt.Cursor
-	args   *ScanArgs
-	init   bool
-	key    []byte
-	value  []byte
-	filter func(M) bool
+	ctx   context.Context
+	tx    *bolt.Tx
+	c     *bolt.Cursor
+	args  *ScanArgs
+	init  bool
+	key   []byte
+	value []byte
 }
 
 type ScanOption func(*ScanArgs)
@@ -103,7 +102,7 @@ func (s *ScanIterator[T, M]) Key() string {
 }
 
 func (s *ScanIterator[T, M]) Value() M {
-	msg, err := Unmarshal[T, M](s.value)
+	msg, err := unmarshal[T, M](s.value)
 	if err != nil {
 		var result M
 		return result
@@ -117,17 +116,6 @@ func (s *ScanIterator[T, M]) Delete() error {
 		return s.c.Delete()
 	}
 	return nil
-}
-
-func (s *ScanIterator[T, M]) SetFilter(filters []func(M) bool) {
-	s.filter = func(item M) bool {
-		for _, filter := range filters {
-			if !filter(item) {
-				return false
-			}
-		}
-		return true
-	}
 }
 
 type PagedIterator[T any, M Message[T]] interface {
@@ -179,15 +167,79 @@ func (p *PageIterator[T, M]) NextToken() string {
 	return string(p.nextToken)
 }
 
-func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
-	iter, err := NewScanIterator[T, M](ctx, tx, path, WithKeyFilter(filter))
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string) ([]M, error) {
+	b, err := SetBucket(tx, path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 	}
 
+	c := b.Cursor()
+
+	prefix := []byte(keyFilter)
+
 	var results []M
-	for iter.Next() {
-		results = append(results, iter.Value())
+
+	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+		m, err := unmarshal[T, M](v)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, m)
 	}
+
 	return results, nil
+}
+
+func ScanWithFilter[T any, M Message[T]](
+	ctx context.Context,
+	tx *bolt.Tx,
+	path Path,
+	keyFilter string,
+	valueFilter func(M) bool,
+	out *[]M,
+) error {
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+	}
+
+	c := b.Cursor()
+
+	if valueFilter == nil {
+		valueFilter = func(_ M) bool { return true }
+	}
+
+	prefix := []byte(keyFilter)
+
+	results := *out
+
+	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+		m, err := unmarshal[T, M](v)
+		if err != nil {
+			return err
+		}
+
+		if valueFilter(m) {
+			results = append(results, m)
+		}
+	}
+
+	*out = results
+
+	return nil
+}
+
+func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string) (bool, error) {
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return false, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+	}
+
+	c := b.Cursor()
+
+	prefix := []byte(keyFilter)
+
+	k, _ := c.Seek(prefix)
+
+	return (k != nil && bytes.HasPrefix(k, prefix)), nil
 }

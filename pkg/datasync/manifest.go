@@ -12,19 +12,20 @@ import (
 	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
-	s.logger.Info().Str(status, started).Str("mode", Manifest.String()).Msg(syncManifest)
+	s.logger.Info().Str(syncStatus, syncStarted).Str("mode", Manifest.String()).Msg(syncManifest)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -44,7 +45,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 			md := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 			manifest, err := ds.Manifest(md).Get(ctx, tx)
 			switch {
-			case bdb.ErrIsNotFound(err):
+			case status.Code(err) == codes.NotFound:
 				if manifest == nil {
 					manifest = ds.Manifest(&dsm3.Metadata{})
 				}
@@ -73,7 +74,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	runEndTime := time.Now().UTC()
-	s.logger.Info().Str(status, finished).Str("mode", Manifest.String()).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
+	s.logger.Info().Str(syncStatus, syncFinished).Str("mode", Manifest.String()).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
 
 	return s.store.MC().UpdateModel(m)
 }
