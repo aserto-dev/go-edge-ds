@@ -3,6 +3,9 @@ package bdb
 import (
 	"bytes"
 	"context"
+	"sync"
+
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -190,7 +193,7 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyF
 	return results, nil
 }
 
-func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string, valueFilter func(M) bool) ([]M, error) {
+func ScanWithFilter(ctx context.Context, tx *bolt.Tx, path Path, keyFilter string, valueFilter func(*dsc3.Relation) bool, relationsPool, msgPool *sync.Pool) ([]*dsc3.Relation, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
@@ -199,22 +202,25 @@ func ScanWithFilter[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path 
 	c := b.Cursor()
 
 	if valueFilter == nil {
-		valueFilter = func(_ M) bool { return true }
+		valueFilter = func(_ *dsc3.Relation) bool { return true }
 	}
 
 	prefix := []byte(keyFilter)
 
-	var results []M
+	results := relationsPool.Get().([]*dsc3.Relation)
 
 	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
-		m, err := unmarshal[T, M](v)
-		if err != nil {
+		msg := msgPool.Get().(*dsc3.Relation)
+
+		if err := unmarshalRelation(v, &msg); err != nil {
 			return nil, err
 		}
 
-		if valueFilter(m) {
-			results = append(results, m)
+		if valueFilter(msg) {
+			results = append(results, msg)
 		}
+
+		msgPool.Put(msg)
 	}
 
 	return results, nil

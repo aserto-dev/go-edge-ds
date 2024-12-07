@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/proto"
 )
@@ -38,6 +39,18 @@ func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	}
 
 	return &t, nil
+}
+
+func unmarshalRelation(b []byte, out **dsc3.Relation) error {
+	msg := *out
+
+	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
+		return err
+	}
+
+	*out = msg
+
+	return nil
 }
 
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {

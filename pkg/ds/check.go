@@ -2,6 +2,7 @@ package ds
 
 import (
 	"context"
+	"sync"
 
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/graph"
@@ -26,14 +27,31 @@ func Check(i *dsr3.CheckRequest) *check {
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {
-	return mc.Check(i.CheckRequest, getRelations(ctx, tx))
+	// pool of *dsc3.Relation instances
+	msgPool := sync.Pool{
+		New: func() interface{} {
+			return &dsc3.Relation{}
+		},
+	}
+
+	// pool of []*dsc3.Relation
+	relationsPool := sync.Pool{
+		New: func() interface{} {
+			return []*dsc3.Relation{}
+		},
+	}
+
+	resp, err := mc.Check(i.CheckRequest, getRelations(ctx, tx, &relationsPool, &msgPool))
+
+	return resp, err
 }
 
-func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
+func getRelations(ctx context.Context, tx *bolt.Tx, relationsPool, msgPool *sync.Pool) graph.RelationReader {
 	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
 		path, keyFilter, valueFilter := Relation(r).Filter()
 
-		return bdb.ScanWithFilter[dsc3.Relation](ctx, tx, path, keyFilter, valueFilter)
+		relations, err := bdb.ScanWithFilter(ctx, tx, path, keyFilter, valueFilter, relationsPool, msgPool)
+		return relations, err
 	}
 }
 
