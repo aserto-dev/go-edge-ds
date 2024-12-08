@@ -40,6 +40,10 @@ func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	return &t, nil
 }
 
+func unmarshalTo[T any, M Message[T]](b []byte, dst M) error {
+	return unmarshalOpts.Unmarshal(b, dst)
+}
+
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {
 	buf, err := GetKey(tx, path, key)
 	if err != nil {

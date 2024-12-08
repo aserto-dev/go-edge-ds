@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/aserto-dev/azm/graph"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	bolt "go.etcd.io/bbolt"
@@ -190,13 +192,14 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyF
 	return results, nil
 }
 
-func ScanWithFilter[T any, M Message[T]](
+func ScanWithFilter(
 	ctx context.Context,
 	tx *bolt.Tx,
 	path Path,
 	keyFilter string,
-	valueFilter func(M) bool,
-	out *[]M,
+	valueFilter func(*dsc3.Relation) bool,
+	pool graph.RelationPool,
+	out *[]*dsc3.Relation,
 ) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
@@ -206,7 +209,7 @@ func ScanWithFilter[T any, M Message[T]](
 	c := b.Cursor()
 
 	if valueFilter == nil {
-		valueFilter = func(_ M) bool { return true }
+		valueFilter = func(_ *dsc3.Relation) bool { return true }
 	}
 
 	prefix := []byte(keyFilter)
@@ -214,8 +217,8 @@ func ScanWithFilter[T any, M Message[T]](
 	results := *out
 
 	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
-		m, err := unmarshal[T, M](v)
-		if err != nil {
+		m := pool.Get()
+		if err := unmarshalTo(v, m); err != nil {
 			return err
 		}
 
