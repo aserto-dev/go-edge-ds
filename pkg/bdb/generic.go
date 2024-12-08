@@ -24,6 +24,11 @@ var (
 		AllowPartial:   false,
 		DiscardUnknown: true,
 	}
+	unmarshalToOpts = proto.UnmarshalOptions{
+		Merge:          true,
+		AllowPartial:   false,
+		DiscardUnknown: true,
+	}
 )
 
 func marshal[T any, M Message[T]](t M) ([]byte, error) {
@@ -41,7 +46,7 @@ func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 }
 
 func unmarshalTo[T any, M Message[T]](b []byte, dst M) error {
-	return unmarshalOpts.Unmarshal(b, dst)
+	return unmarshalToOpts.Unmarshal(b, dst)
 }
 
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {
