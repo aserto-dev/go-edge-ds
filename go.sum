@@ -12,12 +12,12 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/aserto-dev/aserto-grpc v0.2.6 h1:h64MYALF5zLm2sSKcLEtyXyrJvZSxfqTOmQ1j/J44kI=
 github.com/aserto-dev/aserto-grpc v0.2.6/go.mod h1:Vki74KINVfnwtJ8QGzRm+xHNjsJ2KUWFtXhezJK9DEg=
-github.com/aserto-dev/azm v0.2.2-0.20241208220302-6161ae10603f h1:rGxstrWBXOn6H2VJ9rwbav26+n6iSIw4gR1+NI8Ae88=
-github.com/aserto-dev/azm v0.2.2-0.20241208220302-6161ae10603f/go.mod h1:2/cPbPXJST9swni5fE6SaI960ahAdiaj7rLhjTXF4ak=
+github.com/aserto-dev/azm v0.2.2-0.20241209183007-db142a784585 h1:M5uD91qqFbibAWvv/9tSWy/xr2NeyX2W1nCdiAYuBvA=
+github.com/aserto-dev/azm v0.2.2-0.20241209183007-db142a784585/go.mod h1:LDCYFBjVtFaTi3+g4GBewZVkrvxTKPrCPmuas2TLbuk=
 github.com/aserto-dev/errors v0.0.11 h1:CXo+Uwmh09doG2HvL1SC8Fnne8f9VPrGyEQPtogAfyY=
 github.com/aserto-dev/errors v0.0.11/go.mod h1:T1YQOtcxpgBriPTn5HXJkD/QukYz5YojYOIzGMo0ybM=
-github.com/aserto-dev/go-directory v0.33.1 h1:jLyzMRu5Omw5KJ2cmqnGZZbrF091HFHnt9awhqZhSq8=
-github.com/aserto-dev/go-directory v0.33.1/go.mod h1:0Ng9lPTahslSN/ONoWCceG6Q1ukpSfxYEu589eCReRM=
+github.com/aserto-dev/go-directory v0.33.2-0.20241209182914-962e2284a774 h1:EYzcBLxIFXZVeI6V+inh/9vucDlLWSyFo8V2nk9ipJA=
+github.com/aserto-dev/go-directory v0.33.2-0.20241209182914-962e2284a774/go.mod h1:8oIbHi7n0fTgTcqcuW/dNB8KigJndqMEqQQZjoEz5ws=
 github.com/aserto-dev/header v0.0.8 h1:T052WblWFZ/5Mg3MphHylE3sZobdIQpdj5cP3sPMhL8=
 github.com/aserto-dev/header v0.0.8/go.mod h1:wmWm+omABTWf6QRRmw9yOdvgTstk/vYDqIA1duR8Pus=
 github.com/aserto-dev/logger v0.0.5 h1:l8KY2YJgf8zAx0E9tvdKfeg7qIvDZAN7JK2fIPU0AeU=
@@ -141,6 +141,8 @@ github.com/panmari/cuckoofilter v1.0.6/go.mod h1:bKADbQPGbN6TxUvo/IbMEIUbKuASnps
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 h1:GFCKgmp0tecUJ0sJuv4pzYCqS9+RGSn52M3FUwPs+uo=
+github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=

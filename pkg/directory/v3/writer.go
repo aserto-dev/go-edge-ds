@@ -19,6 +19,7 @@ import (
 )
 
 type Writer struct {
+	dsw3.UnimplementedWriterServer
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator

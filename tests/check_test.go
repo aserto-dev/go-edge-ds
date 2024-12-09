@@ -46,8 +46,12 @@ func BenchmarkCheck(b *testing.B) {
 	b.ResetTimer()
 
 	for _, check := range checks {
-		_, err := client.V3.Reader.Check(ctx, check)
-		assert.NoError(err)
+		b.RunParallel(func(pb *testing.PB) {
+			for pb.Next() {
+				_, err := client.V3.Reader.Check(ctx, check)
+				assert.NoError(err)
+			}
+		})
 	}
 }
 

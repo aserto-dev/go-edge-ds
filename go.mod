@@ -4,12 +4,16 @@ go 1.22.9
 
 toolchain go1.23.3
 
+// replace github.com/aserto-dev/azm => ../azm
+
+// replace github.com/aserto-dev/go-directory => ../go-directory
+
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.2.2-0.20241208220302-6161ae10603f
+	github.com/aserto-dev/azm v0.2.2-0.20241209183007-db142a784585
 	github.com/aserto-dev/errors v0.0.11
-	github.com/aserto-dev/go-directory v0.33.1
+	github.com/aserto-dev/go-directory v0.33.2-0.20241209182914-962e2284a774
 	github.com/bufbuild/protovalidate-go v0.7.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
@@ -53,6 +57,7 @@ require (
 	github.com/mitchellh/go-ps v1.0.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect
 	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
+	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect

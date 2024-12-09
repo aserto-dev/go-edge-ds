@@ -31,6 +31,7 @@ import (
 )
 
 type Model struct {
+	dsm3.UnimplementedModelServer
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 	v      *protovalidate.Validator
