@@ -21,6 +21,7 @@ import (
 )
 
 type Reader struct {
+	dsr3.UnimplementedReaderServer
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator

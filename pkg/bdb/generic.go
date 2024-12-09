@@ -10,6 +10,7 @@ import (
 
 type Message[T any] interface {
 	proto.Message
+	UnmarshalVT([]byte) error
 	*T
 }
 
@@ -24,6 +25,11 @@ var (
 		AllowPartial:   false,
 		DiscardUnknown: true,
 	}
+	// unmarshalToOpts = proto.UnmarshalOptions{
+	// 	Merge:          true,
+	// 	AllowPartial:   false,
+	// 	DiscardUnknown: true,
+	// }
 )
 
 func marshal[T any, M Message[T]](t M) ([]byte, error) {
@@ -38,6 +44,10 @@ func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	}
 
 	return &t, nil
+}
+
+func unmarshalTo[T any, M Message[T]](b []byte, dst M) error {
+	return dst.UnmarshalVT(b)
 }
 
 func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {

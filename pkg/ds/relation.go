@@ -170,7 +170,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if fv := i.GetObjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.GetObjectType(), fv)
-			log.Trace().Str("fv", fv).Str("item", item.GetObjectType()).Bool("equal", equal == 0).Msg("object_type filter")
+			// log.Trace().Str("fv", fv).Str("item", item.GetObjectType()).Bool("equal", equal == 0).Msg("object_type filter")
 			return equal == 0
 		})
 	}
@@ -178,7 +178,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if fv := i.GetObjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(fv, item.GetObjectId())
-			log.Trace().Str("fv", fv).Str("item", item.GetObjectId()).Bool("equal", equal == 0).Msg("object_id filter")
+			// log.Trace().Str("fv", fv).Str("item", item.GetObjectId()).Bool("equal", equal == 0).Msg("object_id filter")
 			return equal == 0
 		})
 	}
@@ -186,7 +186,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.Relation, fv)
-			log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal == 0).Msg("relation filter")
+			// log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal == 0).Msg("relation filter")
 			return equal == 0
 		})
 	}
@@ -194,7 +194,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if fv := i.GetSubjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.GetSubjectType(), fv)
-			log.Trace().Str("fv", fv).Str("item", item.GetSubjectType()).Bool("equal", equal == 0).Msg("subject_type filter")
+			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectType()).Bool("equal", equal == 0).Msg("subject_type filter")
 			return equal == 0
 		})
 	}
@@ -202,7 +202,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if fv := i.GetSubjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(fv, item.GetSubjectId())
-			log.Trace().Str("fv", fv).Str("item", item.GetSubjectId()).Bool("equal", equal == 0).Msg("subject_id filter")
+			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectId()).Bool("equal", equal == 0).Msg("subject_id filter")
 			return equal == 0
 		})
 	}
@@ -211,7 +211,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 		fv := i.GetSubjectRelation()
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
-			log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")
+			// log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")
 			return equal == 0
 		})
 	}
