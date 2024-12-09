@@ -68,7 +68,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 		}
 
 		if etag == updObj.Etag {
-			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+			s.logger.Trace().Bytes("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
 			resp.Result = updObj
 			return nil
 		}
@@ -124,7 +124,10 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		if req.GetWithRelations() {
 			{
 				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](
+					ctx, tx, bdb.RelationsSubPath,
+					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+				)
 				if err != nil {
 					return err
 				}
@@ -142,7 +145,10 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 			}
 			{
 				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](
+					ctx, tx, bdb.RelationsObjPath,
+					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+				)
 				if err != nil {
 					return err
 				}
@@ -197,7 +203,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		}
 
 		if etag == updRel.Etag {
-			s.logger.Trace().Str("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+			s.logger.Trace().Bytes("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
 			resp.Result = updRel
 			return nil
 		}

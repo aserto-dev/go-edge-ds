@@ -55,7 +55,7 @@ func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error
 	return nil
 }
 
-func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter string) bool {
+func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter []byte) bool {
 	exists, err := bdb.KeyPrefixExists[dsc3.Relation](ctx, tx, path, keyFilter)
 	if err != nil {
 		return false

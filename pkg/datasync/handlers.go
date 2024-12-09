@@ -37,7 +37,7 @@ func (s *Sync) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obje
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
+		s.logger.Trace().Bytes("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
 		return nil
 	}
 
@@ -98,7 +98,7 @@ func (s *Sync) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Re
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
+		s.logger.Trace().Bytes("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
 		return nil
 	}
 

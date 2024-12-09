@@ -3,6 +3,7 @@ package ds
 // model contains relation related items.
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/aserto-dev/azm/safe"
@@ -11,7 +12,6 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	"github.com/rs/zerolog/log"
-	"github.com/samber/lo"
 )
 
 // Relation identifier.
@@ -37,113 +37,146 @@ func GetRelations(i *dsr3.GetRelationsRequest) *relations {
 	return &relations{r, relation{r.SafeRelation}}
 }
 
-func (i *relation) Key() string {
+func (i *relation) Key() []byte {
 	return i.ObjKey()
 }
 
-func (i *relation) ObjKey() string {
-	return i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
-		InstanceSeparator +
-		i.GetRelation() +
-		InstanceSeparator +
-		i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
-		lo.Ternary(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
+func (i *relation) ObjKey() []byte {
+	var buf bytes.Buffer
+	buf.Grow(832)
+
+	buf.WriteString(i.GetObjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetObjectId())
+
+	buf.WriteByte(InstanceSeparator)
+	buf.WriteString(i.GetRelation())
+	buf.WriteByte(InstanceSeparator)
+
+	buf.WriteString(i.GetSubjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetSubjectId())
+
+	if i.GetSubjectRelation() != "" {
+		buf.WriteByte(InstanceSeparator)
+		buf.WriteString(i.GetSubjectRelation())
+	}
+
+	return buf.Bytes()
 }
 
-func (i *relation) SubKey() string {
-	return i.GetSubjectType() + TypeIDSeparator + i.GetSubjectId() +
-		InstanceSeparator +
-		i.GetRelation() +
-		InstanceSeparator +
-		i.GetObjectType() + TypeIDSeparator + i.GetObjectId() +
-		lo.Ternary(i.GetSubjectRelation() == "", "", InstanceSeparator+i.GetSubjectRelation())
+func (i *relation) SubKey() []byte {
+	var buf bytes.Buffer
+	buf.Grow(832)
+
+	buf.WriteString(i.GetSubjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetSubjectId())
+
+	buf.WriteByte(InstanceSeparator)
+	buf.WriteString(i.GetRelation())
+	buf.WriteByte(InstanceSeparator)
+
+	buf.WriteString(i.GetObjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetObjectId())
+
+	if i.GetSubjectRelation() != "" {
+		buf.WriteByte(InstanceSeparator)
+		buf.WriteString(i.GetSubjectRelation())
+	}
+
+	return buf.Bytes()
 }
 
-func (i *relation) PathAndFilter() ([]string, string, error) {
+func (i *relation) PathAndFilter() ([]string, []byte, error) {
 	switch {
 	case ObjectSelector(i.Object()).IsComplete():
 		return bdb.RelationsObjPath, i.ObjFilter(), nil
 	case ObjectSelector(i.Subject()).IsComplete():
 		return bdb.RelationsSubPath, i.SubFilter(), nil
 	default:
-		return []string{}, "", ErrNoCompleteObjectIdentifier
+		return []string{}, []byte{}, ErrNoCompleteObjectIdentifier
 	}
 }
 
 // ObjFilter
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relation) ObjFilter() string {
-	filter := strings.Builder{}
+func (i *relation) ObjFilter() []byte {
+	var buf bytes.Buffer
+	buf.Grow(832)
 
-	filter.WriteString(i.GetObjectType())
-	filter.WriteString(TypeIDSeparator)
-	filter.WriteString(i.GetObjectId())
-	filter.WriteString(InstanceSeparator)
+	buf.WriteString(i.GetObjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetObjectId())
+	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetRelation()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetRelation())
-	filter.WriteString(InstanceSeparator)
+	buf.WriteString(i.GetRelation())
+	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetSubjectType()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetSubjectType())
-	filter.WriteString(TypeIDSeparator)
+	buf.WriteString(i.GetSubjectType())
+	buf.WriteByte(TypeIDSeparator)
 
 	if IsNotSet(i.GetSubjectId()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetSubjectId())
+	buf.WriteString(i.GetSubjectId())
 
-	return filter.String()
+	return buf.Bytes()
 }
 
 // SubFilter
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relation) SubFilter() string {
-	filter := strings.Builder{}
+func (i *relation) SubFilter() []byte {
+	var buf bytes.Buffer
+	buf.Grow(832)
 
-	filter.WriteString(i.GetSubjectType())
-	filter.WriteString(TypeIDSeparator)
-	filter.WriteString(i.GetSubjectId())
-	filter.WriteString(InstanceSeparator)
+	buf.WriteString(i.GetSubjectType())
+	buf.WriteByte(TypeIDSeparator)
+	buf.WriteString(i.GetSubjectId())
+	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetRelation()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetRelation())
-	filter.WriteString(InstanceSeparator)
+	buf.WriteString(i.GetRelation())
+	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetObjectType()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetObjectType())
-	filter.WriteString(TypeIDSeparator)
+	buf.WriteString(i.GetObjectType())
+	buf.WriteByte(TypeIDSeparator)
 
 	if IsNotSet(i.GetObjectId()) {
-		return filter.String()
+		return buf.Bytes()
 	}
 
-	filter.WriteString(i.GetObjectId())
+	buf.WriteString(i.GetObjectId())
 
-	return filter.String()
+	return buf.Bytes()
 }
 
 type RelationFilter func(*dsc3.Relation) bool
 
-func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
+// nolint: gocritic
+func (i *relation) Filter() (bdb.Path, []byte, RelationFilter) {
 	var (
 		path      bdb.Path
-		keyFilter string
+		keyFilter []byte
 	)
 
 	// #1  determine if object identifier is complete (has type+id)
@@ -161,7 +194,7 @@ func (i *relation) Filter() (bdb.Path, string, RelationFilter) {
 	if len(path) == 0 {
 		log.Debug().Msg("no covering index path, default to scan of relation object path")
 		path = bdb.RelationsObjPath
-		keyFilter = ""
+		keyFilter = []byte{}
 	}
 
 	// #2 build valueFilter function

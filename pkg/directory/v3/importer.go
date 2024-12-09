@@ -173,7 +173,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
+		s.logger.Trace().Bytes("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
 		return nil
 	}
 
@@ -231,7 +231,10 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 
 	{
 		// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		iter, err := bdb.NewScanIterator[dsc3.Relation](
+			ctx, tx, bdb.RelationsSubPath,
+			bdb.WithKeyFilter(append(obj.Key(), ds.InstanceSeparator)),
+		)
 		if err != nil {
 			return err
 		}
@@ -250,7 +253,10 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 
 	{
 		// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-		iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(obj.Key()+ds.InstanceSeparator))
+		iter, err := bdb.NewScanIterator[dsc3.Relation](
+			ctx, tx, bdb.RelationsObjPath,
+			bdb.WithKeyFilter(append(obj.Key(), ds.InstanceSeparator)),
+		)
 		if err != nil {
 			return err
 		}
@@ -295,7 +301,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
+		s.logger.Trace().Bytes("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
 		return nil
 	}
 
