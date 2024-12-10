@@ -105,8 +105,6 @@ github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+l
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/homeport/dyff v1.9.3 h1:ltfPBSFppsJGE/Mmo8I1h3fqYxk+c3oTf6EMFpBNL9Y=
 github.com/homeport/dyff v1.9.3/go.mod h1:smCju/EnwXnfxdeN//7Dt7/Z36I11NbTPNZNADRn1+A=
-github.com/homeport/dyff v1.9.4 h1:JqPRQgcUe21XiixSOMoHvPkYYw+kgq0ADMKh0Hgh3+E=
-github.com/homeport/dyff v1.9.4/go.mod h1:smCju/EnwXnfxdeN//7Dt7/Z36I11NbTPNZNADRn1+A=
 github.com/ianlancetaylor/demangle v0.0.0-20210905161508-09a460cdf81d/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
