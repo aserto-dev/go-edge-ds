@@ -1,5 +1,5 @@
-buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20240920164238-5a7b106cbb87.1 h1:7QIeAuTdLp173vC/9JojRMDFcpmqtoYrxPmvdHAOynw=
-buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20240920164238-5a7b106cbb87.1/go.mod h1:mnHCFccv4HwuIAOHNGdiIc5ZYbBCvbTWZcodLN5wITI=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20241127180247-a33202765966.1 h1:jLd96rDDNJ+zIJxvV/L855VEtrjR0G4aePVDlCpf6kw=
+buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.35.2-20241127180247-a33202765966.1/go.mod h1:mnHCFccv4HwuIAOHNGdiIc5ZYbBCvbTWZcodLN5wITI=
 cel.dev/expr v0.18.0 h1:CJ6drgk+Hf96lkLikr4rFf19WrU0BOWEihyZnI2TAzo=
 cel.dev/expr v0.18.0/go.mod h1:MrpN08Q+lEBs+bGYdLxxHkZoUSsCp0nSKTs0nTymJgw=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
@@ -12,8 +12,12 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/aserto-dev/aserto-grpc v0.2.6 h1:h64MYALF5zLm2sSKcLEtyXyrJvZSxfqTOmQ1j/J44kI=
 github.com/aserto-dev/aserto-grpc v0.2.6/go.mod h1:Vki74KINVfnwtJ8QGzRm+xHNjsJ2KUWFtXhezJK9DEg=
+github.com/aserto-dev/azm v0.2.2-0.20241210055902-84a39f33e2b9 h1:Na3iybhht0FUFCSedNtvcX35ebYfNNd5c32UTlgh1Qg=
+github.com/aserto-dev/azm v0.2.2-0.20241210055902-84a39f33e2b9/go.mod h1:635U0pZ1bXPxvN13iMf+g/09Uu1wzH+aBNJddAFnwHQ=
 github.com/aserto-dev/errors v0.0.11 h1:CXo+Uwmh09doG2HvL1SC8Fnne8f9VPrGyEQPtogAfyY=
 github.com/aserto-dev/errors v0.0.11/go.mod h1:T1YQOtcxpgBriPTn5HXJkD/QukYz5YojYOIzGMo0ybM=
+github.com/aserto-dev/go-directory v0.33.2-0.20241210055557-b7307c2abab3 h1:vBLVIB+9S4CRqiqb5OPZP04YZ+6+RFOmaTGBI2UvVBE=
+github.com/aserto-dev/go-directory v0.33.2-0.20241210055557-b7307c2abab3/go.mod h1:8mJoaMW2HeaNfixziRg7QOuQ7CF5Y9Pt+6wddOmNW60=
 github.com/aserto-dev/header v0.0.8 h1:T052WblWFZ/5Mg3MphHylE3sZobdIQpdj5cP3sPMhL8=
 github.com/aserto-dev/header v0.0.8/go.mod h1:wmWm+omABTWf6QRRmw9yOdvgTstk/vYDqIA1duR8Pus=
 github.com/aserto-dev/logger v0.0.5 h1:l8KY2YJgf8zAx0E9tvdKfeg7qIvDZAN7JK2fIPU0AeU=
@@ -31,8 +35,8 @@ github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSV
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/deckarep/golang-set/v2 v2.6.0 h1:XfcQbWM1LlMB8BsJ8N9vW5ehnnPVIw0je80NsVHagjM=
-github.com/deckarep/golang-set/v2 v2.6.0/go.mod h1:VAky9rY/yGXJOLEDv3OMci+7wtDpOF4IN+y82NBOac4=
+github.com/deckarep/golang-set/v2 v2.7.0 h1:gIloKvD7yH2oip4VLhsv3JyLLFnC0Y2mlusgcvJYW5k=
+github.com/deckarep/golang-set/v2 v2.7.0/go.mod h1:VAky9rY/yGXJOLEDv3OMci+7wtDpOF4IN+y82NBOac4=
 github.com/dgryski/go-metro v0.0.0-20200812162917-85c65e2d0165/go.mod h1:c9O8+fpSOX1DM8cPNSkX/qsBWdkD4yd2dpciOWQjpBw=
 github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 h1:y7y0Oa6UawqTFPCDw9JG6pdKt4F9pAhHv0B7FMGaGD0=
 github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140/go.mod h1:c9O8+fpSOX1DM8cPNSkX/qsBWdkD4yd2dpciOWQjpBw=
@@ -101,6 +105,8 @@ github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+l
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/homeport/dyff v1.9.3 h1:ltfPBSFppsJGE/Mmo8I1h3fqYxk+c3oTf6EMFpBNL9Y=
 github.com/homeport/dyff v1.9.3/go.mod h1:smCju/EnwXnfxdeN//7Dt7/Z36I11NbTPNZNADRn1+A=
+github.com/homeport/dyff v1.9.4 h1:JqPRQgcUe21XiixSOMoHvPkYYw+kgq0ADMKh0Hgh3+E=
+github.com/homeport/dyff v1.9.4/go.mod h1:smCju/EnwXnfxdeN//7Dt7/Z36I11NbTPNZNADRn1+A=
 github.com/ianlancetaylor/demangle v0.0.0-20210905161508-09a460cdf81d/go.mod h1:aYm2/VgdVmcIU8iMfdMvDMsRAQjcfZSKFby6HOFvi/w=
 github.com/kisielk/errcheck v1.5.0/go.mod h1:pFxgyoBC7bSaBwPgfKdkLd5X25qrDl4LWUI2bnpBCr8=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
@@ -258,8 +264,8 @@ google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7
 google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8/go.mod h1:JiN7NxoALGmiZfu7CAH4rXhgtRTLTxftemlI0sWmxmc=
 google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55/go.mod h1:DMBHOl98Agz4BDEuKkezgsaosCRResVns1a3J2ZsMNc=
 google.golang.org/genproto v0.0.0-20200423170343-7949de9c1215/go.mod h1:55QSHmfGQM9UVYDPBsyGGes0y52j32PQ3BqQfXhyH3c=
-google.golang.org/genproto/googleapis/api v0.0.0-20241206012308-a4fef0638583 h1:v+j+5gpj0FopU0KKLDGfDo9ZRRpKdi5UBrCP0f76kuY=
-google.golang.org/genproto/googleapis/api v0.0.0-20241206012308-a4fef0638583/go.mod h1:jehYqy3+AhJU9ve55aNOaSml7wUXjF9x6z2LcCfpAhY=
+google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 h1:CkkIfIt50+lT6NHAVoRYEyAvQGFM7xEwXUUywFvEb3Q=
+google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576/go.mod h1:1R3kvZ1dtP3+4p4d3G8uJ8rFk/fWlScl38vanWACI08=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20241206012308-a4fef0638583 h1:IfdSdTcLFy4lqUQrQJLkLt1PB+AsqVz6lwkWPzWEz10=
 google.golang.org/genproto/googleapis/rpc v0.0.0-20241206012308-a4fef0638583/go.mod h1:5uTbfoYQed2U9p3KIj2/Zzm02PYhndfdmML0qC3q3FU=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
