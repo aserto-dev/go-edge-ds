@@ -195,9 +195,9 @@ func ScanWithFilter(
 	tx *bolt.Tx,
 	path Path,
 	keyFilter []byte,
-	valueFilter func(*dsc3.Relation) bool,
+	valueFilter func(*dsc3.RelationIdentifier) bool,
 	pool graph.RelationPool,
-	out *[]*dsc3.Relation,
+	out *[]*dsc3.RelationIdentifier,
 ) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
@@ -207,7 +207,7 @@ func ScanWithFilter(
 	c := b.Cursor()
 
 	if valueFilter == nil {
-		valueFilter = func(_ *dsc3.Relation) bool { return true }
+		valueFilter = func(_ *dsc3.RelationIdentifier) bool { return true }
 	}
 
 	results := *out

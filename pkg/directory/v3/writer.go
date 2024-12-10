@@ -234,15 +234,16 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	rel := ds.Relation(&dsc3.Relation{
+	rel := &dsc3.Relation{
 		ObjectType:      req.ObjectType,
 		ObjectId:        req.ObjectId,
 		Relation:        req.Relation,
 		SubjectType:     req.SubjectType,
 		SubjectId:       req.SubjectId,
 		SubjectRelation: req.SubjectRelation,
-	})
-	if err := rel.Validate(s.store.MC()); err != nil {
+	}
+	rid := ds.Relation(rel)
+	if err := rid.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
@@ -250,7 +251,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel.Relation)
+			updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rid.ObjKey(), rel)
 			if err != nil {
 				return err
 			}
@@ -260,11 +261,11 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			}
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rid.ObjKey()); err != nil {
 			return err
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rid.SubKey()); err != nil {
 			return err
 		}
 
