@@ -1,8 +1,8 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.22.9
+go 1.22.10
 
-toolchain go1.23.3
+toolchain go1.23.4
 
 // replace github.com/aserto-dev/azm => ../azm
 
@@ -11,9 +11,9 @@ toolchain go1.23.3
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.2.2-0.20241210055902-84a39f33e2b9
+	github.com/aserto-dev/azm v0.2.2-0.20241210213546-f97c77e8252b
 	github.com/aserto-dev/errors v0.0.11
-	github.com/aserto-dev/go-directory v0.33.2-0.20241210055557-b7307c2abab3
+	github.com/aserto-dev/go-directory v0.33.2-0.20241210213355-3d02dab1a2bd
 	github.com/bufbuild/protovalidate-go v0.7.3
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.4
@@ -66,13 +66,13 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/texttheater/golang-levenshtein v1.0.1 // indirect
 	github.com/virtuald/go-ordered-json v0.0.0-20170621173500-b18e6e673d74 // indirect
-	golang.org/x/exp v0.0.0-20241108190413-2d47ceb2692f // indirect
+	golang.org/x/exp v0.0.0-20241210194714-1829a127f884 // indirect
 	golang.org/x/net v0.32.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241206012308-a4fef0638583 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241209162323-e6fa225c2576 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
