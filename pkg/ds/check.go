@@ -13,7 +13,6 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-directory/pkg/prop"
 
-	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -31,16 +30,10 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 }
 
 func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
-	return func(r *dsc3.Relation) ([]*dsc3.Relation, error) {
-		path, keyFilter, valueFilter := Relation(r).Filter()
-		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, keyFilter)
-		if err != nil {
-			return nil, err
-		}
+	return func(r *dsc3.RelationIdentifier, pool graph.RelationPool, out *[]*dsc3.RelationIdentifier) error {
+		path, keyFilter, valueFilter := RelationIdentifier(r).Filter()
 
-		return lo.Filter(relations, func(r *dsc3.Relation, _ int) bool {
-			return valueFilter(r)
-		}), nil
+		return bdb.ScanWithFilter(ctx, tx, path, keyFilter, valueFilter, pool, out)
 	}
 }
 
@@ -62,13 +55,12 @@ func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error
 	return nil
 }
 
-func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter string) bool {
-	scan, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, path, bdb.WithPageSize(1), bdb.WithKeyFilter(keyFilter))
+func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter []byte) bool {
+	exists, err := bdb.KeyPrefixExists[dsc3.Relation](ctx, tx, path, keyFilter)
 	if err != nil {
 		return false
 	}
-
-	return scan.Next()
+	return exists
 }
 
 func SetContextWithReason(err error) *structpb.Struct {

@@ -14,7 +14,6 @@ import (
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // Error codes returned by failures to parse an expression.
@@ -203,7 +202,7 @@ func ListBuckets(tx *bolt.Tx, path Path) ([]string, error) {
 }
 
 // SetKey, set key and value in the path specified bucket.
-func SetKey(tx *bolt.Tx, path Path, key string, value []byte) error {
+func SetKey(tx *bolt.Tx, path Path, key, value []byte) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return err
@@ -212,11 +211,11 @@ func SetKey(tx *bolt.Tx, path Path, key string, value []byte) error {
 		return ErrPathNotFound
 	}
 
-	return b.Put([]byte(key), value)
+	return b.Put(key, value)
 }
 
 // DeleteKey, delete key and value in path specified bucket, when it exists. None existing keys will not raise an error.
-func DeleteKey(tx *bolt.Tx, path Path, key string) error {
+func DeleteKey(tx *bolt.Tx, path Path, key []byte) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return err
@@ -225,11 +224,11 @@ func DeleteKey(tx *bolt.Tx, path Path, key string) error {
 		return ErrPathNotFound
 	}
 
-	return b.Delete([]byte(key))
+	return b.Delete(key)
 }
 
 // GetKey, get key and value from path specified bucket.
-func GetKey(tx *bolt.Tx, path Path, key string) ([]byte, error) {
+func GetKey(tx *bolt.Tx, path Path, key []byte) ([]byte, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return []byte{}, err
@@ -238,7 +237,7 @@ func GetKey(tx *bolt.Tx, path Path, key string) ([]byte, error) {
 		return []byte{}, ErrPathNotFound
 	}
 
-	v := b.Get([]byte(key))
+	v := b.Get(key)
 	if v == nil {
 		return []byte{}, ErrKeyNotFound
 	}
@@ -247,7 +246,7 @@ func GetKey(tx *bolt.Tx, path Path, key string) ([]byte, error) {
 }
 
 // KeyExists, check if the key exists in the path specified bucket.
-func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
+func KeyExists(tx *bolt.Tx, path Path, key []byte) (bool, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return false, err
@@ -256,17 +255,10 @@ func KeyExists(tx *bolt.Tx, path Path, key string) (bool, error) {
 		return false, ErrPathNotFound
 	}
 
-	v := b.Get([]byte(key))
+	v := b.Get(key)
 	if v == nil {
 		return false, nil
 	}
 
 	return true, nil
-}
-
-func ErrIsNotFound(err error) bool {
-	if s, ok := status.FromError(err); ok {
-		return s.Code() == codes.NotFound
-	}
-	return false
 }

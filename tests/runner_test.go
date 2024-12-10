@@ -7,13 +7,17 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"testing"
 	"time"
 
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
+	"github.com/pkg/errors"
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/require"
@@ -32,6 +36,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	ctx := context.Background()
 	logger := zerolog.New(io.Discard)
 
@@ -57,6 +62,100 @@ func TestMain(m *testing.M) {
 
 	closer()
 	os.Exit(exitVal)
+}
+
+func importFile(stream dsi3.Importer_ImportClient, file string) error {
+	r, err := os.Open(file)
+	if err != nil {
+		return errors.Wrapf(err, "failed to open file: [%s]", file)
+	}
+	defer r.Close()
+
+	reader, err := NewReader(r)
+	if err != nil || reader == nil {
+		fmt.Fprintf(os.Stderr, "Skipping file [%s]: [%s]\n", file, err.Error())
+		return nil
+	}
+	defer reader.Close()
+
+	objectType := reader.GetObjectType()
+	switch objectType {
+	case ObjectsStr:
+		if err := loadObjects(stream, reader); err != nil {
+			return err
+		}
+
+	case RelationsStr:
+		if err := loadRelations(stream, reader); err != nil {
+			return err
+		}
+
+	default:
+		fmt.Fprintf(os.Stderr, "skipping file [%s] with object type [%s]\n", file, objectType)
+	}
+
+	return nil
+}
+
+func loadObjects(stream dsi3.Importer_ImportClient, objects *Reader) error {
+	defer objects.Close()
+
+	var m dsc3.Object
+
+	for {
+		err := objects.Read(&m)
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			if strings.Contains(err.Error(), "unknown field") {
+				continue
+			}
+			return err
+		}
+
+		if err := stream.Send(&dsi3.ImportRequest{
+			OpCode: dsi3.Opcode_OPCODE_SET,
+			Msg: &dsi3.ImportRequest_Object{
+				Object: &m,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func loadRelations(stream dsi3.Importer_ImportClient, relations *Reader) error {
+	defer relations.Close()
+
+	var m dsc3.Relation
+
+	for {
+		err := relations.Read(&m)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			if strings.Contains(err.Error(), "unknown field") {
+				continue
+			}
+			return err
+		}
+
+		if err := stream.Send(&dsi3.ImportRequest{
+			OpCode: dsi3.Opcode_OPCODE_SET,
+			Msg: &dsi3.ImportRequest_Relation{
+				Relation: &m,
+			},
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func testInit() (*server.TestEdgeClient, func()) {

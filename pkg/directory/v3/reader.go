@@ -9,6 +9,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/pkg/errors"
+	"github.com/pkg/profile"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
@@ -21,6 +22,7 @@ import (
 )
 
 type Reader struct {
+	dsr3.UnimplementedReaderServer
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator
@@ -142,11 +144,12 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	}
 
 	if req.GetObjectType() != "" {
-		if err := ds.ObjectSelector(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType}).Validate(s.store.MC()); err != nil {
+		oid := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType})
+		if err := ds.ObjectSelector(oid.ObjectIdentifier).Validate(s.store.MC()); err != nil {
 			return resp, err
 		}
 
-		opts = append(opts, bdb.WithKeyFilter(req.GetObjectType()+ds.TypeIDSeparator))
+		opts = append(opts, bdb.WithKeyFilter(oid.Key()))
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
@@ -219,13 +222,13 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 			if err != nil {
 				sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
 			}
-			objects[ds.Object(sub).Key()] = sub
+			objects[ds.Object(sub).StrKey()] = sub
 
 			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
 			if err != nil {
 				obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
 			}
-			objects[ds.Object(obj).Key()] = obj
+			objects[ds.Object(obj).StrKey()] = obj
 
 			resp.Objects = objects
 		}
@@ -257,7 +260,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		return resp, err
 	}
 
-	path, keyFilter, valueFilter := getRelations.Filter()
+	path, keyFilter, valueFilter := getRelations.RelationValueFilter()
 
 	opts := []bdb.ScanOption{
 		bdb.WithPageToken(req.Page.Token),
@@ -294,13 +297,13 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				if err != nil {
 					sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
 				}
-				objects[ds.Object(sub).Key()] = sub
+				objects[ds.Object(sub).StrKey()] = sub
 
 				obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
 				if err != nil {
 					obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
 				}
-				objects[ds.Object(obj).Key()] = obj
+				objects[ds.Object(obj).StrKey()] = obj
 			}
 
 			resp.Objects = objects
@@ -314,6 +317,8 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 
 // Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
+	defer profile.Start(profile.TraceProfile, profile.ProfilePath("."), profile.NoShutdownHook).Stop()
+
 	resp := &dsr3.CheckResponse{}
 
 	if err := s.Validate(req); err != nil {
