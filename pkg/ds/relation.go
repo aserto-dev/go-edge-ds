@@ -267,6 +267,7 @@ func (i *relation) Filter() (path bdb.Path, keyFilter []byte, valueFilter func(*
 	return path, keyFilter, valueFilter
 }
 
+// nolint: gocritic // commentedOutCode
 func (i *relation) RelationValueFilter() (path bdb.Path, keyFilter []byte, valueFilter func(*dsc3.Relation) bool) {
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly

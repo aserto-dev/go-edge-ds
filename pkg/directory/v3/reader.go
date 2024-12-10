@@ -358,7 +358,6 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 
 // Checks, execute multiple check requests in parallel.
 func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.ChecksResponse, error) {
-	// defer profile.Start(profile.TraceProfile, profile.ProfilePath("."), profile.NoShutdownHook).Stop()
 	resp := &dsr3.ChecksResponse{}
 
 	// TODO add ProtoValidate constraints pb-directory and add dsr3.ChecksRequest to protovalidate init func.

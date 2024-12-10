@@ -42,7 +42,6 @@ func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 }
 
 func unmarshalTo[T any, M Message[T]](b []byte, dst M) error {
-	// return dst.UnmarshalVT(b)
 	return dst.UnmarshalVT(b)
 }
 
