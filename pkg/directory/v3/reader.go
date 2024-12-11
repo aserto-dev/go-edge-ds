@@ -9,7 +9,6 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/pkg/errors"
-	"github.com/pkg/profile"
 
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
@@ -317,8 +316,6 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 
 // Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
-	defer profile.Start(profile.TraceProfile, profile.ProfilePath("."), profile.NoShutdownHook).Stop()
-
 	resp := &dsr3.CheckResponse{}
 
 	if err := s.Validate(req); err != nil {
