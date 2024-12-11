@@ -5,43 +5,49 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"runtime"
 	"testing"
 
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/server"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )
 
-func BenchmarkCheck(b *testing.B) {
+func BenchmarkCheckSerial(b *testing.B) {
 	assert := require.New(b)
 
-	checks, err := loadChecks()
+	checks, err := loadChecks[dsr3.CheckRequest]()
 	assert.NoError(err)
 	assert.NotEmpty(checks)
 
 	client, cleanup := testInit()
 	b.Cleanup(cleanup)
 
+	setupBenchmark(b, client)
 	ctx := context.Background()
 
-	manifest, err := os.ReadFile("./data/check/manifest.yaml")
+	b.ResetTimer()
+
+	for _, check := range checks {
+		_, err := client.V3.Reader.Check(ctx, check)
+		assert.NoError(err)
+	}
+}
+
+func BenchmarkCheckParallel(b *testing.B) {
+	assert := require.New(b)
+
+	checks, err := loadChecks[dsr3.CheckRequest]()
 	assert.NoError(err)
+	assert.NotEmpty(checks)
 
-	assert.NoError(deleteManifest(client))
-	assert.NoError(setManifest(client, manifest))
+	client, cleanup := testInit()
+	b.Cleanup(cleanup)
 
-	g, iCtx := errgroup.WithContext(ctx)
-	stream, err := client.V3.Importer.Import(iCtx)
-	assert.NoError(err)
-
-	g.Go(receiver(stream))
-
-	assert.NoError(importFile(stream, "./data/check/objects.json"))
-	assert.NoError(importFile(stream, "./data/check/relations.json"))
-	assert.NoError(stream.CloseSend())
-
-	assert.NoError(g.Wait())
+	setupBenchmark(b, client)
+	ctx := context.Background()
 
 	b.ResetTimer()
 
@@ -55,13 +61,71 @@ func BenchmarkCheck(b *testing.B) {
 	}
 }
 
-func loadChecks() ([]*dsr3.CheckRequest, error) {
+func BenchmarkCheckParallelChunks(b *testing.B) {
+	assert := require.New(b)
+
+	checks, err := loadChecks[dsr3.CheckRequest]()
+	assert.NoError(err)
+	assert.NotEmpty(checks)
+
+	client, cleanup := testInit()
+	b.Cleanup(cleanup)
+
+	setupBenchmark(b, client)
+	ctx := context.Background()
+
+	var chunks [][]*dsr3.CheckRequest
+	numChunks := runtime.NumCPU()
+	chunkSize := (len(checks) + numChunks - 1) / numChunks
+
+	for i := 0; i < len(checks); i += chunkSize {
+		end := min(i+chunkSize, len(checks))
+		chunks = append(chunks, checks[i:end])
+	}
+
+	b.ResetTimer()
+
+	for _, chunk := range chunks {
+		b.RunParallel(func(pb *testing.PB) {
+			for _, check := range chunk {
+				for pb.Next() {
+					_, err := client.V3.Reader.Check(ctx, check)
+					assert.NoError(err)
+				}
+			}
+		})
+	}
+}
+
+func setupBenchmark(b *testing.B, client *server.TestEdgeClient) {
+	assert := require.New(b)
+
+	manifest, err := os.ReadFile("./data/check/manifest.yaml")
+	assert.NoError(err)
+
+	assert.NoError(deleteManifest(client))
+	assert.NoError(setManifest(client, manifest))
+
+	g, iCtx := errgroup.WithContext(context.Background())
+	stream, err := client.V3.Importer.Import(iCtx)
+	assert.NoError(err)
+
+	g.Go(receiver(stream))
+
+	assert.NoError(importFile(stream, "./data/check/objects.json"))
+	assert.NoError(importFile(stream, "./data/check/relations.json"))
+	assert.NoError(stream.CloseSend())
+
+	assert.NoError(g.Wait())
+}
+
+func loadChecks[T any]() ([]*T, error) {
 	bin, err := os.ReadFile("./data/check/check.json")
 	if err != nil {
 		return nil, err
 	}
 
-	var checks []*dsr3.CheckRequest
+	var checks []*T
 	if err := json.Unmarshal(bin, &checks); err != nil {
 		return nil, err
 

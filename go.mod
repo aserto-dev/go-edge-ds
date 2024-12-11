@@ -4,14 +4,14 @@ go 1.22.10
 
 toolchain go1.23.4
 
-// replace github.com/aserto-dev/azm => ../azm
+replace github.com/aserto-dev/azm => ../azm
 
 // replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.2.2-0.20241210213546-f97c77e8252b
+	github.com/aserto-dev/azm v0.2.2-0.20241210214915-de60dbb1c83b
 	github.com/aserto-dev/errors v0.0.11
 	github.com/aserto-dev/go-directory v0.33.2-0.20241210213355-3d02dab1a2bd
 	github.com/bufbuild/protovalidate-go v0.7.3
@@ -22,7 +22,6 @@ require (
 	github.com/homeport/dyff v1.9.3
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/profile v1.7.0
 	github.com/rs/zerolog v1.33.0
 	github.com/samber/lo v1.47.0
 	github.com/stretchr/testify v1.10.0
@@ -40,7 +39,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.7.0 // indirect
 	github.com/dgryski/go-metro v0.0.0-20211217172704-adc40b04c140 // indirect
-	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gonvenience/bunt v1.3.5 // indirect
 	github.com/gonvenience/neat v1.3.13 // indirect
@@ -48,7 +46,6 @@ require (
 	github.com/gonvenience/text v1.0.7 // indirect
 	github.com/gonvenience/wrap v1.2.0 // indirect
 	github.com/google/cel-go v0.22.0 // indirect
-	github.com/google/pprof v0.0.0-20240727154555-813a5fbdbec8 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.24.0 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
