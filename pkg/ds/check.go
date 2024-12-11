@@ -31,9 +31,12 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 
 func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
 	return func(r *dsc3.RelationIdentifier, pool graph.RelationPool, out *[]*dsc3.RelationIdentifier) error {
-		path, keyFilter, valueFilter := RelationIdentifier(r).Filter()
+		keyFilter := RelationIdentifierBuffer()
+		defer ReturnRelationIdentifierBuffer(keyFilter)
 
-		return bdb.ScanWithFilter(ctx, tx, path, keyFilter, valueFilter, pool, out)
+		path, valueFilter := RelationIdentifier(r).Filter(keyFilter)
+
+		return bdb.ScanWithFilter(ctx, tx, path, keyFilter.Bytes(), valueFilter, pool, out)
 	}
 }
 
