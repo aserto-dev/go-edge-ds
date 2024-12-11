@@ -11,12 +11,12 @@ var (
 	ObjectsPath       Path = []string{"objects"}
 	RelationsSubPath  Path = []string{"relations_sub"}
 	RelationsObjPath  Path = []string{"relations_obj"}
+	MetadataKey            = []byte("metadata")
+	BodyKey                = []byte("body")
+	ModelKey               = []byte("model")
 )
 
 const (
 	ManifestName    string = "default"
 	ManifestVersion string = "0.0.1"
-	MetadataKey     string = "metadata"
-	BodyKey         string = "body"
-	ModelKey        string = "model"
 )

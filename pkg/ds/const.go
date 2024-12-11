@@ -1,7 +1,7 @@
 package ds
 
 const (
-	TypeIDSeparator   string = ":"
-	InstanceSeparator string = "|"
-	RelationSeparator string = "#"
+	TypeIDSeparator   byte = ':'
+	InstanceSeparator byte = '|'
+	RelationSeparator byte = '#'
 )

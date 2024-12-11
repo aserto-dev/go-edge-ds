@@ -13,12 +13,12 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func UpdateMetadataObject(ctx context.Context, tx *bolt.Tx, path []string, key string, msg *dsc3.Object) (*dsc3.Object, error) {
+func UpdateMetadataObject(ctx context.Context, tx *bolt.Tx, path []string, keyFilter []byte, msg *dsc3.Object) (*dsc3.Object, error) {
 	// get timestamp once for transaction.
 	ts := timestamppb.New(time.Now().UTC())
 
 	// get current instance.
-	cur, err := bdb.Get[dsc3.Object](ctx, tx, path, key)
+	cur, err := bdb.Get[dsc3.Object](ctx, tx, path, keyFilter)
 	switch {
 	case status.Code(err) == codes.NotFound:
 		// new instance, set created_at timestamp.
@@ -43,7 +43,7 @@ func UpdateMetadataObject(ctx context.Context, tx *bolt.Tx, path []string, key s
 	return msg, nil
 }
 
-func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key string, msg *dsc3.Relation) (*dsc3.Relation, error) {
+func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key []byte, msg *dsc3.Relation) (*dsc3.Relation, error) {
 	// get timestamp once for transaction.
 	ts := timestamppb.New(time.Now().UTC())
 

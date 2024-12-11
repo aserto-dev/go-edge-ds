@@ -37,7 +37,7 @@ func (s *Sync) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obje
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
+		s.logger.Trace().Bytes("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
 		return nil
 	}
 
@@ -81,8 +81,7 @@ func (s *Sync) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Re
 	}
 
 	if err := s.validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+		return derr.ErrProtoValidate.Msg(err.Error()) // invalid proto message
 	}
 
 	rel := ds.Relation(req)
@@ -98,17 +97,17 @@ func (s *Sync) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Re
 	}
 
 	if etag == updReq.Etag {
-		s.logger.Trace().Str("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
+		s.logger.Trace().Bytes("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
 		return nil
 	}
 
 	updReq.Etag = etag
 
-	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.Relation(updReq).ObjKey(), updReq); err != nil {
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 
-	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, ds.Relation(updReq).SubKey(), updReq); err != nil {
+	if _, err := bdb.Set[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, rel.SubKey(), updReq); err != nil {
 		return derr.ErrInvalidRelation.Msg("set")
 	}
 

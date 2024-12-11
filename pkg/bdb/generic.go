@@ -25,11 +25,6 @@ var (
 		AllowPartial:   false,
 		DiscardUnknown: true,
 	}
-	// unmarshalToOpts = proto.UnmarshalOptions{
-	// 	Merge:          true,
-	// 	AllowPartial:   false,
-	// 	DiscardUnknown: true,
-	// }
 )
 
 func marshal[T any, M Message[T]](t M) ([]byte, error) {
@@ -50,7 +45,7 @@ func unmarshalTo[T any, M Message[T]](b []byte, dst M) error {
 	return dst.UnmarshalVT(b)
 }
 
-func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string) (M, error) {
+func Get[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key []byte) (M, error) {
 	buf, err := GetKey(tx, path, key)
 	if err != nil {
 		return nil, err
@@ -80,7 +75,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 	return result, nil
 }
 
-func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key string, t M) (M, error) {
+func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key []byte, t M) (M, error) {
 	buf, err := marshal(t)
 	if err != nil {
 		return nil, err
@@ -93,7 +88,7 @@ func Set[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, key s
 	return t, nil
 }
 
-func Delete(ctx context.Context, tx *bolt.Tx, path Path, key string) error {
+func Delete(ctx context.Context, tx *bolt.Tx, path Path, key []byte) error {
 	return DeleteKey(tx, path, key)
 }
 
@@ -109,7 +104,7 @@ func unmarshalAny[T any](buf []byte) (*T, error) {
 	return &t, nil
 }
 
-func GetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key string) (*T, error) {
+func GetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key []byte) (*T, error) {
 	buf, err := GetKey(tx, path, key)
 	if err != nil {
 		return nil, err
@@ -118,7 +113,7 @@ func GetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key string) (*T,
 	return unmarshalAny[T](buf)
 }
 
-func SetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key string, t *T) (*T, error) {
+func SetAny[T any](ctx context.Context, tx *bolt.Tx, path Path, key []byte, t *T) (*T, error) {
 	buf, err := marshalAny(t)
 	if err != nil {
 		return nil, err

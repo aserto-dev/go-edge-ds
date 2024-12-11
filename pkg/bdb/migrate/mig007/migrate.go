@@ -74,7 +74,7 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 
 			// re-encode body value.
 			{
-				bodyValue := b.Get([]byte(bdb.BodyKey))
+				bodyValue := b.Get(bdb.BodyKey)
 
 				body, err := unmarshal[dsm3.Body](bodyValue)
 				if err != nil {
@@ -86,14 +86,14 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 					return err
 				}
 
-				if err := mig.SetKey(wtx, path, []byte(bdb.BodyKey), bodyBuf); err != nil {
+				if err := mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf); err != nil {
 					return err
 				}
 			}
 
 			// re-encode metadata value.
 			{
-				metadataValue := b.Get([]byte(bdb.MetadataKey))
+				metadataValue := b.Get(bdb.MetadataKey)
 
 				metadata, err := unmarshal[dsm3.Metadata](metadataValue)
 				if err != nil {
@@ -105,16 +105,16 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 					return err
 				}
 
-				if err := mig.SetKey(wtx, path, []byte(bdb.MetadataKey), metadataBuf); err != nil {
+				if err := mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf); err != nil {
 					return err
 				}
 			}
 
 			// copy model value as-is.
 			{
-				modelValue := b.Get([]byte(bdb.ModelKey))
+				modelValue := b.Get(bdb.ModelKey)
 
-				if err := mig.SetKey(wtx, path, []byte(bdb.ModelKey), modelValue); err != nil {
+				if err := mig.SetKey(wtx, path, bdb.ModelKey, modelValue); err != nil {
 					return err
 				}
 			}
@@ -205,11 +205,11 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 					return err
 				}
 
-				if err := mig.SetKey(wtx, bdb.RelationsObjPath, []byte(ds.Relation(rel).ObjKey()), val); err != nil {
+				if err := mig.SetKey(wtx, bdb.RelationsObjPath, ds.Relation(rel).ObjKey(), val); err != nil {
 					return err
 				}
 
-				if err := mig.SetKey(wtx, bdb.RelationsSubPath, []byte(ds.Relation(rel).SubKey()), val); err != nil {
+				if err := mig.SetKey(wtx, bdb.RelationsSubPath, ds.Relation(rel).SubKey(), val); err != nil {
 					return err
 				}
 

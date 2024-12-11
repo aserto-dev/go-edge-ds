@@ -30,8 +30,8 @@ func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.C
 }
 
 func getRelations(ctx context.Context, tx *bolt.Tx) graph.RelationReader {
-	return func(r *dsc3.Relation, pool graph.RelationPool, out *[]*dsc3.Relation) error {
-		path, keyFilter, valueFilter := Relation(r).Filter()
+	return func(r *dsc3.RelationIdentifier, pool graph.RelationPool, out *[]*dsc3.RelationIdentifier) error {
+		path, keyFilter, valueFilter := RelationIdentifier(r).Filter()
 
 		return bdb.ScanWithFilter(ctx, tx, path, keyFilter, valueFilter, pool, out)
 	}
@@ -55,7 +55,7 @@ func (i *check) RelationIdentifiersExist(ctx context.Context, tx *bolt.Tx) error
 	return nil
 }
 
-func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter string) bool {
+func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path bdb.Path, keyFilter []byte) bool {
 	exists, err := bdb.KeyPrefixExists[dsc3.Relation](ctx, tx, path, keyFilter)
 	if err != nil {
 		return false

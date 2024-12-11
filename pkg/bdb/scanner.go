@@ -50,9 +50,9 @@ func WithPageToken(token string) ScanOption {
 	}
 }
 
-func WithKeyFilter(filter string) ScanOption {
+func WithKeyFilter(filter []byte) ScanOption {
 	return func(a *ScanArgs) {
-		a.keyFilter = []byte(filter)
+		a.keyFilter = filter
 	}
 }
 
@@ -169,7 +169,7 @@ func (p *PageIterator[T, M]) NextToken() string {
 	return string(p.nextToken)
 }
 
-func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string) ([]M, error) {
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter []byte) ([]M, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
@@ -177,11 +177,9 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyF
 
 	c := b.Cursor()
 
-	prefix := []byte(keyFilter)
-
 	var results []M
 
-	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+	for k, v := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, v = c.Next() {
 		m, err := unmarshal[T, M](v)
 		if err != nil {
 			return nil, err
@@ -196,10 +194,10 @@ func ScanWithFilter(
 	ctx context.Context,
 	tx *bolt.Tx,
 	path Path,
-	keyFilter string,
-	valueFilter func(*dsc3.Relation) bool,
+	keyFilter []byte,
+	valueFilter func(*dsc3.RelationIdentifier) bool,
 	pool graph.RelationPool,
-	out *[]*dsc3.Relation,
+	out *[]*dsc3.RelationIdentifier,
 ) error {
 	b, err := SetBucket(tx, path)
 	if err != nil {
@@ -209,14 +207,12 @@ func ScanWithFilter(
 	c := b.Cursor()
 
 	if valueFilter == nil {
-		valueFilter = func(_ *dsc3.Relation) bool { return true }
+		valueFilter = func(_ *dsc3.RelationIdentifier) bool { return true }
 	}
-
-	prefix := []byte(keyFilter)
 
 	results := *out
 
-	for k, v := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, v = c.Next() {
+	for k, v := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, v = c.Next() {
 		m := pool.Get()
 		if err := unmarshalTo(v, m); err != nil {
 			return err
@@ -232,7 +228,7 @@ func ScanWithFilter(
 	return nil
 }
 
-func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter string) (bool, error) {
+func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter []byte) (bool, error) {
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return false, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
@@ -240,9 +236,7 @@ func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path
 
 	c := b.Cursor()
 
-	prefix := []byte(keyFilter)
+	k, _ := c.Seek(keyFilter)
 
-	k, _ := c.Seek(prefix)
-
-	return (k != nil && bytes.HasPrefix(k, prefix)), nil
+	return (k != nil && bytes.HasPrefix(k, keyFilter)), nil
 }
