@@ -5,8 +5,8 @@ package ds
 import (
 	"bytes"
 	"strings"
-	"sync"
 
+	"github.com/aserto-dev/azm/mempool"
 	"github.com/aserto-dev/azm/safe"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
@@ -14,6 +14,10 @@ import (
 
 	"github.com/rs/zerolog/log"
 )
+
+const maxRelationSize = 832
+
+var bufPool = mempool.NewSlicePool[byte](maxRelationSize)
 
 // Relation identifier.
 type relation struct {
@@ -56,11 +60,10 @@ func (i *relation) Key() []byte {
 }
 
 func (i *relation) ObjKey() []byte {
-	buf := bytes.NewBuffer(bufPool.Get().([]byte))
-	defer func() {
-		buf.Reset()
-		bufPool.Put(buf.Bytes())
-	}()
+	ptr := bufPool.Get()
+	defer bufPool.Put(ptr)
+
+	buf := bytes.NewBuffer(*ptr)
 
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -83,11 +86,10 @@ func (i *relation) ObjKey() []byte {
 }
 
 func (i *relation) SubKey() []byte {
-	buf := bytes.NewBuffer(bufPool.Get().([]byte))
-	defer func() {
-		buf.Reset()
-		bufPool.Put(buf.Bytes())
-	}()
+	ptr := bufPool.Get()
+	defer bufPool.Put(ptr)
+
+	buf := bytes.NewBuffer(*ptr)
 
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -124,11 +126,10 @@ func (i *relation) PathAndFilter() ([]string, []byte, error) {
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
 // TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) ObjFilter() []byte {
-	buf := bytes.NewBuffer(bufPool.Get().([]byte))
-	defer func() {
-		buf.Reset()
-		bufPool.Put(buf.Bytes())
-	}()
+	ptr := bufPool.Get()
+	defer bufPool.Put(ptr)
+
+	buf := bytes.NewBuffer(*ptr)
 
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -162,11 +163,10 @@ func (i *relation) ObjFilter() []byte {
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
 // TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) SubFilter() []byte {
-	buf := bytes.NewBuffer(bufPool.Get().([]byte))
-	defer func() {
-		buf.Reset()
-		bufPool.Put(buf.Bytes())
-	}()
+	ptr := bufPool.Get()
+	defer bufPool.Put(ptr)
+
+	buf := bytes.NewBuffer(*ptr)
 
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -362,10 +362,4 @@ func (i *relation) RelationValueFilter() (path bdb.Path, keyFilter []byte, value
 	}
 
 	return path, keyFilter, valueFilter
-}
-
-var bufPool = sync.Pool{
-	New: func() interface{} {
-		return make([]byte, 0, 832)
-	},
 }
