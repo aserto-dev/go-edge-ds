@@ -122,38 +122,45 @@ func setManifest(client *server.TestEdgeClient, manifest []byte) error {
 	return err
 }
 
+func getManifest(client *server.TestEdgeClient) ([]byte, error) {
+	stream, err := client.V3.Model.GetManifest(context.Background(), &dsm3.GetManifestRequest{Empty: &emptypb.Empty{}})
+	if err != nil {
+		return nil, err
+	}
+
+	data := bytes.Buffer{}
+
+	bytesRecv := 0
+	for {
+		resp, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		if md, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Metadata); ok {
+			_ = md.Metadata
+		}
+
+		if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
+			data.Write(body.Body.Data)
+			bytesRecv += len(body.Body.Data)
+		}
+	}
+
+	return data.Bytes(), nil
+}
+
 func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testing.T) {
 	return func(t *testing.T) {
-		stream, err := client.V3.Model.GetManifest(context.Background(), &dsm3.GetManifestRequest{Empty: &emptypb.Empty{}})
-		if err != nil {
-			require.NoError(t, err)
-		}
-
-		data := bytes.Buffer{}
-
-		bytesRecv := 0
-		for {
-			resp, err := stream.Recv()
-			if err == io.EOF {
-				break
-			}
-
-			if err != nil {
-				require.NoError(t, err)
-			}
-
-			if md, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Metadata); ok {
-				_ = md.Metadata
-			}
-
-			if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
-				data.Write(body.Body.Data)
-				bytesRecv += len(body.Body.Data)
-			}
-		}
+		data, err := getManifest(client)
+		require.NoError(t, err)
 
 		tempManifest := path.Join(os.TempDir(), "manifest.yaml")
-		if err := os.WriteFile(tempManifest, data.Bytes(), 0o600); err != nil {
+		if err := os.WriteFile(tempManifest, data, 0o600); err != nil {
 			require.NoError(t, err)
 		}
 

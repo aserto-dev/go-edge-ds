@@ -19,6 +19,7 @@ import (
 )
 
 type Writer struct {
+	dsw3.UnimplementedWriterServer
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator
@@ -54,7 +55,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 	etag := obj.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updObj, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
+		updObj, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, obj.Key(), req.Object)
 		if err != nil {
 			return err
 		}
@@ -67,7 +68,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 		}
 
 		if etag == updObj.Etag {
-			s.logger.Trace().Str("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+			s.logger.Trace().Bytes("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
 			resp.Result = updObj
 			return nil
 		}
@@ -106,7 +107,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
-			updObj, err := bdb.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
+			updObj, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
 			if err != nil {
 				return err
 			}
@@ -123,7 +124,10 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		if req.GetWithRelations() {
 			{
 				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](
+					ctx, tx, bdb.RelationsSubPath,
+					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+				)
 				if err != nil {
 					return err
 				}
@@ -141,7 +145,10 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 			}
 			{
 				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, bdb.WithKeyFilter(objIdent.Key()+ds.InstanceSeparator))
+				iter, err := bdb.NewScanIterator[dsc3.Relation](
+					ctx, tx, bdb.RelationsObjPath,
+					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+				)
 				if err != nil {
 					return err
 				}
@@ -183,7 +190,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 	etag := relation.Hash()
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		updRel, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
+		updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, relation.ObjKey(), req.Relation)
 		if err != nil {
 			return err
 		}
@@ -196,7 +203,7 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		}
 
 		if etag == updRel.Etag {
-			s.logger.Trace().Str("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+			s.logger.Trace().Bytes("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
 			resp.Result = updRel
 			return nil
 		}
@@ -227,15 +234,16 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		return resp, derr.ErrProtoValidate.Msg(err.Error())
 	}
 
-	rel := ds.Relation(&dsc3.Relation{
+	rel := &dsc3.Relation{
 		ObjectType:      req.ObjectType,
 		ObjectId:        req.ObjectId,
 		Relation:        req.Relation,
 		SubjectType:     req.SubjectType,
 		SubjectId:       req.SubjectId,
 		SubjectRelation: req.SubjectRelation,
-	})
-	if err := rel.Validate(s.store.MC()); err != nil {
+	}
+	rid := ds.Relation(rel)
+	if err := rid.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
@@ -243,7 +251,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
-			updRel, err := bdb.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rel.ObjKey(), rel.Relation)
+			updRel, err := ds.UpdateMetadataRelation(ctx, tx, bdb.RelationsObjPath, rid.ObjKey(), rel)
 			if err != nil {
 				return err
 			}
@@ -253,11 +261,11 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			}
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rid.ObjKey()); err != nil {
 			return err
 		}
 
-		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rid.SubKey()); err != nil {
 			return err
 		}
 

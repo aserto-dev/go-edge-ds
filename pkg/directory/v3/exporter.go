@@ -16,6 +16,7 @@ import (
 )
 
 type Exporter struct {
+	dse3.UnimplementedExporterServer
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
 	validator *protovalidate.Validator

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 
+	"github.com/aserto-dev/azm/graph"
+	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	bolt "go.etcd.io/bbolt"
@@ -19,14 +21,13 @@ type Iterator[T any, M Message[T]] interface {
 }
 
 type ScanIterator[T any, M Message[T]] struct {
-	ctx    context.Context
-	tx     *bolt.Tx
-	c      *bolt.Cursor
-	args   *ScanArgs
-	init   bool
-	key    []byte
-	value  []byte
-	filter func(M) bool
+	ctx   context.Context
+	tx    *bolt.Tx
+	c     *bolt.Cursor
+	args  *ScanArgs
+	init  bool
+	key   []byte
+	value []byte
 }
 
 type ScanOption func(*ScanArgs)
@@ -49,9 +50,9 @@ func WithPageToken(token string) ScanOption {
 	}
 }
 
-func WithKeyFilter(filter string) ScanOption {
+func WithKeyFilter(filter []byte) ScanOption {
 	return func(a *ScanArgs) {
-		a.keyFilter = []byte(filter)
+		a.keyFilter = filter
 	}
 }
 
@@ -103,7 +104,7 @@ func (s *ScanIterator[T, M]) Key() string {
 }
 
 func (s *ScanIterator[T, M]) Value() M {
-	msg, err := Unmarshal[T, M](s.value)
+	msg, err := unmarshal[T, M](s.value)
 	if err != nil {
 		var result M
 		return result
@@ -117,17 +118,6 @@ func (s *ScanIterator[T, M]) Delete() error {
 		return s.c.Delete()
 	}
 	return nil
-}
-
-func (s *ScanIterator[T, M]) SetFilter(filters []func(M) bool) {
-	s.filter = func(item M) bool {
-		for _, filter := range filters {
-			if !filter(item) {
-				return false
-			}
-		}
-		return true
-	}
 }
 
 type PagedIterator[T any, M Message[T]] interface {
@@ -179,15 +169,74 @@ func (p *PageIterator[T, M]) NextToken() string {
 	return string(p.nextToken)
 }
 
-func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, filter string) ([]M, error) {
-	iter, err := NewScanIterator[T, M](ctx, tx, path, WithKeyFilter(filter))
+func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter []byte) ([]M, error) {
+	b, err := SetBucket(tx, path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 	}
 
+	c := b.Cursor()
+
 	var results []M
-	for iter.Next() {
-		results = append(results, iter.Value())
+
+	for k, v := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, v = c.Next() {
+		m, err := unmarshal[T, M](v)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, m)
 	}
+
 	return results, nil
+}
+
+func ScanWithFilter(
+	ctx context.Context,
+	tx *bolt.Tx,
+	path Path,
+	keyFilter []byte,
+	valueFilter func(*dsc3.RelationIdentifier) bool,
+	pool graph.RelationPool,
+	out *[]*dsc3.RelationIdentifier,
+) error {
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+	}
+
+	c := b.Cursor()
+
+	if valueFilter == nil {
+		valueFilter = func(_ *dsc3.RelationIdentifier) bool { return true }
+	}
+
+	results := *out
+
+	for k, v := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, v = c.Next() {
+		m := pool.Get()
+		if err := unmarshalTo(v, m); err != nil {
+			return err
+		}
+
+		if valueFilter(m) {
+			results = append(results, m)
+		}
+	}
+
+	*out = results
+
+	return nil
+}
+
+func KeyPrefixExists[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyFilter []byte) (bool, error) {
+	b, err := SetBucket(tx, path)
+	if err != nil {
+		return false, errors.Wrapf(ErrPathNotFound, "path [%s]", path)
+	}
+
+	c := b.Cursor()
+
+	k, _ := c.Seek(keyFilter)
+
+	return (k != nil && bytes.HasPrefix(k, keyFilter)), nil
 }
