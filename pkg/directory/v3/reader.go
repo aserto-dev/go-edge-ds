@@ -184,13 +184,16 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		return resp, err
 	}
 
-	path, filter, err := getRelation.PathAndFilter()
+	filter := ds.RelationIdentifierBuffer()
+	defer ds.ReturnRelationIdentifierBuffer(filter)
+
+	path, err := getRelation.PathAndFilter(filter)
 	if err != nil {
 		return resp, err
 	}
 
 	err = s.store.DB().View(func(tx *bolt.Tx) error {
-		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter)
+		relations, err := bdb.Scan[dsc3.Relation](ctx, tx, path, filter.Bytes())
 		if err != nil {
 			return err
 		}
@@ -259,11 +262,14 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		return resp, err
 	}
 
-	path, keyFilter, valueFilter := getRelations.RelationValueFilter()
+	keyFilter := ds.RelationIdentifierBuffer()
+	defer ds.ReturnRelationIdentifierBuffer(keyFilter)
+
+	path, valueFilter := getRelations.RelationValueFilter(keyFilter)
 
 	opts := []bdb.ScanOption{
 		bdb.WithPageToken(req.Page.Token),
-		bdb.WithKeyFilter(keyFilter),
+		bdb.WithKeyFilter(keyFilter.Bytes()),
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {

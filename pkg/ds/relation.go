@@ -100,103 +100,95 @@ func (i *relation) SubKey() []byte {
 	return buf.Bytes()
 }
 
-func (i *relation) PathAndFilter() ([]string, []byte, error) {
+func (i *relation) PathAndFilter(filter *bytes.Buffer) ([]string, error) {
 	switch {
 	case ObjectSelector(i.Object()).IsComplete():
-		return bdb.RelationsObjPath, i.ObjFilter(), nil
+		i.ObjFilter(filter)
+		return bdb.RelationsObjPath, nil
 	case ObjectSelector(i.Subject()).IsComplete():
-		return bdb.RelationsSubPath, i.SubFilter(), nil
+		i.SubFilter(filter)
+		return bdb.RelationsSubPath, nil
 	default:
-		return []string{}, []byte{}, ErrNoCompleteObjectIdentifier
+		return []string{}, ErrNoCompleteObjectIdentifier
 	}
 }
 
 // ObjFilter
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relation) ObjFilter() []byte {
-	buf := newRelationBuffer()
-
+func (i *relation) ObjFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
 	buf.WriteString(i.GetObjectId())
 	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetRelation()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetRelation())
 	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetSubjectType()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)
 
 	if IsNotSet(i.GetSubjectId()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetSubjectId())
-
-	return buf.Bytes()
 }
 
 // SubFilter
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
 // TODO: if subject relation exists add subject relation to filter clause.
-func (i *relation) SubFilter() []byte {
-	buf := newRelationBuffer()
-
+func (i *relation) SubFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)
 	buf.WriteString(i.GetSubjectId())
 	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetRelation()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetRelation())
 	buf.WriteByte(InstanceSeparator)
 
 	if IsNotSet(i.GetObjectType()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
 
 	if IsNotSet(i.GetObjectId()) {
-		return buf.Bytes()
+		return
 	}
 
 	buf.WriteString(i.GetObjectId())
-
-	return buf.Bytes()
 }
 
 // nolint: gocritic
-func (i *relation) Filter() (path bdb.Path, keyFilter []byte, valueFilter func(*dsc3.RelationIdentifier) bool) {
+func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.RelationIdentifier) bool) {
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
 	if ObjectIdentifier(i.Object()).IsComplete() {
 		path = bdb.RelationsObjPath
-		keyFilter = i.ObjFilter()
-	}
-	if ObjectIdentifier(i.Subject()).IsComplete() {
+		i.ObjFilter(keyFilter)
+	} else if ObjectIdentifier(i.Subject()).IsComplete() {
 		path = bdb.RelationsSubPath
-		keyFilter = i.SubFilter()
+		i.SubFilter(keyFilter)
 	}
 	if len(path) == 0 {
 		log.Debug().Msg("no covering index path, default to scan of relation object path")
 		path = bdb.RelationsObjPath
-		keyFilter = []byte{}
 	}
 
 	// #2 build valueFilter function
@@ -260,27 +252,25 @@ func (i *relation) Filter() (path bdb.Path, keyFilter []byte, valueFilter func(*
 		return true
 	}
 
-	return path, keyFilter, valueFilter
+	return path, valueFilter
 }
 
 // nolint: gocritic // commentedOutCode
-func (i *relation) RelationValueFilter() (path bdb.Path, keyFilter []byte, valueFilter func(*dsc3.Relation) bool) {
+func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.Relation) bool) {
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
 	if ObjectIdentifier(i.Object()).IsComplete() {
 		path = bdb.RelationsObjPath
-		keyFilter = i.ObjFilter()
-	}
-	if ObjectIdentifier(i.Subject()).IsComplete() {
+		i.ObjFilter(keyFilter)
+	} else if ObjectIdentifier(i.Subject()).IsComplete() {
 		path = bdb.RelationsSubPath
-		keyFilter = i.SubFilter()
+		i.SubFilter(keyFilter)
 	}
 	if len(path) == 0 {
 		log.Debug().Msg("no covering index path, default to scan of relation object path")
 		path = bdb.RelationsObjPath
-		keyFilter = []byte{}
 	}
 
 	// #2 build valueFilter function
@@ -344,10 +334,8 @@ func (i *relation) RelationValueFilter() (path bdb.Path, keyFilter []byte, value
 		return true
 	}
 
-	return path, keyFilter, valueFilter
+	return path, valueFilter
 }
-
-const maxRelationIdentifierSize = 384
 
 func newRelationBuffer() *bytes.Buffer {
 	return bytes.NewBuffer(make([]byte, 0, maxRelationIdentifierSize))
