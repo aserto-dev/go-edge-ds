@@ -1,8 +1,6 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.22.10
-
-toolchain go1.23.4
+go 1.23.4
 
 // replace github.com/aserto-dev/azm => ../azm
 
@@ -11,7 +9,7 @@ toolchain go1.23.4
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.6
-	github.com/aserto-dev/azm v0.2.2
+	github.com/aserto-dev/azm v0.2.3-0.20241220173410-22058cc2818a
 	github.com/aserto-dev/errors v0.0.11
 	github.com/aserto-dev/go-directory v0.33.2
 	github.com/bufbuild/protovalidate-go v0.7.3
