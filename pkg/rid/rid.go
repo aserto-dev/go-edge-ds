@@ -42,7 +42,6 @@ const (
 )
 
 func ObjKeyToRID(key []byte, rid *dsc3.RelationIdentifier) error {
-	// r := *rid // nolint govet
 	parts := bytes.FieldsFunc(key, isToken)
 
 	l := len(parts)
@@ -60,7 +59,6 @@ func ObjKeyToRID(key []byte, rid *dsc3.RelationIdentifier) error {
 			rid.SubjectRelation = ""
 		}
 
-		// *rid = r // nolint govet
 		return nil
 	}
 
@@ -68,8 +66,6 @@ func ObjKeyToRID(key []byte, rid *dsc3.RelationIdentifier) error {
 }
 
 func SubKeyToRID(key []byte, rid *dsc3.RelationIdentifier) error {
-	// r := *rid // nolint govet
-
 	parts := bytes.FieldsFunc(key, isToken)
 
 	l := len(parts)
@@ -87,7 +83,6 @@ func SubKeyToRID(key []byte, rid *dsc3.RelationIdentifier) error {
 			rid.SubjectRelation = ""
 		}
 
-		// *rid = r // nolint govet
 		return nil
 	}
 
