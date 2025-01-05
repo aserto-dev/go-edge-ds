@@ -9,6 +9,7 @@ var (
 	PermissionsPath   Path = []string{"permissions"}
 	RelationTypesPath Path = []string{"relation_types"}
 	ObjectsPath       Path = []string{"objects"}
+	RelationsPath     Path = []string{"relations"}
 	RelationsSubPath  Path = []string{"relations_sub"}
 	RelationsObjPath  Path = []string{"relations_obj"}
 	MetadataKey            = []byte("metadata")

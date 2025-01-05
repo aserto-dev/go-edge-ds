@@ -3,9 +3,11 @@ package bdb
 import (
 	"bytes"
 	"context"
+	"slices"
 
 	"github.com/aserto-dev/azm/graph"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/rid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	bolt "go.etcd.io/bbolt"
@@ -204,6 +206,11 @@ func ScanWithFilter(
 		return errors.Wrapf(ErrPathNotFound, "path [%s]", path)
 	}
 
+	keyToRID := rid.ObjKeyToRID
+	if slices.Equal(path, RelationsSubPath) {
+		keyToRID = rid.SubKeyToRID
+	}
+
 	c := b.Cursor()
 
 	if valueFilter == nil {
@@ -212,9 +219,9 @@ func ScanWithFilter(
 
 	results := *out
 
-	for k, v := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, v = c.Next() {
+	for k, _ := c.Seek(keyFilter); k != nil && bytes.HasPrefix(k, keyFilter); k, _ = c.Next() {
 		m := pool.Get()
-		if err := unmarshalTo(v, m); err != nil {
+		if err := keyToRID(k, m); err != nil {
 			return err
 		}
 
