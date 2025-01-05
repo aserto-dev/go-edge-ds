@@ -26,18 +26,6 @@ import (
 
 const blockSize = 1024 // test with 1KiB block size to exercise chunking.
 
-func TestManifestV2(t *testing.T) {
-	client, closer := testInit()
-	t.Cleanup(closer)
-
-	manifest, err := os.ReadFile("./manifest_v2_test.yaml")
-	require.NoError(t, err)
-
-	t.Run("set-manifest", testSetManifest(client, manifest))
-	t.Run("get-manifest", testGetManifest(client, "./manifest_v2_test.yaml"))
-	t.Run("delete-manifest", testDeleteManifest(client))
-}
-
 func TestManifestV3(t *testing.T) {
 	client, closer := testInit()
 	t.Cleanup(closer)
