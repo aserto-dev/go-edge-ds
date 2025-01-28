@@ -20,6 +20,10 @@ type checks struct {
 }
 
 func Checks(i *dsr3.ChecksRequest) *checks {
+	if i.Default == nil {
+		i.Default = &dsr3.CheckRequest{}
+	}
+
 	return &checks{safe.Checks(i)}
 }
 
