@@ -11,6 +11,7 @@ import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig005"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig006"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig007"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig008"
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/Masterminds/semver/v3"
@@ -27,6 +28,7 @@ var migMap = map[string]Migration{
 	mig005.Version: mig005.Migrate,
 	mig006.Version: mig006.Migrate,
 	mig007.Version: mig007.Migrate,
+	mig008.Version: mig008.Migrate,
 }
 
 var (
