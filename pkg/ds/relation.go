@@ -37,7 +37,10 @@ func Relation(i *dsc3.Relation) *relation {
 }
 
 func RelationIdentifier(i *dsc3.RelationIdentifier) *relation {
-	return &relation{safe.Relation(i)}
+	return &relation{&safe.SafeRelation{
+		RelationIdentifier: i,
+		HasSubjectRelation: i.SubjectRelation != "",
+	}}
 }
 
 func GetRelation(i *dsr3.GetRelationRequest) *relations {
