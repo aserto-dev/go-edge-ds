@@ -12,6 +12,7 @@ import (
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	dsa1 "github.com/authzen/access.go/api/access/v1"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
@@ -50,6 +51,7 @@ type Directory struct {
 	model3    dsm3.ModelServer
 	reader3   dsr3.ReaderServer
 	writer3   dsw3.WriterServer
+	access1   dsa1.AccessServer
 }
 
 var (
@@ -125,6 +127,8 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 	exporter3 := v3.NewExporter(logger, store, validator)
 	importer3 := v3.NewImporter(logger, store, validator)
 
+	access1 := v3.NewAccess(logger, reader3)
+
 	dir := &Directory{
 		config:    config,
 		logger:    &newLogger,
@@ -135,6 +139,7 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		writer3:   writer3,
 		exporter3: exporter3,
 		importer3: importer3,
+		access1:   access1,
 	}
 
 	if err := store.LoadModel(); err != nil {
@@ -169,6 +174,10 @@ func (s *Directory) Reader3() dsr3.ReaderServer {
 
 func (s *Directory) Writer3() dsw3.WriterServer {
 	return s.writer3
+}
+
+func (s *Directory) Access1() dsa1.AccessServer {
+	return s.access1
 }
 
 func (s *Directory) Logger() *zerolog.Logger {
