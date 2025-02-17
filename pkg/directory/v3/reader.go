@@ -344,10 +344,6 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		if err := check.RelationIdentifiersExist(ctx, tx); err != nil {
-			return err
-		}
-
 		var err error
 		resp, err = check.Exec(ctx, tx, s.store.MC())
 		return err
@@ -362,13 +358,6 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 // Checks, execute multiple check requests in parallel.
 func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.ChecksResponse, error) {
 	resp := &dsr3.ChecksResponse{}
-
-	// TODO add ProtoValidate constraints pb-directory and add dsr3.ChecksRequest to protovalidate init func.
-	// if err := s.Validate(req); err != nil {
-	// 	resp.Check = false
-	// 	resp.Context = setContextWithReason(err)
-	// 	return resp, nil
-	// }
 
 	checks := ds.Checks(req)
 	if err := checks.Validate(s.store.MC()); err != nil {

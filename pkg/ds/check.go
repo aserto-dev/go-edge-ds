@@ -26,6 +26,13 @@ func Check(i *dsr3.CheckRequest) *check {
 }
 
 func (i *check) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.CheckResponse, error) {
+	if err := i.RelationIdentifiersExist(ctx, tx); err != nil {
+		return &dsr3.CheckResponse{
+			Check:   false,
+			Context: SetContextWithReason(err),
+		}, err
+	}
+
 	return mc.Check(i.CheckRequest, getRelations(ctx, tx))
 }
 
