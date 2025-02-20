@@ -10,9 +10,9 @@ replace github.com/bufbuild/protovalidate-go => github.com/bufbuild/protovalidat
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.9
-	github.com/aserto-dev/azm v0.2.9-0.20250219205037-5533d50f033e
+	github.com/aserto-dev/azm v0.2.9-0.20250220002245-5ec95be39106
 	github.com/aserto-dev/errors v0.0.13
-	github.com/aserto-dev/go-directory v0.33.5-0.20250219151104-69a476b1e7c1
+	github.com/aserto-dev/go-directory v0.33.5
 	github.com/authzen/access.go v0.0.0-20250123041208-d58afed67b50
 	github.com/bufbuild/protovalidate-go v0.8.2
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
