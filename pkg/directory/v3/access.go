@@ -210,7 +210,7 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 
 	graphReq := extractActionSearch(req)
 
-	assignableRelations, err := s.reader.store.MC().AssignableRelations(
+	assignable, err := s.reader.store.MC().AssignableRelations(
 		cache.ObjectName(graphReq.ObjectType),
 		cache.ObjectName(graphReq.SubjectType),
 	)
@@ -226,7 +226,7 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 		return resp, err
 	}
 
-	assignable := append(assignableRelations, availablePermissions...)
+	assignable = append(assignable, availablePermissions...)
 
 	checks := []*dsr3.CheckRequest{}
 	for _, rel := range assignable {
