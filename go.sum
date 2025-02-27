@@ -26,6 +26,8 @@ github.com/authzen/access.go v0.0.0-20250225192010-dfb0e30b2a39 h1:iz+T5QcLM++rk
 github.com/authzen/access.go v0.0.0-20250225192010-dfb0e30b2a39/go.mod h1:l+wym4Tax3t4UDb/usaRSr1lECxuSoTIoE1JRz0U4HA=
 github.com/authzen/access.go v0.0.0-20250226070317-7215cd5b987b h1:WFQbekOcWgN+EPfFBvPjrNaIs8JsvDfTTuAMXP8sdaY=
 github.com/authzen/access.go v0.0.0-20250226070317-7215cd5b987b/go.mod h1:l+wym4Tax3t4UDb/usaRSr1lECxuSoTIoE1JRz0U4HA=
+github.com/authzen/access.go v0.0.0-20250226232048-71248046cf0a h1:N6Pj4GoKGJcfAD/ePhG5bgBsbcpbSzwR296XmlPSFlY=
+github.com/authzen/access.go v0.0.0-20250226232048-71248046cf0a/go.mod h1:l+wym4Tax3t4UDb/usaRSr1lECxuSoTIoE1JRz0U4HA=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/bufbuild/protovalidate-go v0.7.3 h1:kKnoSueygR3xxppvuBpm9SEwIsP359MMRfMBGmRByPg=
 github.com/bufbuild/protovalidate-go v0.7.3/go.mod h1:CFv34wMqiBzAHdQ4q/tWYi9ILFYKuaC3/4zh6eqdUck=
