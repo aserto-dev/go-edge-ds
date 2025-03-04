@@ -16,14 +16,12 @@ EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
 VAULT_VER	         := 1.8.12
-SVU_VER 	         := 1.12.0
+SVU_VER 	         := 3.1.0
 GOTESTSUM_VER      := 1.11.0
-GOLANGCI-LINT_VER  := 1.61.0
+GOLANGCI-LINT_VER  := 1.64.5
 GORELEASER_VER     := 2.3.2
-WIRE_VER	         := 0.6.0
-BUF_VER            := 1.34.0
 
-RELEASE_TAG        := $$(svu)
+RELEASE_TAG        := $$(svu current)
 
 .DEFAULT_GOAL      := build
 
@@ -59,6 +57,8 @@ generate:
 .PHONY: lint
 lint:
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
+	@${EXT_BIN_DIR}/golangci-lint config path
+	@${EXT_BIN_DIR}/golangci-lint config verify
 	@${EXT_BIN_DIR}/golangci-lint run --config ${PWD}/.golangci.yaml
 
 .PHONY: test
@@ -110,7 +110,7 @@ install-svu: install-svu-${GOOS}
 .PHONY: install-svu-darwin
 install-svu-darwin: ${EXT_TMP_DIR} ${EXT_BIN_DIR}
 	@echo -e "$(ATTN_COLOR)==> $@ $(NO_COLOR)"
-	@gh release download --repo https://github.com/caarlos0/svu --pattern "svu_*_darwin_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
+	@gh release download --repo https://github.com/caarlos0/svu --pattern "svu_*darwin_all.tar.gz" --output "${EXT_TMP_DIR}/svu.tar.gz" --clobber
 	@tar -xvf ${EXT_TMP_DIR}/svu.tar.gz --directory ${EXT_BIN_DIR} svu &> /dev/null
 
 .PHONY: install-svu-linux

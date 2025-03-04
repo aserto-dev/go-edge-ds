@@ -4,6 +4,11 @@ import (
 	"os"
 )
 
+const (
+	FileMode0644 = 0o644
+	FileMode0700 = 0o700
+)
+
 func FileExists(path string) bool {
 	fsInfo, err := os.Stat(path)
 	if err == nil && !fsInfo.IsDir() {
@@ -22,7 +27,7 @@ func DirExists(path string) bool {
 
 func EnsureDirPath(path string) error {
 	if !DirExists(path) {
-		return os.MkdirAll(path, 0o700)
+		return os.MkdirAll(path, FileMode0700)
 	}
 	return nil
 }

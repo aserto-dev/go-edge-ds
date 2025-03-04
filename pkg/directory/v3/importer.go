@@ -10,21 +10,19 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
 )
 
 type Importer struct {
 	dsi3.UnimplementedImporterServer
-	logger    *zerolog.Logger
-	store     *bdb.BoltDB
-	validator *protovalidate.Validator
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
 }
 
 const (
@@ -34,16 +32,11 @@ const (
 
 type counters map[string]*dsi3.ImportCounter
 
-func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Importer {
+func NewImporter(logger *zerolog.Logger, store *bdb.BoltDB) *Importer {
 	return &Importer{
-		logger:    logger,
-		store:     store,
-		validator: validator,
+		logger: logger,
+		store:  store,
 	}
-}
-
-func (s *Importer) Validate(msg proto.Message) error {
-	return s.validator.Validate(msg)
 }
 
 func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
@@ -66,7 +59,7 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 			}
 
 			req, err := stream.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				s.logger.Trace().Msg("import stream EOF")
 				for _, c := range ctr {
 					_ = stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Counter{Counter: c}})
@@ -102,23 +95,23 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 	return importErr
 }
 
-func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, ctr counters) (err error) {
+func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, ctr counters) error {
 	switch m := req.Msg.(type) {
 	case *dsi3.ImportRequest_Object:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
-			err = s.objectSetHandler(ctx, tx, m.Object)
+			err := s.objectSetHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
-			err = s.objectDeleteHandler(ctx, tx, m.Object)
+			err := s.objectDeleteHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
-			err = s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
+			err := s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
 			return err
 		}
@@ -127,13 +120,13 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 
 	case *dsi3.ImportRequest_Relation:
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
-			err = s.relationSetHandler(ctx, tx, m.Relation)
+			err := s.relationSetHandler(ctx, tx, m.Relation)
 			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
-			err = s.relationDeleteHandler(ctx, tx, m.Relation)
+			err := s.relationDeleteHandler(ctx, tx, m.Relation)
 			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
 			return err
 		}
@@ -156,8 +149,8 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if err := s.Validate(req); err != nil {
-		return protoValidateError(err)
+	if err := validator.Object(req); err != nil {
+		return err
 	}
 
 	obj := ds.Object(req)
@@ -193,8 +186,8 @@ func (s *Importer) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *ds
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if err := s.Validate(req); err != nil {
-		return protoValidateError(err)
+	if err := validator.Object(req); err != nil {
+		return err
 	}
 
 	obj := ds.Object(req)
@@ -216,8 +209,8 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if err := s.Validate(req); err != nil {
-		return protoValidateError(err)
+	if err := validator.Object(req); err != nil {
+		return err
 	}
 
 	obj := ds.Object(req)
@@ -284,8 +277,8 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if err := s.Validate(req); err != nil {
-		return protoValidateError(err)
+	if err := validator.Relation(req); err != nil {
+		return err
 	}
 
 	rel := ds.Relation(req)
@@ -325,8 +318,8 @@ func (s *Importer) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if err := s.Validate(req); err != nil {
-		return protoValidateError(err)
+	if err := validator.Relation(req); err != nil {
+		return err
 	}
 
 	rel := ds.Relation(req)
@@ -360,22 +353,6 @@ func updateCounter(c *dsi3.ImportCounter, opCode dsi3.Opcode, err error) *dsi3.I
 	}
 
 	return c
-}
-
-func protoValidateError(e error) error {
-	err := derr.ErrProtoValidate
-
-	var valErr *protovalidate.ValidationError
-	if ok := errors.As(e, &valErr); ok {
-		err.Message = fmt.Sprintf("%q %s",
-			valErr.Violations[0].GetConstraintId(),
-			valErr.Violations[0].GetMessage(),
-		)
-		return err
-	}
-
-	err.Message = e.Error()
-	return err
 }
 
 func modelValidateError(e error) error {

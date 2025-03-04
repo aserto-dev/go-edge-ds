@@ -110,7 +110,7 @@ func (s *Sync) producer(ctx context.Context, conn *grpc.ClientConn) error {
 
 	for {
 		msg, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
@@ -294,5 +294,5 @@ func getObjectKey(obj *dsc3.Object) []byte {
 func getRelationKey(rel *dsc3.Relation) []byte {
 	return []byte(fmt.Sprintf("%s:%s#%s@%s:%s%s",
 		rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId,
-		lo.Ternary(rel.SubjectRelation == "", "", fmt.Sprintf("#%s", rel.SubjectRelation))))
+		lo.Ternary(rel.SubjectRelation == "", "", "#"+rel.SubjectRelation)))
 }

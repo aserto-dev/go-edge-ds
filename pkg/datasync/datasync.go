@@ -7,11 +7,9 @@ import (
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
-	"github.com/bufbuild/protovalidate-go"
 	cuckoo "github.com/panmari/cuckoofilter"
 	"github.com/rs/zerolog"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -20,23 +18,17 @@ type SyncClient interface {
 }
 
 type Client struct {
-	logger    *zerolog.Logger
-	store     *bdb.BoltDB
-	validator *protovalidate.Validator
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
 }
 
 var _ SyncClient = &Client{}
 
-func New(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Client {
+func New(logger *zerolog.Logger, store *bdb.BoltDB) *Client {
 	return &Client{
-		logger:    logger,
-		store:     store,
-		validator: validator,
+		logger: logger,
+		store:  store,
 	}
-}
-
-func (c *Client) validate(msg proto.Message) error {
-	return c.validator.Validate(msg)
 }
 
 func (c *Client) Sync(ctx context.Context, conn *grpc.ClientConn, opts ...Option) error {

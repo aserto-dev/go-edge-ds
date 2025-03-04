@@ -6,44 +6,36 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type Writer struct {
 	dsw3.UnimplementedWriterServer
-	logger    *zerolog.Logger
-	store     *bdb.BoltDB
-	validator *protovalidate.Validator
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
 }
 
-func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Writer {
+func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
 	return &Writer{
-		logger:    logger,
-		store:     store,
-		validator: validator,
+		logger: logger,
+		store:  store,
 	}
-}
-
-func (s *Writer) Validate(msg proto.Message) error {
-	return s.validator.Validate(msg)
 }
 
 // object methods.
 func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*dsw3.SetObjectResponse, error) {
 	resp := &dsw3.SetObjectResponse{}
 
-	if err := s.Validate(req); err != nil {
-		// invalid proto message.
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.SetObjectRequest(req); err != nil {
+		return resp, err
 	}
 
 	obj := ds.Object(req.Object)
@@ -90,8 +82,8 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest) (*dsw3.DeleteObjectResponse, error) {
 	resp := &dsw3.DeleteObjectResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.DeleteObjectRequest(req); err != nil {
+		return resp, err
 	}
 
 	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
@@ -178,8 +170,8 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) (*dsw3.SetRelationResponse, error) {
 	resp := &dsw3.SetRelationResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.SetRelationRequest(req); err != nil {
+		return resp, err
 	}
 
 	relation := ds.Relation(req.Relation)
@@ -199,7 +191,9 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		// if the updReq.Etag == "" this means the this is an insert
 		if ifMatchHeader != "" && updRel.Etag != "" && ifMatchHeader != updRel.Etag {
-			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId)
+			return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+				updRel.ObjectType, updRel.ObjectId, updRel.Relation, updRel.SubjectType, updRel.SubjectId,
+			)
 		}
 
 		if etag == updRel.Etag {
@@ -230,8 +224,8 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationRequest) (*dsw3.DeleteRelationResponse, error) {
 	resp := &dsw3.DeleteRelationResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.DeleteRelationRequest(req); err != nil {
+		return resp, err
 	}
 
 	rel := &dsc3.Relation{
@@ -257,7 +251,9 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 			}
 
 			if ifMatchHeader != updRel.Etag {
-				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]", rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId)
+				return derr.ErrHashMismatch.Msgf("for relation with objectType [%s], objectId [%s], relation [%s], subjectType [%s], SubjectId [%s]",
+					rel.ObjectType, rel.ObjectId, rel.Relation, rel.SubjectType, rel.SubjectId,
+				)
 			}
 		}
 

@@ -16,6 +16,7 @@ import (
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/directory"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
 	"github.com/pkg/errors"
 
@@ -37,11 +38,13 @@ var (
 
 func TestMain(m *testing.M) {
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	ctx := context.Background()
 	logger := zerolog.New(io.Discard)
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dirPath := os.TempDir()
-	if err := os.MkdirAll(dirPath, 0o700); err != nil {
+	if err := os.MkdirAll(dirPath, fs.FileMode0700); err != nil {
 		panic(err)
 	}
 
@@ -104,7 +107,7 @@ func loadObjects(stream dsi3.Importer_ImportClient, objects *Reader) error {
 
 	for {
 		err := objects.Read(&m)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -135,7 +138,7 @@ func loadRelations(stream dsi3.Importer_ImportClient, relations *Reader) error {
 
 	for {
 		err := relations.Read(&m)
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
