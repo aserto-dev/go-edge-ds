@@ -5,6 +5,7 @@ import (
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
@@ -18,9 +19,8 @@ func (s *Sync) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Obje
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if err := s.validate(req); err != nil {
-		// invalid proto message
-		return derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.Object(req); err != nil {
+		return err
 	}
 
 	obj := ds.Object(req)
@@ -57,8 +57,8 @@ func (s *Sync) objectDeleteHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.O
 		return derr.ErrInvalidObject.Msg("nil")
 	}
 
-	if err := s.validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.Object(req); err != nil {
+		return err
 	}
 
 	obj := ds.Object(req)
@@ -80,8 +80,8 @@ func (s *Sync) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.Re
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if err := s.validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error()) // invalid proto message
+	if err := validator.Relation(req); err != nil {
+		return err
 	}
 
 	rel := ds.Relation(req)
@@ -121,8 +121,8 @@ func (s *Sync) relationDeleteHandler(ctx context.Context, tx *bolt.Tx, req *dsc3
 		return derr.ErrInvalidRelation.Msg("nil")
 	}
 
-	if err := s.validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.Relation(req); err != nil {
+		return err
 	}
 
 	rel := ds.Relation(req)

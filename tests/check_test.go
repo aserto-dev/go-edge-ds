@@ -3,6 +3,7 @@ package tests_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
 	"runtime"
@@ -128,7 +129,6 @@ func loadChecks[T any]() ([]*T, error) {
 	var checks []*T
 	if err := json.Unmarshal(bin, &checks); err != nil {
 		return nil, err
-
 	}
 
 	return checks, nil
@@ -138,7 +138,7 @@ func receiver(stream dsi3.Importer_ImportClient) func() error {
 	return func() error {
 		for {
 			_, err := stream.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 

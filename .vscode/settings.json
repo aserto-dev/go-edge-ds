@@ -28,7 +28,6 @@
         "panmari",
         "protobuf",
         "protojson",
-        "protovalidate",
         "rels",
         "samber",
         "stretchr",

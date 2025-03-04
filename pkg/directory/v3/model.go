@@ -13,10 +13,10 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/gateway/model/v3"
 	mnfst "github.com/aserto-dev/go-directory/pkg/manifest"
 	"github.com/aserto-dev/go-directory/pkg/pb"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
 	"github.com/grpc-ecosystem/go-grpc-middleware/util/metautils"
 	"github.com/pkg/errors"
@@ -34,7 +34,6 @@ type Model struct {
 	dsm3.UnimplementedModelServer
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
-	v      *protovalidate.Validator
 }
 
 // NOTES:
@@ -48,19 +47,17 @@ type Model struct {
 // _manifest/default/0.0.1/model		-- contains the serialized model representation of the manifest byte stream
 
 func NewModel(logger *zerolog.Logger, store *bdb.BoltDB) *Model {
-	v, _ := protovalidate.New()
 	return &Model{
 		logger: logger,
 		store:  store,
-		v:      v,
 	}
 }
 
 var _ = dsm3.ModelServer(&Model{})
 
 func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetManifestServer) error {
-	if err := s.v.Validate(req); err != nil {
-		return derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetManifestRequest(req); err != nil {
+		return err
 	}
 
 	md := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
@@ -162,7 +159,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 
 	for {
 		msg, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -171,7 +168,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 		}
 
 		if body, ok := msg.GetMsg().(*dsm3.SetManifestRequest_Body); ok {
-			if err := s.v.Validate(body.Body); err != nil {
+			if err := validator.Body(body.Body); err != nil {
 				return err
 			}
 			data.Write(body.Body.Data)
@@ -190,7 +187,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 		Etag:      strconv.FormatUint(h.Sum64(), 10),
 	}
 
-	if err := s.v.Validate(md); err != nil {
+	if err := validator.Metadata(md); err != nil {
 		return err
 	}
 
@@ -229,8 +226,8 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 
 func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequest) (*dsm3.DeleteManifestResponse, error) {
 	resp := &dsm3.DeleteManifestResponse{}
-	if err := s.v.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.DeleteManifestRequest(req); err != nil {
+		return resp, err
 	}
 
 	h := fnv.New64a()

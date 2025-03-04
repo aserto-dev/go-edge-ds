@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -133,7 +134,7 @@ func getManifest(client *server.TestEdgeClient) ([]byte, error) {
 	bytesRecv := 0
 	for {
 		resp, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 
@@ -194,7 +195,7 @@ func testGetModel(client *server.TestEdgeClient) func(*testing.T) {
 
 		for {
 			resp, err := stream.Recv()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 
@@ -242,8 +243,8 @@ func deleteManifest(client *server.TestEdgeClient) error {
 }
 
 type testData struct {
-	Objects   []*dsc3.Object
-	Relations []*dsc3.Relation
+	Objects   []*dsc3.Object   `json:"objects"`
+	Relations []*dsc3.Relation `json:"relations"`
 }
 
 func loadData(client *server.TestEdgeClient, dataFile string) error {

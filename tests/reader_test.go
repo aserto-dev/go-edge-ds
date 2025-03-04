@@ -34,32 +34,36 @@ func NewReader(r io.Reader) (*Reader, error) {
 	}
 
 	keyStr := ""
-	if del, ok := tok.(json.Delim); ok {
-		// get key value if not array
-		if del == '{' {
-			t, err := dec.Token()
-			if err != nil {
-				return nil, err
-			}
 
-			if key, ok := t.(string); ok {
-				keyStr = key
-			}
+	del, ok := tok.(json.Delim)
+	if !ok {
+		return nil, errors.Errorf("unsupported file format")
+	}
 
-			tok, err := dec.Token()
-			if err != nil {
-				return nil, err
-			}
-			if delim, ok := tok.(json.Delim); !ok && delim.String() != "[" {
-				return nil, errors.Errorf("file does not contain a JSON array")
-			}
-
-			return &Reader{
-				dec:     dec,
-				first:   false,
-				rootKey: keyStr,
-			}, nil
+	// get key value if not array
+	if del == '{' {
+		t, err := dec.Token()
+		if err != nil {
+			return nil, err
 		}
+
+		if key, ok := t.(string); ok {
+			keyStr = key
+		}
+
+		tok, err := dec.Token()
+		if err != nil {
+			return nil, err
+		}
+		if delim, ok := tok.(json.Delim); !ok && delim.String() != "[" {
+			return nil, errors.Errorf("file does not contain a JSON array")
+		}
+
+		return &Reader{
+			dec:     dec,
+			first:   false,
+			rootKey: keyStr,
+		}, nil
 	}
 
 	return nil, errors.Errorf("unsupported file format")

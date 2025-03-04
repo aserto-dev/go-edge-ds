@@ -12,6 +12,7 @@ import (
 	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/pkg/errors"
@@ -63,7 +64,9 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 		return err
 	}
 
-	s.logger.Debug().Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).Bool("identical", localMD.Etag == remoteMD.Etag).Msg(syncManifest)
+	s.logger.Debug().
+		Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).
+		Bool("identical", localMD.Etag == remoteMD.Etag).Msg(syncManifest)
 	if localMD.Etag == remoteMD.Etag {
 		return nil
 	}
@@ -74,7 +77,10 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	runEndTime := time.Now().UTC()
-	s.logger.Info().Str(syncStatus, syncFinished).Str("mode", Manifest.String()).Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
+
+	s.logger.Info().
+		Str(syncStatus, syncFinished).Str("mode", Manifest.String()).
+		Str("duration", runEndTime.Sub(runStartTime).String()).Msg(syncManifest)
 
 	return s.store.MC().UpdateModel(m)
 }
@@ -90,7 +96,7 @@ func (s *Sync) setManifest(ctx context.Context, remoteBuf []byte) (*model.Model,
 		Etag:      strconv.FormatUint(h.Sum64(), 10),
 	}
 
-	if err := s.validate(md); err != nil {
+	if err := validator.Metadata(md); err != nil {
 		return nil, err
 	}
 
@@ -137,7 +143,7 @@ func (s *Sync) getManifest(ctx context.Context, mc dsm3.ModelClient) (*dsm3.Meta
 	bytesRecv := 0
 	for {
 		resp, err := stream.Recv()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break
 		}
 

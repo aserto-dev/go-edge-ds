@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
 	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
@@ -20,14 +19,14 @@ import (
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-// required minimum schema version, when the current version is lower, migration will be invoked to update to the minimum schema version required.
+// required minimum schema version, when the current version is lower,
+// migration will be invoked to update to the minimum schema version required.
 const (
 	schemaVersion   string = "0.0.8"
 	manifestVersion int    = 2
@@ -45,7 +44,6 @@ type Directory struct {
 	config    *Config
 	logger    *zerolog.Logger
 	store     *bdb.BoltDB
-	validator *protovalidate.Validator
 	exporter3 dse3.ExporterServer
 	importer3 dsi3.ImporterServer
 	model3    dsm3.ModelServer
@@ -117,15 +115,10 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		return nil, err
 	}
 
-	validator, err := validator()
-	if err != nil {
-		return nil, err
-	}
-
-	reader3 := v3.NewReader(logger, store, validator)
-	writer3 := v3.NewWriter(logger, store, validator)
-	exporter3 := v3.NewExporter(logger, store, validator)
-	importer3 := v3.NewImporter(logger, store, validator)
+	reader3 := v3.NewReader(logger, store)
+	writer3 := v3.NewWriter(logger, store)
+	exporter3 := v3.NewExporter(logger, store)
+	importer3 := v3.NewImporter(logger, store)
 
 	access1 := v3.NewAccess(logger, reader3)
 
@@ -133,7 +126,6 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		config:    config,
 		logger:    &newLogger,
 		store:     store,
-		validator: validator,
 		model3:    v3.NewModel(logger, store),
 		reader3:   reader3,
 		writer3:   writer3,
@@ -190,37 +182,5 @@ func (s *Directory) Config() Config {
 }
 
 func (s *Directory) DataSyncClient() datasync.SyncClient {
-	return datasync.New(s.logger, s.store, s.validator)
-}
-
-func validator() (*protovalidate.Validator, error) {
-	return protovalidate.New(
-		protovalidate.WithFailFast(true),
-		protovalidate.WithDisableLazy(true),
-		protovalidate.WithMessages(
-			&dsc3.Object{},
-			&dsc3.ObjectIdentifier{},
-			&dsc3.Relation{},
-			&dsc3.RelationIdentifier{},
-			&dsc3.PaginationRequest{},
-			&dsr3.GetObjectRequest{},
-			&dsr3.GetObjectsRequest{},
-			&dsr3.GetObjectManyRequest{},
-			&dsr3.GetRelationRequest{},
-			&dsr3.GetRelationsRequest{},
-			&dsr3.CheckRequest{},
-			&dsr3.CheckPermissionRequest{},
-			&dsr3.CheckRelationRequest{},
-			&dsr3.GetGraphRequest{},
-			&dsi3.ImportRequest{},
-			&dsw3.SetObjectRequest{},
-			&dsw3.DeleteObjectRequest{},
-			&dsw3.SetRelationRequest{},
-			&dsw3.DeleteRelationRequest{},
-			&dsm3.GetManifestRequest{},
-			&dsm3.SetManifestRequest{},
-			&dsm3.DeleteManifestRequest{},
-			&dsm3.Metadata{},
-		),
-	)
+	return datasync.New(s.logger, s.store)
 }

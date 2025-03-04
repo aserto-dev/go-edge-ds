@@ -5,46 +5,38 @@ import (
 
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	"github.com/aserto-dev/go-directory/pkg/derr"
+	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 	"github.com/pkg/errors"
 
-	"github.com/bufbuild/protovalidate-go"
 	"github.com/go-http-utils/headers"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc"
 	grpcmd "google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/proto"
 )
 
 type Reader struct {
 	dsr3.UnimplementedReaderServer
-	logger    *zerolog.Logger
-	store     *bdb.BoltDB
-	validator *protovalidate.Validator
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
 }
 
-func NewReader(logger *zerolog.Logger, store *bdb.BoltDB, validator *protovalidate.Validator) *Reader {
+func NewReader(logger *zerolog.Logger, store *bdb.BoltDB) *Reader {
 	return &Reader{
-		logger:    logger,
-		store:     store,
-		validator: validator,
+		logger: logger,
+		store:  store,
 	}
-}
-
-func (s *Reader) Validate(msg proto.Message) error {
-	return s.validator.Validate(msg)
 }
 
 // GetObject, get single object instance.
 func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*dsr3.GetObjectResponse, error) {
 	resp := &dsr3.GetObjectResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetObjectRequest(req); err != nil {
+		return resp, err
 	}
 
 	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
@@ -100,8 +92,8 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyRequest) (*dsr3.GetObjectManyResponse, error) {
 	resp := &dsr3.GetObjectManyResponse{Results: []*dsc3.Object{}}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetObjectManyRequest(req); err != nil {
+		return resp, err
 	}
 
 	// validate all object identifiers first.
@@ -129,8 +121,8 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*dsr3.GetObjectsResponse, error) {
 	resp := &dsr3.GetObjectsResponse{Results: []*dsc3.Object{}, Page: &dsc3.PaginationResponse{}}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetObjectsRequest(req); err != nil {
+		return resp, err
 	}
 
 	if req.Page == nil {
@@ -175,8 +167,8 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		Objects: map[string]*dsc3.Object{},
 	}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetRelationRequest(req); err != nil {
+		return resp, err
 	}
 
 	getRelation := ds.GetRelation(req)
@@ -249,8 +241,8 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		Page:    &dsc3.PaginationResponse{},
 	}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetRelationsRequest(req); err != nil {
+		return resp, err
 	}
 
 	if req.Page == nil {
@@ -324,7 +316,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
 	resp := &dsr3.CheckResponse{}
 
-	if err := s.Validate(req); err != nil {
+	if err := validator.CheckRequest(req); err != nil {
 		resp.Check = false
 		resp.Context = ds.SetContextWithReason(err)
 		return resp, nil
@@ -380,8 +372,8 @@ func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.Che
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
 	resp := &dsr3.CheckPermissionResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.CheckPermissionRequest(req); err != nil {
+		return resp, err
 	}
 
 	if err := ds.CheckPermission(req).Validate(s.store.MC()); err != nil {
@@ -414,8 +406,8 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
 	resp := &dsr3.CheckRelationResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return resp, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.CheckRelationRequest(req); err != nil {
+		return resp, err
 	}
 
 	if err := ds.CheckRelation(req).Validate(s.store.MC()); err != nil {
@@ -448,8 +440,8 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3.GetGraphResponse, error) {
 	resp := &dsr3.GetGraphResponse{}
 
-	if err := s.Validate(req); err != nil {
-		return &dsr3.GetGraphResponse{}, derr.ErrProtoValidate.Msg(err.Error())
+	if err := validator.GetGraphRequest(req); err != nil {
+		return &dsr3.GetGraphResponse{}, err
 	}
 
 	getGraph := ds.GetGraph(req)
