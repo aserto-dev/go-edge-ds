@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
+	berr "go.etcd.io/bbolt/errors"
 	"google.golang.org/grpc/codes"
 )
 
@@ -27,8 +28,8 @@ var (
 type Config struct {
 	DBPath         string
 	RequestTimeout time.Duration
-	MaxBatchSize   int
-	MaxBatchDelay  time.Duration
+	MaxBatchSize   int           `json:"-"` // obsolete bbolt configuration value.
+	MaxBatchDelay  time.Duration `json:"-"` // obsolete bbolt configuration value.
 }
 
 // BoltDB based key-value store.
@@ -147,7 +148,7 @@ func DeleteBucket(tx *bolt.Tx, path Path) error {
 	if len(path) == 1 {
 		err := tx.DeleteBucket([]byte(path[0]))
 		switch {
-		case errors.Is(err, bolt.ErrBucketNotFound):
+		case errors.Is(err, berr.ErrBucketNotFound):
 			return nil
 		case err != nil:
 			return err
@@ -158,12 +159,12 @@ func DeleteBucket(tx *bolt.Tx, path Path) error {
 
 	b, err := SetBucket(tx, path[:len(path)-1])
 	if err != nil {
-		return nil
+		return nil //nolint:nilerr // early return when bucket does not exist, delete should not error.
 	}
 
 	err = b.DeleteBucket([]byte(path[len(path)-1]))
 	switch {
-	case errors.Is(err, bolt.ErrBucketNotFound):
+	case errors.Is(err, berr.ErrBucketNotFound):
 		return nil
 	case err != nil:
 		return err

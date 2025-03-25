@@ -176,31 +176,30 @@ func (i *relation) SubFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetObjectId())
 }
 
-// nolint: gocritic
+const relationFilterCount int = 6
+
 func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.RelationIdentifier) bool) {
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
-	if ObjectIdentifier(i.Object()).IsComplete() {
+	switch {
+	case ObjectIdentifier(i.Object()).IsComplete():
 		path = bdb.RelationsObjPath
 		i.ObjFilter(keyFilter)
-	} else if ObjectIdentifier(i.Subject()).IsComplete() {
+	case ObjectIdentifier(i.Subject()).IsComplete():
 		path = bdb.RelationsSubPath
 		i.SubFilter(keyFilter)
-	}
-	if len(path) == 0 {
-		log.Debug().Msg("no covering index path, default to scan of relation object path")
+	default:
 		path = bdb.RelationsObjPath
 	}
 
 	// #2 build valueFilter function
-	filters := make([]func(item *dsc3.RelationIdentifier) bool, 0, 6)
+	filters := make([]func(item *dsc3.RelationIdentifier) bool, 0, relationFilterCount)
 
 	if fv := i.GetObjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(item.GetObjectType(), fv)
-			// log.Trace().Str("fv", fv).Str("item", item.GetObjectType()).Bool("equal", equal == 0).Msg("object_type filter")
 			return equal == 0
 		})
 	}
@@ -208,7 +207,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	if fv := i.GetObjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(fv, item.GetObjectId())
-			// log.Trace().Str("fv", fv).Str("item", item.GetObjectId()).Bool("equal", equal == 0).Msg("object_id filter")
 			return equal == 0
 		})
 	}
@@ -216,7 +214,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(item.Relation, fv)
-			// log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal == 0).Msg("relation filter")
 			return equal == 0
 		})
 	}
@@ -224,7 +221,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	if fv := i.GetSubjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(item.GetSubjectType(), fv)
-			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectType()).Bool("equal", equal == 0).Msg("subject_type filter")
 			return equal == 0
 		})
 	}
@@ -232,7 +228,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	if fv := i.GetSubjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(fv, item.GetSubjectId())
-			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectId()).Bool("equal", equal == 0).Msg("subject_id filter")
 			return equal == 0
 		})
 	}
@@ -241,7 +236,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 		fv := i.GetSubjectRelation()
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
-			// log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")
 			return equal == 0
 		})
 	}
@@ -258,7 +252,6 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	return path, valueFilter
 }
 
-// nolint: gocritic // commentedOutCode
 func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.Relation) bool) {
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
@@ -282,7 +275,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 	if fv := i.GetObjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.GetObjectType(), fv)
-			// log.Trace().Str("fv", fv).Str("item", item.GetObjectType()).Bool("equal", equal == 0).Msg("object_type filter")
 			return equal == 0
 		})
 	}
@@ -290,7 +282,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 	if fv := i.GetObjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(fv, item.GetObjectId())
-			// log.Trace().Str("fv", fv).Str("item", item.GetObjectId()).Bool("equal", equal == 0).Msg("object_id filter")
 			return equal == 0
 		})
 	}
@@ -298,7 +289,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.Relation, fv)
-			// log.Trace().Str("fv", fv).Str("item", item.Relation).Bool("equal", equal == 0).Msg("relation filter")
 			return equal == 0
 		})
 	}
@@ -306,7 +296,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 	if fv := i.GetSubjectType(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.GetSubjectType(), fv)
-			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectType()).Bool("equal", equal == 0).Msg("subject_type filter")
 			return equal == 0
 		})
 	}
@@ -314,7 +303,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 	if fv := i.GetSubjectId(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(fv, item.GetSubjectId())
-			// log.Trace().Str("fv", fv).Str("item", item.GetSubjectId()).Bool("equal", equal == 0).Msg("subject_id filter")
 			return equal == 0
 		})
 	}
@@ -323,7 +311,6 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 		fv := i.GetSubjectRelation()
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
-			// log.Trace().Str("fv", fv).Str("item", item.SubjectRelation).Bool("equal", equal == 0).Msg("subject_relation filter")
 			return equal == 0
 		})
 	}

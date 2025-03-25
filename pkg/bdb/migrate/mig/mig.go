@@ -18,6 +18,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	bolt "go.etcd.io/bbolt"
+	berr "go.etcd.io/bbolt/errors"
 )
 
 const (
@@ -95,7 +96,7 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 			if len(path) == 1 {
 				err := tx.DeleteBucket([]byte(path[0]))
 				switch {
-				case errors.Is(err, bolt.ErrBucketNotFound):
+				case errors.Is(err, berr.ErrBucketNotFound):
 					return nil
 				case err != nil:
 					return err
@@ -106,12 +107,12 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 			b, err := SetBucket(tx, path[:len(path)-1])
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // early return, when bucket does not exists.
 			}
 
 			err = b.DeleteBucket([]byte(path[len(path)-1]))
 			switch {
-			case errors.Is(err, bolt.ErrBucketNotFound):
+			case errors.Is(err, berr.ErrBucketNotFound):
 				return nil
 			case err != nil:
 				return err
@@ -132,7 +133,7 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 	err := db.View(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		v := b.Get([]byte(versionKey))
@@ -150,11 +151,11 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 	return ver, err
 }
 
-func SetVersion(db *bolt.DB, version *semver.Version) (err error) {
+func SetVersion(db *bolt.DB, version *semver.Version) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		return b.Put([]byte(versionKey), []byte(version.String()))
@@ -165,7 +166,7 @@ func EnsureBaseVersion(_ *zerolog.Logger, _, rwDB *bolt.DB) error {
 	return rwDB.Update(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		return b.Put([]byte(versionKey), []byte(baseVersion))

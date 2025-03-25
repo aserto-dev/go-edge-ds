@@ -212,7 +212,6 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 				if err := mig.SetKey(wtx, bdb.RelationsSubPath, ds.Relation(rel).SubKey(), val); err != nil {
 					return err
 				}
-
 			}
 
 			return wtx.Commit()
@@ -235,9 +234,11 @@ var unmarshalOpts = protojson.UnmarshalOptions{
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
-	if err := unmarshalOpts.Unmarshal(b, any(&t).(proto.Message)); err != nil {
+	msg, _ := any(&t).(proto.Message)
+	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}
+
 	return &t, nil
 }
 

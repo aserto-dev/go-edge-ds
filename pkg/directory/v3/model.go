@@ -253,7 +253,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 			dbMd := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 			manifest, err := ds.Manifest(dbMd).Get(ctx, tx)
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // early return when manifest does not exists, delete should not fail.
 			}
 
 			if ifMatchHeader != manifest.Metadata.Etag {

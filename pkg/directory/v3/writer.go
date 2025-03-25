@@ -114,48 +114,13 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		}
 
 		if req.GetWithRelations() {
-			{
-				// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](
-					ctx, tx, bdb.RelationsSubPath,
-					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
-				)
-				if err != nil {
-					return err
-				}
-
-				for iter.Next() {
-					rel := ds.Relation(iter.Value())
-					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
-						return err
-					}
-
-					if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
-						return err
-					}
-				}
+			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+			if err := s.deleteRelations(ctx, bdb.RelationsSubPath, tx, objIdent.ObjectIdentifier); err != nil {
+				return err
 			}
-			{
-				// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-				iter, err := bdb.NewScanIterator[dsc3.Relation](
-					ctx, tx, bdb.RelationsObjPath,
-					bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
-				)
-				if err != nil {
-					return err
-				}
-
-				for iter.Next() {
-					rel := ds.Relation(iter.Value())
-
-					if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
-						return err
-					}
-
-					if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
-						return err
-					}
-				}
+			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+			if err := s.deleteRelations(ctx, bdb.RelationsObjPath, tx, objIdent.ObjectIdentifier); err != nil {
+				return err
 			}
 		}
 
@@ -164,6 +129,31 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	})
 
 	return resp, err
+}
+
+func (*Writer) deleteRelations(ctx context.Context, path bdb.Path, tx *bolt.Tx, oid *dsc3.ObjectIdentifier) error {
+	objIdent := ds.ObjectIdentifier(oid)
+
+	iter, err := bdb.NewScanIterator[dsc3.Relation](
+		ctx, tx, path,
+		bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+	)
+	if err != nil {
+		return err
+	}
+
+	for iter.Next() {
+		rel := ds.Relation(iter.Value())
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+			return err
+		}
+
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // relation methods.

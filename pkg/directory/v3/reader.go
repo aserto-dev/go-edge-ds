@@ -8,6 +8,7 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/x"
 	"github.com/pkg/errors"
 
 	"github.com/go-http-utils/headers"
@@ -126,7 +127,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	}
 
 	if req.Page == nil {
-		req.Page = &dsc3.PaginationRequest{Size: 100}
+		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
 	opts := []bdb.ScanOption{
@@ -201,7 +202,6 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		resp.Result = dbRel
 
 		inMD, _ := grpcmd.FromIncomingContext(ctx)
-		// optimistic concurrency check
 		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.Etag) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
 
@@ -246,7 +246,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	}
 
 	if req.Page == nil {
-		req.Page = &dsc3.PaginationRequest{Size: 100}
+		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
 	getRelations := ds.GetRelations(req)
@@ -369,6 +369,8 @@ func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.Che
 }
 
 // CheckPermission, check if subject is permitted to access resource (object).
+//
+//nolint:dupl
 func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
 	resp := &dsr3.CheckPermissionResponse{}
 
@@ -403,6 +405,8 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 }
 
 // CheckRelation, check if subject has the specified relation to a resource (object).
+//
+//nolint:dupl
 func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
 	resp := &dsr3.CheckRelationResponse{}
 

@@ -1,3 +1,4 @@
+//nolint:mnd,gosec
 package ds
 
 import (

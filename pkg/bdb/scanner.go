@@ -6,6 +6,7 @@ import (
 
 	"github.com/aserto-dev/azm/graph"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/x"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	bolt "go.etcd.io/bbolt"
@@ -14,7 +15,7 @@ import (
 type Iterator[T any, M Message[T]] interface {
 	Next() bool       // move cursor to next element.
 	RawKey() []byte   // return raw key value ([]byte).
-	RawValue() []byte // return ram value value ([]byte).
+	RawValue() []byte // return raw value value ([]byte).
 	Key() string      // return key value (string).
 	Value() M         // return typed value (M).
 	Delete() error    // delete element underneath cursor.
@@ -57,7 +58,7 @@ func WithKeyFilter(filter []byte) ScanOption {
 }
 
 func NewScanIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, opts ...ScanOption) (Iterator[T, M], error) {
-	args := &ScanArgs{startToken: nil, keyFilter: nil, pageSize: 100}
+	args := &ScanArgs{startToken: nil, keyFilter: nil, pageSize: x.MaxPageSize}
 	for _, opt := range opts {
 		opt(args)
 	}
@@ -138,7 +139,9 @@ func NewPageIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path
 		return nil, err
 	}
 
-	return &PageIterator[T, M]{iter: iter.(*ScanIterator[T, M])}, nil
+	scanIter, _ := iter.(*ScanIterator[T, M])
+
+	return &PageIterator[T, M]{iter: scanIter}, nil
 }
 
 func (p *PageIterator[T, M]) Next() bool {

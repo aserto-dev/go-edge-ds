@@ -1,4 +1,3 @@
-// nolint
 package tests_test
 
 import (
@@ -41,7 +40,6 @@ func TestMain(m *testing.M) {
 	logger := zerolog.New(io.Discard)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	dirPath := os.TempDir()
 	if err := os.MkdirAll(dirPath, fs.FileMode0700); err != nil {
@@ -64,6 +62,8 @@ func TestMain(m *testing.M) {
 	exitVal := m.Run()
 
 	closer()
+	cancel()
+
 	os.Exit(exitVal)
 }
 
