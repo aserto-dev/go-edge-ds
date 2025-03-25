@@ -20,7 +20,6 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/rs/zerolog"
-	bolt "go.etcd.io/bbolt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -78,8 +77,6 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 	cfg := bdb.Config{
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout,
-		MaxBatchSize:   bolt.DefaultMaxBatchSize,
-		MaxBatchDelay:  bolt.DefaultMaxBatchDelay,
 	}
 
 	if ok, err := migrate.CheckSchemaVersion(&cfg, logger, semver.MustParse(schemaVersion)); !ok {
@@ -102,8 +99,6 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 	store, err := bdb.New(&bdb.Config{
 		DBPath:         config.DBPath,
 		RequestTimeout: config.RequestTimeout,
-		MaxBatchSize:   bolt.DefaultMaxBatchSize,
-		MaxBatchDelay:  bolt.DefaultMaxBatchDelay,
 	},
 		&newLogger,
 	)

@@ -18,6 +18,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	bolt "go.etcd.io/bbolt"
+	berr "go.etcd.io/bbolt/errors"
 )
 
 const (
@@ -95,7 +96,7 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 			if len(path) == 1 {
 				err := tx.DeleteBucket([]byte(path[0]))
 				switch {
-				case errors.Is(err, bolt.ErrBucketNotFound):
+				case errors.Is(err, berr.ErrBucketNotFound):
 					return nil
 				case err != nil:
 					return err
@@ -111,7 +112,7 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 			err = b.DeleteBucket([]byte(path[len(path)-1]))
 			switch {
-			case errors.Is(err, bolt.ErrBucketNotFound):
+			case errors.Is(err, berr.ErrBucketNotFound):
 				return nil
 			case err != nil:
 				return err

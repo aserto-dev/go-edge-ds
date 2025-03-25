@@ -8,6 +8,7 @@ import (
 	"github.com/aserto-dev/go-directory/pkg/validator"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
+	"github.com/aserto-dev/go-edge-ds/pkg/x"
 	"github.com/pkg/errors"
 
 	"github.com/go-http-utils/headers"
@@ -126,7 +127,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	}
 
 	if req.Page == nil {
-		req.Page = &dsc3.PaginationRequest{Size: 100}
+		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
 	opts := []bdb.ScanOption{
@@ -201,7 +202,6 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		resp.Result = dbRel
 
 		inMD, _ := grpcmd.FromIncomingContext(ctx)
-		// optimistic concurrency check
 		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.Etag) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
 
@@ -246,7 +246,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	}
 
 	if req.Page == nil {
-		req.Page = &dsc3.PaginationRequest{Size: 100}
+		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
 	getRelations := ds.GetRelations(req)
