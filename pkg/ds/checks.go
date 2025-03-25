@@ -7,12 +7,11 @@ import (
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/jobpool"
 	"github.com/aserto-dev/azm/safe"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/prop"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type checks struct {

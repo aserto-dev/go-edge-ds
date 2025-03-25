@@ -3,8 +3,8 @@ package mig004
 import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
-	"github.com/rs/zerolog"
 
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
