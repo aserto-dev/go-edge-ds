@@ -118,7 +118,6 @@ func (i *relation) PathAndFilter(filter *bytes.Buffer) ([]string, error) {
 
 // ObjFilter
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
-// TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) ObjFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -148,7 +147,6 @@ func (i *relation) ObjFilter(buf *bytes.Buffer) {
 
 // SubFilter
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
-// TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) SubFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)

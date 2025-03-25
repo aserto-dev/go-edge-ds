@@ -45,7 +45,6 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		return resp, err
 	}
 
-	// TODO handle pagination request.
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, objIdent.Key())
 		if err != nil {
@@ -82,7 +81,6 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 
 		resp.Result = obj
 
-		// TODO set pagination response.
 		resp.Page = &dsc3.PaginationResponse{}
 
 		return nil
