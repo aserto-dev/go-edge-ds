@@ -31,6 +31,7 @@ var migMap = map[string]Migration{
 	mig008.Version: mig008.Migrate,
 }
 
+//nolint:lll // single line readability more important.
 var (
 	ErrDirectorySchemaVersionHigher  = cerr.NewAsertoError("E20054", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema version is higher than supported by engine")
 	ErrDirectorySchemaUpdateRequired = cerr.NewAsertoError("E20055", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema update required")

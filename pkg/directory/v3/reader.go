@@ -60,7 +60,8 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		}
 
 		if req.GetWithRelations() {
-			// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+			// incoming object relations of object instance
+			// (result.type == incoming.subject.type && result.key == incoming.subject.key)
 			incoming, err := bdb.Scan[dsc3.Relation](ctx, tx, bdb.RelationsSubPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
@@ -68,7 +69,8 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 
 			resp.Relations = append(resp.Relations, incoming...)
 
-			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+			// outgoing object relations of object instance
+			// (result.type == outgoing.object.type && result.key == outgoing.object.key)
 			outgoing, err := bdb.Scan[dsc3.Relation](ctx, tx, bdb.RelationsObjPath, ds.Object(obj).Key())
 			if err != nil {
 				return err
