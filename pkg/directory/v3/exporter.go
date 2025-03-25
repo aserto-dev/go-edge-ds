@@ -36,6 +36,7 @@ func (s *Exporter) Export(req *dse3.ExportRequest, stream dse3.Exporter_ExportSe
 				logger.Error().Err(err).Msg("export_stats")
 				return err
 			}
+
 			return nil
 		}
 

@@ -111,6 +111,7 @@ func SetBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 		} else {
 			b = b.Bucket([]byte(p))
 		}
+
 		if b == nil {
 			return nil, ErrPathNotFound
 		}
@@ -119,6 +120,7 @@ func SetBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 	if b == nil {
 		return nil, ErrPathNotFound
 	}
+
 	return b, nil
 }
 
@@ -135,6 +137,7 @@ func CreateBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 		} else {
 			b, err = b.CreateBucketIfNotExists([]byte(p))
 		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -147,6 +150,7 @@ func CreateBucket(tx *bolt.Tx, path Path) (*bolt.Bucket, error) {
 func DeleteBucket(tx *bolt.Tx, path Path) error {
 	if len(path) == 1 {
 		err := tx.DeleteBucket([]byte(path[0]))
+
 		switch {
 		case errors.Is(err, berr.ErrBucketNotFound):
 			return nil
@@ -163,6 +167,7 @@ func DeleteBucket(tx *bolt.Tx, path Path) error {
 	}
 
 	err = b.DeleteBucket([]byte(path[len(path)-1]))
+
 	switch {
 	case errors.Is(err, berr.ErrBucketNotFound):
 		return nil
@@ -176,6 +181,7 @@ func DeleteBucket(tx *bolt.Tx, path Path) error {
 // BucketExists, check if bucket path exists.
 func BucketExists(tx *bolt.Tx, path Path) (bool, error) {
 	_, err := SetBucket(tx, path)
+
 	switch {
 	case errors.Is(err, ErrPathNotFound):
 		return false, nil
@@ -189,6 +195,7 @@ func BucketExists(tx *bolt.Tx, path Path) (bool, error) {
 // ListBuckets, returns the bucket name underneath the path.
 func ListBuckets(tx *bolt.Tx, path Path) ([]string, error) {
 	results := []string{}
+
 	b, err := SetBucket(tx, path)
 	if err != nil {
 		return results, err
@@ -208,6 +215,7 @@ func SetKey(tx *bolt.Tx, path Path, key, value []byte) error {
 	if err != nil {
 		return err
 	}
+
 	if b == nil {
 		return ErrPathNotFound
 	}
@@ -221,6 +229,7 @@ func DeleteKey(tx *bolt.Tx, path Path, key []byte) error {
 	if err != nil {
 		return err
 	}
+
 	if b == nil {
 		return ErrPathNotFound
 	}
@@ -234,6 +243,7 @@ func GetKey(tx *bolt.Tx, path Path, key []byte) ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
+
 	if b == nil {
 		return []byte{}, ErrPathNotFound
 	}
@@ -252,6 +262,7 @@ func KeyExists(tx *bolt.Tx, path Path, key []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	if b == nil {
 		return false, ErrPathNotFound
 	}

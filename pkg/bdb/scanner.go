@@ -86,6 +86,7 @@ func (s *ScanIterator[T, M]) Next() bool {
 		} else {
 			s.key, s.value = s.c.Seek(s.args.startToken)
 		}
+
 		s.init = true
 	}
 
@@ -110,6 +111,7 @@ func (s *ScanIterator[T, M]) Value() M {
 		var result M
 		return result
 	}
+
 	return msg
 }
 
@@ -118,6 +120,7 @@ func (s *ScanIterator[T, M]) Delete() error {
 		log.Trace().Str("key", s.Key()).Msg("delete")
 		return s.c.Delete()
 	}
+
 	return nil
 }
 
@@ -187,6 +190,7 @@ func Scan[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, keyF
 		if err != nil {
 			return nil, err
 		}
+
 		results = append(results, m)
 	}
 

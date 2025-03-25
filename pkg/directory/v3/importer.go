@@ -47,9 +47,6 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 		relation: {Type: relation},
 	}
 
-	s.store.DB().MaxBatchSize = s.store.Config().MaxBatchSize
-	s.store.DB().MaxBatchDelay = s.store.Config().MaxBatchDelay
-
 	importErr := s.store.DB().Batch(func(tx *bolt.Tx) error {
 		for {
 			select {
@@ -61,9 +58,11 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 			req, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
 				s.logger.Trace().Msg("import stream EOF")
+
 				for _, c := range ctr {
 					_ = stream.Send(&dsi3.ImportResponse{Msg: &dsi3.ImportResponse_Counter{Counter: c}})
 				}
+
 				// backwards compatible response.
 				return stream.Send(&dsi3.ImportResponse{
 					Object:   ctr[object],
@@ -101,18 +100,21 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err := s.objectSetHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err := s.objectDeleteHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
 			err := s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
 			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+
 			return err
 		}
 
@@ -122,12 +124,14 @@ func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *ds
 		if req.OpCode == dsi3.Opcode_OPCODE_SET {
 			err := s.relationSetHandler(ctx, tx, m.Relation)
 			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
+
 			return err
 		}
 
 		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
 			err := s.relationDeleteHandler(ctx, tx, m.Relation)
 			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
+
 			return err
 		}
 

@@ -66,6 +66,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 			if err != nil {
 				return err
 			}
+
 			resp.Relations = append(resp.Relations, incoming...)
 
 			// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
@@ -73,6 +74,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 			if err != nil {
 				return err
 			}
+
 			resp.Relations = append(resp.Relations, outgoing...)
 
 			s.logger.Trace().Msg("get object with relations")
@@ -110,8 +112,10 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 			if err != nil {
 				return err
 			}
+
 			resp.Results = append(resp.Results, obj)
 		}
+
 		return nil
 	})
 
@@ -194,6 +198,7 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		if len(relations) == 0 {
 			return bdb.ErrKeyNotFound
 		}
+
 		if len(relations) != 1 {
 			return bdb.ErrMultipleResults
 		}
@@ -216,12 +221,14 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 			if err != nil {
 				sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
 			}
+
 			objects[ds.Object(sub).StrKey()] = sub
 
 			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
 			if err != nil {
 				obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
 			}
+
 			objects[ds.Object(obj).StrKey()] = obj
 
 			resp.Objects = objects
@@ -274,12 +281,14 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 			if !valueFilter(iter.Value()) {
 				continue
 			}
+
 			resp.Results = append(resp.Results, iter.Value())
 
 			if int64(req.Page.Size) == int64(len(resp.Results)) {
 				if iter.Next() {
 					resp.Page.NextToken = iter.Key()
 				}
+
 				break
 			}
 		}
@@ -294,12 +303,14 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				if err != nil {
 					sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
 				}
+
 				objects[ds.Object(sub).StrKey()] = sub
 
 				obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
 				if err != nil {
 					obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
 				}
+
 				objects[ds.Object(obj).StrKey()] = obj
 			}
 
@@ -319,6 +330,7 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 	if err := validator.CheckRequest(req); err != nil {
 		resp.Check = false
 		resp.Context = ds.SetContextWithReason(err)
+
 		return resp, nil
 	}
 
@@ -332,12 +344,14 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 		}
 
 		resp.Context = ds.SetContextWithReason(err)
+
 		return resp, nil
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
 		resp, err = check.Exec(ctx, tx, s.store.MC())
+
 		return err
 	})
 	if err != nil {
@@ -359,6 +373,7 @@ func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.Che
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
 		resp, err = checks.Exec(ctx, tx, s.store.MC())
+
 		return err
 	})
 	if err != nil {
@@ -393,11 +408,13 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
+
 		r, err := check.Exec(ctx, tx, s.store.MC())
 		if err == nil {
 			resp.Check = r.Check
 			resp.Trace = r.Trace
 		}
+
 		return err
 	})
 
@@ -429,11 +446,13 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
+
 		r, err := check.Exec(ctx, tx, s.store.MC())
 		if err == nil {
 			resp.Check = r.Check
 			resp.Trace = r.Trace
 		}
+
 		return err
 	})
 
@@ -455,12 +474,14 @@ func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
+
 		results, err := getGraph.Exec(ctx, tx, s.store.MC())
 		if err != nil {
 			return err
 		}
 
 		resp = results
+
 		return nil
 	})
 

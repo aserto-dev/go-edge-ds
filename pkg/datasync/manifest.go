@@ -26,6 +26,7 @@ import (
 
 func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	runStartTime := time.Now().UTC()
+
 	s.logger.Info().Str(syncStatus, syncStarted).Str("mode", Manifest.String()).Msg(syncManifest)
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -45,6 +46,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 		err := s.store.DB().View(func(tx *bolt.Tx) error {
 			md := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 			manifest, err := ds.Manifest(md).Get(ctx, tx)
+
 			switch {
 			case status.Code(err) == codes.NotFound:
 				if manifest == nil {
@@ -56,8 +58,10 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 
 			localMD = manifest.Metadata
 			localReader = bytes.NewReader(manifest.Body.Data)
+
 			return nil
 		})
+
 		return localMD, localReader, err
 	}()
 	if err != nil {
@@ -67,6 +71,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	s.logger.Debug().
 		Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).
 		Bool("identical", localMD.Etag == remoteMD.Etag).Msg(syncManifest)
+
 	if localMD.Etag == remoteMD.Etag {
 		return nil
 	}
@@ -138,9 +143,9 @@ func (s *Sync) getManifest(ctx context.Context, mc dsm3.ModelClient) (*dsm3.Meta
 	}
 
 	data := bytes.Buffer{}
-	var metadata *dsm3.Metadata
-
+	metadata := &dsm3.Metadata{}
 	bytesRecv := 0
+
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {

@@ -49,6 +49,7 @@ func (i *checks) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.
 	pool.Start()
 
 	resp := &dsr3.ChecksResponse{}
+
 	for check := range i.CheckRequests() {
 		if err := pool.Produce(check.CheckRequest); err != nil {
 			return resp, err

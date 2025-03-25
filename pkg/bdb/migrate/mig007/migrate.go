@@ -43,18 +43,22 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 
 func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	log.Info().Str("version", Version).Msg("StartMigration")
+
 	for _, fn := range fnMap {
 		if err := fn(log, roDB, rwDB); err != nil {
 			return err
 		}
 	}
+
 	log.Info().Str("version", Version).Msg("FinishedMigration")
+
 	return nil
 }
 
 func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateManifest")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateManifest")
 			return nil
@@ -122,6 +126,7 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
 }
@@ -130,6 +135,7 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateObjects")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateObjects")
 			return nil
@@ -168,6 +174,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
 }
@@ -176,6 +183,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateRelations")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateRelations")
 			return nil
@@ -218,6 +226,7 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
 }

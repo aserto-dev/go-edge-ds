@@ -60,14 +60,17 @@ func Get() (*Directory, error) {
 	if directory != nil {
 		return directory, nil
 	}
+
 	return nil, status.Error(codes.Internal, "directory not initialized")
 }
 
 func New(ctx context.Context, config *Config, logger *zerolog.Logger) (*Directory, error) {
 	var err error
+
 	once.Do(func() {
 		directory, err = newDirectory(ctx, config, logger)
 	})
+
 	return directory, err
 }
 

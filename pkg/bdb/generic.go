@@ -64,6 +64,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 	}
 
 	c := b.Cursor()
+
 	for key, value := c.First(); key != nil; key, value = c.Next() {
 		i, err := unmarshal[T, M](value)
 		if err != nil {
@@ -102,6 +103,7 @@ func unmarshalAny[T any](buf []byte) (*T, error) {
 	if err := json.Unmarshal(buf, &t); err != nil {
 		return nil, err
 	}
+
 	return &t, nil
 }
 

@@ -115,6 +115,7 @@ func loadObjects(stream dsi3.Importer_ImportClient, objects *Reader) error {
 			if strings.Contains(err.Error(), "unknown field") {
 				continue
 			}
+
 			return err
 		}
 
@@ -141,10 +142,12 @@ func loadRelations(stream dsi3.Importer_ImportClient, relations *Reader) error {
 		if errors.Is(err, io.EOF) {
 			break
 		}
+
 		if err != nil {
 			if strings.Contains(err.Error(), "unknown field") {
 				continue
 			}
+
 			return err
 		}
 
@@ -184,6 +187,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			if apply != nil {
 				apply(tc.Req)
 			}
+
 			runTestCase(ctx, t, tc)
 		})
 	}

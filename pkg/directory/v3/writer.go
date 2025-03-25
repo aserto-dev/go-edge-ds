@@ -61,7 +61,9 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 
 		if etag == updObj.Etag {
 			s.logger.Trace().Bytes("key", ds.Object(req.Object).Key()).Str("etag-equal", etag).Msg("set_object")
+
 			resp.Result = updObj
+
 			return nil
 		}
 
@@ -73,6 +75,7 @@ func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*ds
 		}
 
 		resp.Result = objType
+
 		return nil
 	})
 
@@ -99,6 +102,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)
 		if ifMatchHeader != "" {
 			obj := &dsc3.Object{Type: req.ObjectType, Id: req.ObjectId}
+
 			updObj, err := ds.UpdateMetadataObject(ctx, tx, bdb.ObjectsPath, ds.Object(obj).Key(), obj)
 			if err != nil {
 				return err
@@ -125,6 +129,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		}
 
 		resp.Result = &emptypb.Empty{}
+
 		return nil
 	})
 
@@ -188,7 +193,9 @@ func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) 
 
 		if etag == updRel.Etag {
 			s.logger.Trace().Bytes("key", ds.Relation(req.Relation).ObjKey()).Str("etag-equal", etag).Msg("set_relation")
+
 			resp.Result = updRel
+
 			return nil
 		}
 
@@ -226,6 +233,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		SubjectId:       req.SubjectId,
 		SubjectRelation: req.SubjectRelation,
 	}
+
 	rid := ds.Relation(rel)
 	if err := rid.Validate(s.store.MC()); err != nil {
 		return resp, err
@@ -256,6 +264,7 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 		}
 
 		resp.Result = &emptypb.Empty{}
+
 		return nil
 	})
 

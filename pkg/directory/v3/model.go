@@ -64,6 +64,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
 		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
+
 		switch {
 		case status.Code(err) == codes.NotFound:
 			if manifest == nil {
@@ -110,6 +111,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 
 		if amr.WithModel() {
 			model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
+
 			switch {
 			case status.Code(err) == codes.NotFound:
 				return derr.ErrNotFound.Msg("model")
@@ -118,6 +120,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 			}
 
 			m := pb.NewStruct()
+
 			r, err := model.Reader()
 			if err != nil {
 				return err
@@ -171,7 +174,9 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 			if err := validator.Body(body.Body); err != nil {
 				return err
 			}
+
 			data.Write(body.Body.Data)
+
 			_, _ = h.Write(data.Bytes())
 		}
 	}

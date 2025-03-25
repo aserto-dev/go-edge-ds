@@ -191,9 +191,11 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relatio
 	switch {
 	case ObjectIdentifier(i.Object()).IsComplete():
 		path = bdb.RelationsObjPath
+
 		i.ObjFilter(keyFilter)
 	case ObjectIdentifier(i.Subject()).IsComplete():
 		path = bdb.RelationsSubPath
+
 		i.SubFilter(keyFilter)
 	default:
 		path = bdb.RelationsObjPath
@@ -239,6 +241,7 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relatio
 
 	if i.HasSubjectRelation {
 		fv := i.GetSubjectRelation()
+
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
 			return equal == 0
@@ -251,6 +254,7 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relatio
 				return false
 			}
 		}
+
 		return true
 	}
 
@@ -269,13 +273,17 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 	// when no complete object identifier, fallback to a full table scan
 	if ObjectIdentifier(i.Object()).IsComplete() {
 		path = bdb.RelationsObjPath
+
 		i.ObjFilter(keyFilter)
 	} else if ObjectIdentifier(i.Subject()).IsComplete() {
 		path = bdb.RelationsSubPath
+
 		i.SubFilter(keyFilter)
 	}
+
 	if len(path) == 0 {
 		log.Debug().Msg("no covering index path, default to scan of relation object path")
+
 		path = bdb.RelationsObjPath
 	}
 
@@ -319,6 +327,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 
 	if i.HasSubjectRelation {
 		fv := i.GetSubjectRelation()
+
 		filters = append(filters, func(item *dsc3.Relation) bool {
 			equal := strings.Compare(item.SubjectRelation, fv)
 			return equal == 0
@@ -331,6 +340,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 				return false
 			}
 		}
+
 		return true
 	}
 

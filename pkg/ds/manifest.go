@@ -87,6 +87,7 @@ func (m *manifest) SetModel(ctx context.Context, tx *bolt.Tx, mod *model.Model) 
 	if mod.Metadata == nil {
 		mod.Metadata = &model.Metadata{}
 	}
+
 	mod.Metadata.ETag = m.Metadata.Etag
 	mod.Metadata.UpdatedAt = m.Metadata.UpdatedAt.AsTime()
 
@@ -107,6 +108,7 @@ func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
 	if err := bdb.DeleteBucket(tx, bdb.ManifestPath); err != nil {
 		return err
 	}
+
 	if _, err := bdb.CreateBucket(tx, bdb.ManifestPath); err != nil {
 		return err
 	}
@@ -114,6 +116,7 @@ func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
 	if err := bdb.DeleteBucket(tx, bdb.ObjectsPath); err != nil {
 		return err
 	}
+
 	if _, err := bdb.CreateBucket(tx, bdb.ObjectsPath); err != nil {
 		return err
 	}
@@ -121,6 +124,7 @@ func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
 	if err := bdb.DeleteBucket(tx, bdb.RelationsObjPath); err != nil {
 		return err
 	}
+
 	if _, err := bdb.CreateBucket(tx, bdb.RelationsObjPath); err != nil {
 		return err
 	}
@@ -128,6 +132,7 @@ func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
 	if err := bdb.DeleteBucket(tx, bdb.RelationsSubPath); err != nil {
 		return err
 	}
+
 	if _, err := bdb.CreateBucket(tx, bdb.RelationsSubPath); err != nil {
 		return err
 	}
@@ -137,9 +142,12 @@ func (m *manifest) Delete(ctx context.Context, tx *bolt.Tx) error {
 
 func (m *manifest) Hash() string {
 	h := fnv.New64a()
+
 	h.Reset()
+
 	if _, err := h.Write(m.Body.Data); err != nil {
 		return DefaultHash
 	}
+
 	return strconv.FormatUint(h.Sum64(), 10)
 }

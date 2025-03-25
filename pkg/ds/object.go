@@ -5,9 +5,8 @@ import (
 
 	"github.com/aserto-dev/azm/safe"
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/x"
 )
-
-const MaxObjectIdentifierSize int = 384
 
 type object struct {
 	*safe.SafeObject
@@ -21,7 +20,8 @@ func (i *object) StrKey() string {
 
 func (i *object) Key() []byte {
 	var buf bytes.Buffer
-	buf.Grow(MaxObjectIdentifierSize)
+
+	buf.Grow(x.MaxObjectIdentifierSize)
 
 	buf.WriteString(i.GetType())
 	buf.WriteByte(TypeIDSeparator)
@@ -44,13 +44,16 @@ func (i *objectIdentifier) StrKey() string {
 
 func (i *objectIdentifier) Key() []byte {
 	var buf bytes.Buffer
-	buf.Grow(MaxObjectIdentifierSize)
+
+	buf.Grow(x.MaxObjectIdentifierSize)
 
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
+
 	if i.GetObjectId() != "" {
 		buf.WriteString(i.GetObjectId())
 	}
+
 	return buf.Bytes()
 }
 

@@ -69,6 +69,7 @@ func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path b
 	if err != nil {
 		return false
 	}
+
 	return exists
 }
 

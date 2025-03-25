@@ -35,6 +35,7 @@ func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {
 		} else {
 			b = b.Bucket([]byte(p))
 		}
+
 		if b == nil {
 			return nil, os.ErrNotExist
 		}
@@ -43,6 +44,7 @@ func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {
 	if b == nil {
 		return nil, os.ErrNotExist
 	}
+
 	return b, nil
 }
 
@@ -51,6 +53,7 @@ func SetKey(tx *bolt.Tx, path bdb.Path, key, value []byte) error {
 	if err != nil {
 		return err
 	}
+
 	if b == nil {
 		return os.ErrNotExist
 	}
@@ -193,11 +196,13 @@ func Backup(db *bolt.DB, version *semver.Version) error {
 		if err != nil {
 			return err
 		}
+
 		defer func() { _ = w.Close() }()
 
 		if _, err := tx.WriteTo(w); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -217,9 +222,6 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 		return nil, err
 	}
 
-	db.MaxBatchSize = cfg.MaxBatchSize
-	db.MaxBatchDelay = cfg.MaxBatchDelay
-
 	return db, nil
 }
 
@@ -231,6 +233,7 @@ func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
@@ -242,6 +245,7 @@ func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	}
 
 	ctx := context.Background()
+
 	m, err := loadModel(ctx, roDB)
 	if err != nil {
 		return err
