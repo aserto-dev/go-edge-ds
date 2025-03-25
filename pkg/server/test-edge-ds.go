@@ -32,9 +32,10 @@ type ClientV3 struct {
 	Exporter dse3.ExporterClient
 }
 
+const bufferSize int = 1024 * 1024
+
 func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directory.Config) (*TestEdgeClient, func()) {
-	buffer := 1024 * 1024
-	listener := bufconn.Listen(buffer)
+	listener := bufconn.Listen(bufferSize)
 
 	edgeDSLogger := logger.With().Str("component", "api.edge-directory").Logger()
 
@@ -61,7 +62,7 @@ func NewTestEdgeServer(ctx context.Context, logger *zerolog.Logger, cfg *directo
 		}
 	}()
 
-	// nolint: staticcheck // bufConn does not seem to work with the default DNS provided by grpc.NewClient.
+	//nolint:staticcheck // bufConn does not seem to work with the default DNS provided by grpc.NewClient.
 	conn, _ := grpc.DialContext(ctx, "", grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 		return listener.Dial()
 	}), grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
