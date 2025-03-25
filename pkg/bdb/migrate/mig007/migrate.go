@@ -77,41 +77,13 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 			}
 
 			// re-encode body value.
-			{
-				bodyValue := b.Get(bdb.BodyKey)
-
-				body, err := unmarshal[dsm3.Body](bodyValue)
-				if err != nil {
-					return err
-				}
-
-				bodyBuf, err := marshal(body)
-				if err != nil {
-					return err
-				}
-
-				if err := mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf); err != nil {
-					return err
-				}
+			if err := encodeBody(b, wtx, path); err != nil {
+				return err
 			}
 
 			// re-encode metadata value.
-			{
-				metadataValue := b.Get(bdb.MetadataKey)
-
-				metadata, err := unmarshal[dsm3.Metadata](metadataValue)
-				if err != nil {
-					return err
-				}
-
-				metadataBuf, err := marshal(metadata)
-				if err != nil {
-					return err
-				}
-
-				if err := mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf); err != nil {
-					return err
-				}
+			if err := encodeMetaData(b, wtx, path); err != nil {
+				return err
 			}
 
 			// copy model value as-is.
@@ -129,6 +101,46 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 
 		return nil
 	}
+}
+
+func encodeBody(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
+	bodyValue := b.Get(bdb.BodyKey)
+
+	body, err := unmarshal[dsm3.Body](bodyValue)
+	if err != nil {
+		return err
+	}
+
+	bodyBuf, err := marshal(body)
+	if err != nil {
+		return err
+	}
+
+	if err := mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
+	metadataValue := b.Get(bdb.MetadataKey)
+
+	metadata, err := unmarshal[dsm3.Metadata](metadataValue)
+	if err != nil {
+		return err
+	}
+
+	metadataBuf, err := marshal(metadata)
+	if err != nil {
+		return err
+	}
+
+	if err := mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // updateEncodingObjects, read values from read-only backup, write to new bucket.
