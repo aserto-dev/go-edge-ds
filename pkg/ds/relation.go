@@ -178,7 +178,12 @@ func (i *relation) SubFilter(buf *bytes.Buffer) {
 
 const relationFilterCount int = 6
 
-func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.RelationIdentifier) bool) {
+func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.RelationIdentifier) bool) {
+	var (
+		path        bdb.Path
+		valueFilter func(*dsc3.RelationIdentifier) bool
+	)
+
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
@@ -252,7 +257,12 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 	return path, valueFilter
 }
 
-func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.Relation) bool) {
+func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relation) bool) {
+	var (
+		path        bdb.Path
+		valueFilter func(*dsc3.Relation) bool
+	)
+
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
