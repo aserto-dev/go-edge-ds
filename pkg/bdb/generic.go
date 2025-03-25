@@ -10,7 +10,7 @@ import (
 
 type Message[T any] interface {
 	proto.Message
-	UnmarshalVT([]byte) error
+	UnmarshalVT(b []byte) error
 	*T
 }
 
