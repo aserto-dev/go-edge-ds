@@ -14,9 +14,9 @@ import (
 
 type Iterator[T any, M Message[T]] interface {
 	Next() bool       // move cursor to next element.
-	RawKey() []byte   // return raw key value ([]byte).
-	RawValue() []byte // return raw value value ([]byte).
-	Key() string      // return key value (string).
+	RawKey() []byte   // return raw key ([]byte).
+	RawValue() []byte // return raw value ([]byte).
+	Key() string      // return key (string).
 	Value() M         // return typed value (M).
 	Delete() error    // delete element underneath cursor.
 }
