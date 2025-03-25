@@ -10,8 +10,6 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-
-	"github.com/rs/zerolog/log"
 )
 
 // Relation identifier.
@@ -269,19 +267,16 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
-	if ObjectIdentifier(i.Object()).IsComplete() {
+	switch {
+	case ObjectIdentifier(i.Object()).IsComplete():
 		path = bdb.RelationsObjPath
 
 		i.ObjFilter(keyFilter)
-	} else if ObjectIdentifier(i.Subject()).IsComplete() {
+	case ObjectIdentifier(i.Subject()).IsComplete():
 		path = bdb.RelationsSubPath
 
 		i.SubFilter(keyFilter)
-	}
-
-	if len(path) == 0 {
-		log.Debug().Msg("no covering index path, default to scan of relation object path")
-
+	default:
 		path = bdb.RelationsObjPath
 	}
 

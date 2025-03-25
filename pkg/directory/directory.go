@@ -174,7 +174,6 @@ func (s *Directory) Logger() *zerolog.Logger {
 	return s.logger
 }
 
-// Config, returns read-only copy of directory configuration data.
 func (s *Directory) Config() Config {
 	return *s.config
 }
