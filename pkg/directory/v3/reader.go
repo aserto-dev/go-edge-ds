@@ -40,7 +40,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		return resp, err
 	}
 
-	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType, ObjectId: req.ObjectId})
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
 	if err := objIdent.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
@@ -53,7 +53,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 
 		inMD, _ := grpcmd.FromIncomingContext(ctx)
 		// optimistic concurrency check
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), obj.Etag) {
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), obj.GetEtag()) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
 
 			return nil
@@ -100,20 +100,20 @@ func (s *Reader) GetObjectMany(ctx context.Context, req *dsr3.GetObjectManyReque
 	}
 
 	// validate all object identifiers first.
-	for _, i := range req.Param {
+	for _, i := range req.GetParam() {
 		if err := ds.ObjectIdentifier(i).Validate(s.store.MC()); err != nil {
 			return resp, err
 		}
 	}
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		for _, i := range req.Param {
+		for _, i := range req.GetParam() {
 			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(i).Key())
 			if err != nil {
 				return err
 			}
 
-			resp.Results = append(resp.Results, obj)
+			resp.Results = append(resp.GetResults(), obj)
 		}
 
 		return nil
@@ -130,17 +130,17 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 		return resp, err
 	}
 
-	if req.Page == nil {
+	if req.GetPage() == nil {
 		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
 	opts := []bdb.ScanOption{
-		bdb.WithPageSize(req.Page.Size),
-		bdb.WithPageToken(req.Page.Token),
+		bdb.WithPageSize(req.GetPage().GetSize()),
+		bdb.WithPageToken(req.GetPage().GetToken()),
 	}
 
 	if req.GetObjectType() != "" {
-		oid := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.ObjectType})
+		oid := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType()})
 		if err := ds.ObjectSelector(oid.ObjectIdentifier).Validate(s.store.MC()); err != nil {
 			return resp, err
 		}
@@ -207,14 +207,14 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		resp.Result = dbRel
 
 		inMD, _ := grpcmd.FromIncomingContext(ctx)
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.Etag) {
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), dbRel.GetEtag()) {
 			_ = grpc.SetHeader(ctx, grpcmd.Pairs("x-http-code", "304"))
 
 			return nil
 		}
 
 		if req.GetWithObjects() {
-			relations := []*dsc3.Relation{resp.Result}
+			relations := []*dsc3.Relation{resp.GetResult()}
 			resp.Objects = s.getWithObjects(ctx, tx, relations)
 		}
 
@@ -236,7 +236,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		return resp, err
 	}
 
-	if req.Page == nil {
+	if req.GetPage() == nil {
 		req.Page = &dsc3.PaginationRequest{Size: x.MaxPageSize}
 	}
 
@@ -251,7 +251,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	path, valueFilter := getRelations.RelationValueFilter(keyFilter)
 
 	opts := []bdb.ScanOption{
-		bdb.WithPageToken(req.Page.Token),
+		bdb.WithPageToken(req.GetPage().GetToken()),
 		bdb.WithKeyFilter(keyFilter.Bytes()),
 	}
 
@@ -266,9 +266,9 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 				continue
 			}
 
-			resp.Results = append(resp.Results, iter.Value())
+			resp.Results = append(resp.GetResults(), iter.Value())
 
-			if int64(req.Page.Size) == int64(len(resp.Results)) {
+			if int64(req.GetPage().GetSize()) == int64(len(resp.GetResults())) {
 				if iter.Next() {
 					resp.Page.NextToken = iter.Key()
 				}
@@ -278,7 +278,7 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		}
 
 		if req.GetWithObjects() {
-			resp.Objects = s.getWithObjects(ctx, tx, resp.Results)
+			resp.Objects = s.getWithObjects(ctx, tx, resp.GetResults())
 		}
 
 		return nil
@@ -399,8 +399,8 @@ func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionR
 
 		r, err := check.Exec(ctx, tx, s.store.MC())
 		if err == nil {
-			resp.Check = r.Check
-			resp.Trace = r.Trace
+			resp.Check = r.GetCheck()
+			resp.Trace = r.GetTrace()
 		}
 
 		return err
@@ -437,8 +437,8 @@ func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationReque
 
 		r, err := check.Exec(ctx, tx, s.store.MC())
 		if err == nil {
-			resp.Check = r.Check
-			resp.Trace = r.Trace
+			resp.Check = r.GetCheck()
+			resp.Trace = r.GetTrace()
 		}
 
 		return err

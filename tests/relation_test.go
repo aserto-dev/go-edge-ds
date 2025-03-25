@@ -40,12 +40,12 @@ var relationTestCasesV3 = []*TestCase{
 			case *dsw3.SetRelationResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.Equal(t, "group", resp.Result.ObjectType)
-				assert.Equal(t, "parent-group", resp.Result.ObjectId)
-				assert.Equal(t, "member", resp.Result.Relation)
-				assert.Equal(t, "group", resp.Result.SubjectType)
-				assert.Equal(t, "child-group", resp.Result.SubjectId)
-				assert.Equal(t, "member", resp.Result.SubjectRelation)
+				assert.Equal(t, "group", resp.GetResult().GetObjectType())
+				assert.Equal(t, "parent-group", resp.GetResult().GetObjectId())
+				assert.Equal(t, "member", resp.GetResult().GetRelation())
+				assert.Equal(t, "group", resp.GetResult().GetSubjectType())
+				assert.Equal(t, "child-group", resp.GetResult().GetSubjectId())
+				assert.Equal(t, "member", resp.GetResult().GetSubjectRelation())
 			}
 			return func(proto.Message) {}
 		},
@@ -67,12 +67,12 @@ var relationTestCasesV3 = []*TestCase{
 			case *dsw3.SetRelationResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.Equal(t, "group", resp.Result.ObjectType)
-				assert.Equal(t, "parent-group", resp.Result.ObjectId)
-				assert.Equal(t, "member", resp.Result.Relation)
-				assert.Equal(t, "user", resp.Result.SubjectType)
-				assert.Equal(t, "test-user-1@acmecorp.com", resp.Result.SubjectId)
-				assert.Empty(t, resp.Result.SubjectRelation)
+				assert.Equal(t, "group", resp.GetResult().GetObjectType())
+				assert.Equal(t, "parent-group", resp.GetResult().GetObjectId())
+				assert.Equal(t, "member", resp.GetResult().GetRelation())
+				assert.Equal(t, "user", resp.GetResult().GetSubjectType())
+				assert.Equal(t, "test-user-1@acmecorp.com", resp.GetResult().GetSubjectId())
+				assert.Empty(t, resp.GetResult().GetSubjectRelation())
 			}
 			return func(proto.Message) {}
 		},
@@ -90,7 +90,7 @@ var relationTestCasesV3 = []*TestCase{
 			case *dsr3.GetRelationsResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.Len(t, resp.Results, 2)
+				assert.Len(t, resp.GetResults(), 2)
 			}
 			return func(proto.Message) {}
 		},
@@ -109,9 +109,9 @@ var relationTestCasesV3 = []*TestCase{
 			case *dsr3.GetRelationsResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.Len(t, resp.Results, 1)
+				assert.Len(t, resp.GetResults(), 1)
 
-				assert.Equal(t, "user", resp.Results[0].SubjectType)
+				assert.Equal(t, "user", resp.GetResults()[0].GetSubjectType())
 			}
 			return func(proto.Message) {}
 		},

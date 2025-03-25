@@ -269,7 +269,7 @@ func loadModel(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
 			return err
 		}
 
-		m, err = v3.Load(bytes.NewReader(manifestBody.Data))
+		m, err = v3.Load(bytes.NewReader(manifestBody.GetData()))
 		return err
 	}); err != nil {
 		return m, err

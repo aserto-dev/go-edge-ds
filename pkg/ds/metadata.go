@@ -62,7 +62,7 @@ func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key
 		return nil, err
 	default:
 		// existing instance, propagate created_at timestamp.
-		msg.CreatedAt = cur.CreatedAt
+		msg.CreatedAt = cur.GetCreatedAt()
 	}
 
 	// always set updated_at timestamp.

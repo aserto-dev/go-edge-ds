@@ -25,19 +25,19 @@ type relations struct {
 
 func Relation(i *dsc3.Relation) *relation {
 	return &relation{safe.Relation(&dsc3.RelationIdentifier{
-		ObjectType:      i.ObjectType,
-		ObjectId:        i.ObjectId,
-		Relation:        i.Relation,
-		SubjectType:     i.SubjectType,
-		SubjectId:       i.SubjectId,
-		SubjectRelation: i.SubjectRelation,
+		ObjectType:      i.GetObjectType(),
+		ObjectId:        i.GetObjectId(),
+		Relation:        i.GetRelation(),
+		SubjectType:     i.GetSubjectType(),
+		SubjectId:       i.GetSubjectId(),
+		SubjectRelation: i.GetSubjectRelation(),
 	})}
 }
 
 func RelationIdentifier(i *dsc3.RelationIdentifier) *relation {
 	return &relation{&safe.SafeRelation{
 		RelationIdentifier: i,
-		HasSubjectRelation: i.SubjectRelation != "",
+		HasSubjectRelation: i.GetSubjectRelation() != "",
 	}}
 }
 
@@ -216,7 +216,7 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relatio
 
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
-			equal := strings.Compare(item.Relation, fv)
+			equal := strings.Compare(item.GetRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -239,7 +239,7 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relatio
 		fv := i.GetSubjectRelation()
 
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
-			equal := strings.Compare(item.SubjectRelation, fv)
+			equal := strings.Compare(item.GetSubjectRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -299,7 +299,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
-			equal := strings.Compare(item.Relation, fv)
+			equal := strings.Compare(item.GetRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -322,7 +322,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(
 		fv := i.GetSubjectRelation()
 
 		filters = append(filters, func(item *dsc3.Relation) bool {
-			equal := strings.Compare(item.SubjectRelation, fv)
+			equal := strings.Compare(item.GetSubjectRelation(), fv)
 			return equal == 0
 		})
 	}

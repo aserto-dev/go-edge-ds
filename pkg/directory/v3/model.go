@@ -85,7 +85,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 
 		// optimistic concurrency check
 		inMD, _ := metadata.FromIncomingContext(stream.Context())
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.Etag) {
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.GetEtag()) {
 			return nil
 		}
 
@@ -93,11 +93,11 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		if amr.WithBody() {
 			body := &dsm3.Body{}
 
-			for curByte := 0; curByte < len(manifest.Body.Data); curByte += model.MaxChunkSizeBytes {
-				if curByte+model.MaxChunkSizeBytes > len(manifest.Body.Data) {
-					body.Data = manifest.Body.Data[curByte:len(manifest.Body.Data)]
+			for curByte := 0; curByte < len(manifest.Body.GetData()); curByte += model.MaxChunkSizeBytes {
+				if curByte+model.MaxChunkSizeBytes > len(manifest.Body.GetData()) {
+					body.Data = manifest.Body.GetData()[curByte:len(manifest.Body.GetData())]
 				} else {
-					body.Data = manifest.Body.Data[curByte : curByte+model.MaxChunkSizeBytes]
+					body.Data = manifest.Body.GetData()[curByte : curByte+model.MaxChunkSizeBytes]
 				}
 
 				if err := stream.Send(&dsm3.GetManifestResponse{
@@ -182,7 +182,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 				return err
 			}
 
-			data.Write(body.Body.Data)
+			data.Write(body.Body.GetData())
 
 			_, _ = h.Write(data.Bytes())
 		}
@@ -272,7 +272,7 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 				return nil //nolint:nilerr // early return when manifest does not exists, delete should not fail.
 			}
 
-			if ifMatchHeader != manifest.Metadata.Etag {
+			if ifMatchHeader != manifest.Metadata.GetEtag() {
 				return derr.ErrHashMismatch
 			}
 		}

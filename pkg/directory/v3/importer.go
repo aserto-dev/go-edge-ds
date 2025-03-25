@@ -95,51 +95,51 @@ func (s *Importer) Import(stream dsi3.Importer_ImportServer) error {
 }
 
 func (s *Importer) handleImportRequest(ctx context.Context, tx *bolt.Tx, req *dsi3.ImportRequest, ctr counters) error {
-	switch m := req.Msg.(type) {
+	switch m := req.GetMsg().(type) {
 	case *dsi3.ImportRequest_Object:
-		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_SET {
 			err := s.objectSetHandler(ctx, tx, m.Object)
-			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.GetOpCode(), err)
 
 			return err
 		}
 
-		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_DELETE {
 			err := s.objectDeleteHandler(ctx, tx, m.Object)
-			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.GetOpCode(), err)
 
 			return err
 		}
 
-		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
 			err := s.objectDeleteWithRelationsHandler(ctx, tx, m.Object)
-			ctr[object] = updateCounter(ctr[object], req.OpCode, err)
+			ctr[object] = updateCounter(ctr[object], req.GetOpCode(), err)
 
 			return err
 		}
 
-		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.String(), int32(req.OpCode))
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.GetOpCode().String(), int32(req.GetOpCode()))
 
 	case *dsi3.ImportRequest_Relation:
-		if req.OpCode == dsi3.Opcode_OPCODE_SET {
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_SET {
 			err := s.relationSetHandler(ctx, tx, m.Relation)
-			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
+			ctr[relation] = updateCounter(ctr[relation], req.GetOpCode(), err)
 
 			return err
 		}
 
-		if req.OpCode == dsi3.Opcode_OPCODE_DELETE {
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_DELETE {
 			err := s.relationDeleteHandler(ctx, tx, m.Relation)
-			ctr[relation] = updateCounter(ctr[relation], req.OpCode, err)
+			ctr[relation] = updateCounter(ctr[relation], req.GetOpCode(), err)
 
 			return err
 		}
 
-		if req.OpCode == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
-			return derr.ErrInvalidOpCode.Msgf("%s for type relation", req.OpCode.String())
+		if req.GetOpCode() == dsi3.Opcode_OPCODE_DELETE_WITH_RELATIONS {
+			return derr.ErrInvalidOpCode.Msgf("%s for type relation", req.GetOpCode().String())
 		}
 
-		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.OpCode.String(), int32(req.OpCode))
+		return derr.ErrUnknownOpCode.Msgf("%s - %d", req.GetOpCode().String(), int32(req.GetOpCode()))
 
 	default:
 		return derr.ErrUnknown.Msgf("import request")
@@ -169,7 +169,7 @@ func (s *Importer) objectSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc3.
 		return err
 	}
 
-	if etag == updReq.Etag {
+	if etag == updReq.GetEtag() {
 		s.logger.Trace().Bytes("key", obj.Key()).Str("etag-equal", etag).Msg("ImportObject")
 		return nil
 	}
@@ -285,7 +285,7 @@ func (s *Importer) relationSetHandler(ctx context.Context, tx *bolt.Tx, req *dsc
 		return err
 	}
 
-	if etag == updReq.Etag {
+	if etag == updReq.GetEtag() {
 		s.logger.Trace().Bytes("key", rel.ObjKey()).Str("etag-equal", etag).Msg("ImportRelation")
 		return nil
 	}

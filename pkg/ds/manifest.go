@@ -69,12 +69,12 @@ func (m *manifest) Set(ctx context.Context, tx *bolt.Tx, buf *bytes.Buffer) erro
 		return err
 	}
 
-	if _, err := bdb.Set[dsm3.Metadata](ctx, tx, bdb.ManifestPath, bdb.MetadataKey, m.Metadata); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ManifestPath, bdb.MetadataKey, m.Metadata); err != nil {
 		return err
 	}
 
 	m.Body = &dsm3.Body{Data: buf.Bytes()}
-	if _, err := bdb.Set[dsm3.Body](ctx, tx, bdb.ManifestPath, bdb.BodyKey, m.Body); err != nil {
+	if _, err := bdb.Set(ctx, tx, bdb.ManifestPath, bdb.BodyKey, m.Body); err != nil {
 		return err
 	}
 
@@ -88,10 +88,10 @@ func (m *manifest) SetModel(ctx context.Context, tx *bolt.Tx, mod *model.Model) 
 		mod.Metadata = &model.Metadata{}
 	}
 
-	mod.Metadata.ETag = m.Metadata.Etag
-	mod.Metadata.UpdatedAt = m.Metadata.UpdatedAt.AsTime()
+	mod.Metadata.ETag = m.Metadata.GetEtag()
+	mod.Metadata.UpdatedAt = m.Metadata.GetUpdatedAt().AsTime()
 
-	if _, err := bdb.SetAny[model.Model](ctx, tx, bdb.ManifestPath, bdb.ModelKey, mod); err != nil {
+	if _, err := bdb.SetAny(ctx, tx, bdb.ManifestPath, bdb.ModelKey, mod); err != nil {
 		return err
 	}
 
@@ -145,7 +145,7 @@ func (m *manifest) Hash() string {
 
 	h.Reset()
 
-	if _, err := h.Write(m.Body.Data); err != nil {
+	if _, err := h.Write(m.Body.GetData()); err != nil {
 		return DefaultHash
 	}
 

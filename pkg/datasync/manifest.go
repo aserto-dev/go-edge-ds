@@ -57,7 +57,7 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 			}
 
 			localMD = manifest.Metadata
-			localReader = bytes.NewReader(manifest.Body.Data)
+			localReader = bytes.NewReader(manifest.Body.GetData())
 
 			return nil
 		})
@@ -69,10 +69,10 @@ func (s *Sync) syncManifest(ctx context.Context, conn *grpc.ClientConn) error {
 	}
 
 	s.logger.Debug().
-		Str("local.etag", localMD.Etag).Str("remote.etag", remoteMD.Etag).
-		Bool("identical", localMD.Etag == remoteMD.Etag).Msg(syncManifest)
+		Str("local.etag", localMD.GetEtag()).Str("remote.etag", remoteMD.GetEtag()).
+		Bool("identical", localMD.GetEtag() == remoteMD.GetEtag()).Msg(syncManifest)
 
-	if localMD.Etag == remoteMD.Etag {
+	if localMD.GetEtag() == remoteMD.GetEtag() {
 		return nil
 	}
 
@@ -161,8 +161,8 @@ func (s *Sync) getManifest(ctx context.Context, mc dsm3.ModelClient) (*dsm3.Meta
 		}
 
 		if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
-			data.Write(body.Body.Data)
-			bytesRecv += len(body.Body.Data)
+			data.Write(body.Body.GetData())
+			bytesRecv += len(body.Body.GetData())
 		}
 	}
 
