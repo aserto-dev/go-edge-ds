@@ -226,48 +226,36 @@ func (s *Importer) objectDeleteWithRelationsHandler(ctx context.Context, tx *bol
 		return derr.ErrInvalidObject.Msg("delete")
 	}
 
-	{
-		// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
-		iter, err := bdb.NewScanIterator[dsc3.Relation](
-			ctx, tx, bdb.RelationsSubPath,
-			bdb.WithKeyFilter(append(obj.Key(), ds.InstanceSeparator)),
-		)
-		if err != nil {
-			return err
-		}
-
-		for iter.Next() {
-			rel := ds.Relation(iter.Value())
-			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
-				return err
-			}
-
-			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
-				return err
-			}
-		}
+	// incoming object relations of object instance (result.type == incoming.subject.type && result.key == incoming.subject.key)
+	if err := s.deleteObjectRelations(ctx, tx, bdb.RelationsSubPath, req); err != nil {
+		return err
 	}
 
-	{
-		// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
-		iter, err := bdb.NewScanIterator[dsc3.Relation](
-			ctx, tx, bdb.RelationsObjPath,
-			bdb.WithKeyFilter(append(obj.Key(), ds.InstanceSeparator)),
-		)
-		if err != nil {
+	// outgoing object relations of object instance (result.type == outgoing.object.type && result.key == outgoing.object.key)
+	if err := s.deleteObjectRelations(ctx, tx, bdb.RelationsObjPath, req); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (*Importer) deleteObjectRelations(ctx context.Context, tx *bolt.Tx, path bdb.Path, obj *dsc3.Object) error {
+	iter, err := bdb.NewScanIterator[dsc3.Relation](
+		ctx, tx, path,
+		bdb.WithKeyFilter(append(ds.Object(obj).Key(), ds.InstanceSeparator)),
+	)
+	if err != nil {
+		return err
+	}
+
+	for iter.Next() {
+		rel := ds.Relation(iter.Value())
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
 			return err
 		}
 
-		for iter.Next() {
-			rel := ds.Relation(iter.Value())
-
-			if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
-				return err
-			}
-
-			if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
-				return err
-			}
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+			return err
 		}
 	}
 

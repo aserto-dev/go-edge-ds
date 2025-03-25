@@ -214,24 +214,8 @@ func (s *Reader) GetRelation(ctx context.Context, req *dsr3.GetRelationRequest) 
 		}
 
 		if req.GetWithObjects() {
-			objects := map[string]*dsc3.Object{}
-			rel := ds.Relation(dbRel)
-
-			sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
-			if err != nil {
-				sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
-			}
-
-			objects[ds.Object(sub).StrKey()] = sub
-
-			obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
-			if err != nil {
-				obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
-			}
-
-			objects[ds.Object(obj).StrKey()] = obj
-
-			resp.Objects = objects
+			relations := []*dsc3.Relation{resp.Result}
+			resp.Objects = s.getWithObjects(ctx, tx, relations)
 		}
 
 		return nil
@@ -294,33 +278,37 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 		}
 
 		if req.GetWithObjects() {
-			objects := map[string]*dsc3.Object{}
-
-			for _, r := range resp.Results {
-				rel := ds.Relation(r)
-
-				sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
-				if err != nil {
-					sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
-				}
-
-				objects[ds.Object(sub).StrKey()] = sub
-
-				obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
-				if err != nil {
-					obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
-				}
-
-				objects[ds.Object(obj).StrKey()] = obj
-			}
-
-			resp.Objects = objects
+			resp.Objects = s.getWithObjects(ctx, tx, resp.Results)
 		}
 
 		return nil
 	})
 
 	return resp, err
+}
+
+func (*Reader) getWithObjects(ctx context.Context, tx *bolt.Tx, relations []*dsc3.Relation) map[string]*dsc3.Object {
+	objects := map[string]*dsc3.Object{}
+
+	for _, r := range relations {
+		rel := ds.Relation(r)
+
+		sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
+		if err != nil {
+			sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
+		}
+
+		objects[ds.Object(sub).StrKey()] = sub
+
+		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
+		if err != nil {
+			obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
+		}
+
+		objects[ds.Object(obj).StrKey()] = obj
+	}
+
+	return objects
 }
 
 // Check, if subject is permitted to access resource (object).
