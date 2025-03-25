@@ -10,7 +10,7 @@ require (
 	github.com/aserto-dev/aserto-grpc v0.2.9
 	github.com/aserto-dev/azm v0.2.11
 	github.com/aserto-dev/errors v0.0.15
-	github.com/aserto-dev/go-directory v0.33.9-0.20250324162550-63302ffe24ec
+	github.com/aserto-dev/go-directory v0.33.9
 	github.com/authzen/access.go v0.0.0-20250225192010-dfb0e30b2a39
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.7
@@ -59,8 +59,8 @@ require (
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
