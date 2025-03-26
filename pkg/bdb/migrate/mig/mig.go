@@ -35,6 +35,7 @@ func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {
 		} else {
 			b = b.Bucket([]byte(p))
 		}
+
 		if b == nil {
 			return nil, os.ErrNotExist
 		}
@@ -43,6 +44,7 @@ func SetBucket(tx *bolt.Tx, path bdb.Path) (*bolt.Bucket, error) {
 	if b == nil {
 		return nil, os.ErrNotExist
 	}
+
 	return b, nil
 }
 
@@ -51,6 +53,7 @@ func SetKey(tx *bolt.Tx, path bdb.Path, key, value []byte) error {
 	if err != nil {
 		return err
 	}
+
 	if b == nil {
 		return os.ErrNotExist
 	}
@@ -107,7 +110,7 @@ func DeleteBucket(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error
 
 			b, err := SetBucket(tx, path[:len(path)-1])
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // early return, when bucket does not exists.
 			}
 
 			err = b.DeleteBucket([]byte(path[len(path)-1]))
@@ -133,7 +136,7 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 	err := db.View(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		v := b.Get([]byte(versionKey))
@@ -151,11 +154,11 @@ func GetVersion(db *bolt.DB) (*semver.Version, error) {
 	return ver, err
 }
 
-func SetVersion(db *bolt.DB, version *semver.Version) (err error) {
+func SetVersion(db *bolt.DB, version *semver.Version) error {
 	return db.Update(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		return b.Put([]byte(versionKey), []byte(version.String()))
@@ -166,7 +169,7 @@ func EnsureBaseVersion(_ *zerolog.Logger, _, rwDB *bolt.DB) error {
 	return rwDB.Update(func(tx *bolt.Tx) error {
 		b, err := SetBucket(tx, bdb.SystemPath)
 		if err != nil {
-			return nil
+			return nil //nolint:nilerr // early return, when bucket does not exists.
 		}
 
 		return b.Put([]byte(versionKey), []byte(baseVersion))
@@ -193,11 +196,13 @@ func Backup(db *bolt.DB, version *semver.Version) error {
 		if err != nil {
 			return err
 		}
+
 		defer func() { _ = w.Close() }()
 
 		if _, err := tx.WriteTo(w); err != nil {
 			return err
 		}
+
 		return nil
 	})
 }
@@ -217,9 +222,6 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 		return nil, err
 	}
 
-	db.MaxBatchSize = cfg.MaxBatchSize
-	db.MaxBatchDelay = cfg.MaxBatchDelay
-
 	return db, nil
 }
 
@@ -231,6 +233,7 @@ func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) 
 	if err != nil {
 		return nil, err
 	}
+
 	return db, nil
 }
 
@@ -242,6 +245,7 @@ func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	}
 
 	ctx := context.Background()
+
 	m, err := loadModel(ctx, roDB)
 	if err != nil {
 		return err
@@ -265,7 +269,7 @@ func loadModel(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
 			return err
 		}
 
-		m, err = v3.Load(bytes.NewReader(manifestBody.Data))
+		m, err = v3.Load(bytes.NewReader(manifestBody.GetData()))
 		return err
 	}); err != nil {
 		return m, err

@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 
+	azmModel "github.com/aserto-dev/azm/model"
 	manifest "github.com/aserto-dev/azm/v3"
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
@@ -64,6 +65,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 
 	modelErr := s.store.DB().View(func(tx *bolt.Tx) error {
 		manifest, err := ds.Manifest(md).Get(stream.Context(), tx)
+
 		switch {
 		case status.Code(err) == codes.NotFound:
 			if manifest == nil {
@@ -83,7 +85,7 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 
 		// optimistic concurrency check
 		inMD, _ := metadata.FromIncomingContext(stream.Context())
-		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.Etag) {
+		if lo.Contains(inMD.Get(headers.IfNoneMatch), manifest.Metadata.GetEtag()) {
 			return nil
 		}
 
@@ -91,11 +93,11 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		if amr.WithBody() {
 			body := &dsm3.Body{}
 
-			for curByte := 0; curByte < len(manifest.Body.Data); curByte += model.MaxChunkSizeBytes {
-				if curByte+model.MaxChunkSizeBytes > len(manifest.Body.Data) {
-					body.Data = manifest.Body.Data[curByte:len(manifest.Body.Data)]
+			for curByte := 0; curByte < len(manifest.Body.GetData()); curByte += model.MaxChunkSizeBytes {
+				if curByte+model.MaxChunkSizeBytes > len(manifest.Body.GetData()) {
+					body.Data = manifest.Body.GetData()[curByte:len(manifest.Body.GetData())]
 				} else {
-					body.Data = manifest.Body.Data[curByte : curByte+model.MaxChunkSizeBytes]
+					body.Data = manifest.Body.GetData()[curByte : curByte+model.MaxChunkSizeBytes]
 				}
 
 				if err := stream.Send(&dsm3.GetManifestResponse{
@@ -109,37 +111,45 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 		}
 
 		if amr.WithModel() {
-			model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
-			switch {
-			case status.Code(err) == codes.NotFound:
-				return derr.ErrNotFound.Msg("model")
-			case err != nil:
-				return errors.Errorf("failed to get model")
-			}
-
-			m := pb.NewStruct()
-			r, err := model.Reader()
-			if err != nil {
-				return err
-			}
-
-			if err := pb.BufToProto(r, m); err != nil {
-				return err
-			}
-
-			if err := stream.Send(&dsm3.GetManifestResponse{
-				Msg: &dsm3.GetManifestResponse_Model{
-					Model: m,
-				},
-			}); err != nil {
-				return err
-			}
+			return s.getModel(stream, tx, md)
 		}
 
 		return nil
 	})
 
 	return modelErr
+}
+
+func (*Model) getModel(stream dsm3.Model_GetManifestServer, tx *bolt.Tx, md *dsm3.Metadata) error {
+	model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
+
+	switch {
+	case status.Code(err) == codes.NotFound:
+		return derr.ErrNotFound.Msg("model")
+	case err != nil:
+		return errors.Errorf("failed to get model")
+	}
+
+	m := pb.NewStruct()
+
+	r, err := model.Reader()
+	if err != nil {
+		return err
+	}
+
+	if err := pb.BufToProto(r, m); err != nil {
+		return err
+	}
+
+	if err := stream.Send(&dsm3.GetManifestResponse{
+		Msg: &dsm3.GetManifestResponse_Model{
+			Model: m,
+		},
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
@@ -171,7 +181,9 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 			if err := validator.Body(body.Body); err != nil {
 				return err
 			}
-			data.Write(body.Body.Data)
+
+			data.Write(body.Body.GetData())
+
 			_, _ = h.Write(data.Bytes())
 		}
 	}
@@ -197,24 +209,7 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	}
 
 	if err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		stats, err := ds.CalculateStats(stream.Context(), tx)
-		if err != nil {
-			return derr.ErrUnknown.Msgf("failed to calculate stats: %s", err.Error())
-		}
-
-		if err := s.store.MC().CanUpdate(m, stats); err != nil {
-			return err
-		}
-
-		if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
-			return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
-		}
-
-		if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
-			return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
-		}
-
-		return nil
+		return s.setManifest(stream, tx, m, md, data)
 	}); err != nil {
 		return err
 	}
@@ -222,6 +217,27 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	logger.Info().Msg("manifest updated")
 
 	return s.store.MC().UpdateModel(m)
+}
+
+func (s *Model) setManifest(stream dsm3.Model_SetManifestServer, tx *bolt.Tx, m *azmModel.Model, md *dsm3.Metadata, data *bytes.Buffer) error {
+	stats, err := ds.CalculateStats(stream.Context(), tx)
+	if err != nil {
+		return derr.ErrUnknown.Msgf("failed to calculate stats: %s", err.Error())
+	}
+
+	if err := s.store.MC().CanUpdate(m, stats); err != nil {
+		return err
+	}
+
+	if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
+		return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
+	}
+
+	if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
+		return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
+	}
+
+	return nil
 }
 
 func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequest) (*dsm3.DeleteManifestResponse, error) {
@@ -253,10 +269,10 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 			dbMd := &dsm3.Metadata{UpdatedAt: timestamppb.Now(), Etag: ""}
 			manifest, err := ds.Manifest(dbMd).Get(ctx, tx)
 			if err != nil {
-				return nil
+				return nil //nolint:nilerr // early return when manifest does not exists, delete should not fail.
 			}
 
-			if ifMatchHeader != manifest.Metadata.Etag {
+			if ifMatchHeader != manifest.Metadata.GetEtag() {
 				return derr.ErrHashMismatch
 			}
 		}

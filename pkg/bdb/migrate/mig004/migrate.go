@@ -3,8 +3,8 @@ package mig004
 import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
-	"github.com/rs/zerolog"
 
+	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -28,11 +28,14 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 
 func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	log.Info().Str("version", Version).Msg("StartMigration")
+
 	for _, fn := range fnMap {
 		if err := fn(log, roDB, rwDB); err != nil {
 			return err
 		}
 	}
+
 	log.Info().Str("version", Version).Msg("FinishedMigration")
+
 	return nil
 }

@@ -2,146 +2,149 @@
 # golangci.com configuration
 # https://github.com/golangci/golangci/wiki/Configuration
 
-run:
-  timeout: 5m
-
-linters-settings:
-  dupl:
-    threshold: 100
-  funlen:
-    lines: 100
-    statements: 80
-  goconst:
-    min-len: 2
-    min-occurrences: 2
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - experimental
-      - opinionated
-      - performance
-      - style
-    disabled-checks:
-      - dupImport # https://github.com/go-critic/go-critic/issues/845
-      - ifElseChain
-      - octalLiteral
-      - whyNoLint
-      - wrapperFunc
-  gocyclo:
-    min-complexity: 18
-  goimports:
-    local-prefixes: github.com/golangci/golangci-lint
-  govet:
-    settings:
-      printf:
-        funcs:
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
-          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
-  misspell:
-    locale: US
-  nolintlint:
-    allow-unused: false # report any unused nolint directives
-    require-explanation: false # don't require an explanation for nolint directives
-    require-specific: false # don't require nolint directives to be specific about which linter is being skipped
-
 linters:
-  # please, do not use `enable-all`: it's deprecated and will be removed soon.
-  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
-  disable-all: true
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
   enable:
+    - asasalint
     - asciicheck
+    - bidichk
     - bodyclose
+    - canonicalheader
+    # - containedctx
+    # - contextcheck
     - copyloopvar
+    - cyclop
+    - decorder
     - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - err113
     - errcheck
+    - errchkjson
     - errname
+    - errorlint
     - exhaustive
+    - exptostd
+    - fatcontext
+    - forbidigo
+    - forcetypeassert
     - funlen
+    - ginkgolinter
+    - gocheckcompilerdirectives
     - gochecknoinits
+    - gochecksumtype
+    - gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
-    - gosimple
-    - err113
+    - godox
     - gofmt
+    - gofumpt
+    - goheader
     - goimports
+    - gomoddirectives
+    - gomodguard
     - goprintffuncname
     - gosec
     - gosimple
+    - gosmopolitan
     - govet
+    - grouper
+    - iface
     - importas
+    - inamedparam
     - ineffassign
+    - interfacebloat
+    - intrange
+    - ireturn
+    - lll
+    - loggercheck
+    - maintidx
+    - makezero
+    - mirror
     - misspell
+    - mnd
+    - musttag
     - nakedret
+    - nestif
+    - nilerr
+    - nilnesserr
+    - nilnil
     - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - perfsprint
+    - prealloc
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - recvcheck
     - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
     - staticcheck
     - stylecheck
+    - tagalign
+    - tagliatelle
+    - testableexamples
     - testifylint
     - testpackage
-    - typecheck
+    - tparallel
     - unconvert
     - unparam
     - unused
+    - usestdlibvars
+    - usetesting
     - wastedassign
+    - whitespace
+    - wsl
+    - zerologlint
 
-  # don't enable:
-    # - depguard
-    # - dupl
-    # - gochecknoglobals
-    # - gocognit
-    # - godox
-    # - gomnd
-    # - lll
-    # - nestif
-    # - nolintlint # conflict with 1.19 gofmt changes
-    # - prealloc
-    # - revive
-    # - wsl
-    # - whitespace
+  # explicitly disabled linters
+  disable:
+    - depguard
+    - exhaustruct
+    - gci # use gofumpt
+    - gochecknoglobals # no configuration options
+    - nlreturn # redundant with wsl
+    - paralleltest
+    - revive
+    - thelper
+    - varnamelen
+    - wrapcheck
 
-issues:
-  # List of regexps of issue texts to exclude, empty list by default.
-  # But independently from this option we use default exclude patterns,
-  # it can be disabled by `exclude-use-default: false`. To list all
-  # excluded by default patterns execute `golangci-lint run --help`
-  exclude:
-  - declaration of "(err|ctx)" shadows declaration at
-  - shadow of imported from 'github.com/stretchr/testify/assert' package 'assert'
-  # Excluding configuration per-path, per-linter, per-text and per-source
-  exclude-rules:
-    - path: _test\.go
-      linters:
-      - gomnd
-    # https://github.com/go-critic/go-critic/issues/926
-    - text: "unnecessaryDefer:"
-      linters:
-      - gocritic
-    - text: "unnamedResult:"
-      linters:
-      - gocritic
-    - path: \.resolvers\.go
-      text: "typeDefFirst:"
-      linters:
-      - gocritic
-    - path: \.resolvers\.go
-      text: "paramTypeCombine:"
-      linters:
-      - gocritic
-    - path: \.resolvers\.go
-      text: "hugeParam:"
-      linters:
-      - gocritic
-    # integer overflow conversion
-    - text: "G115" 
-      linters:
-      - gosec
-    - text: "G404"
-      linters:
-      - gosec
-    - text: "SA1019: \\S+ is deprecated"
-      linters:
-        - staticcheck
+  exclusions:
+    rules:
+      - path: tests/
+        linters:
+        - dupl
+        - forbidigo
+
+linters-settings:
+  cyclop:
+    max-complexity: 12
+
+  funlen:
+    lines: 80
+    statements: 60
+    ignore-comments: true
+
+  ireturn:
+    allow:
+      - error
+      - generic
+      - (SyncClient|Server)$
+
+  lll:
+    line-length: 150
+
+  tagliatelle:
+    case:
+      rules:
+        json: snake
+        yaml: snake

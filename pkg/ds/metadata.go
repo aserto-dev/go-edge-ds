@@ -19,6 +19,7 @@ func UpdateMetadataObject(ctx context.Context, tx *bolt.Tx, path []string, keyFi
 
 	// get current instance.
 	cur, err := bdb.Get[dsc3.Object](ctx, tx, path, keyFilter)
+
 	switch {
 	case status.Code(err) == codes.NotFound:
 		// new instance, set created_at timestamp.
@@ -49,6 +50,7 @@ func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key
 
 	// get current instance.
 	cur, err := bdb.Get[dsc3.Relation](ctx, tx, path, key)
+
 	switch {
 	case status.Code(err) == codes.NotFound:
 		// new instance, set created_at timestamp.
@@ -60,7 +62,7 @@ func UpdateMetadataRelation(ctx context.Context, tx *bolt.Tx, path []string, key
 		return nil, err
 	default:
 		// existing instance, propagate created_at timestamp.
-		msg.CreatedAt = cur.CreatedAt
+		msg.CreatedAt = cur.GetCreatedAt()
 	}
 
 	// always set updated_at timestamp.

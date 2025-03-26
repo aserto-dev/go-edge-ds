@@ -6,12 +6,11 @@ import (
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/graph"
 	"github.com/aserto-dev/azm/safe"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/derr"
 	"github.com/aserto-dev/go-directory/pkg/prop"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 
 	bolt "go.etcd.io/bbolt"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -70,6 +69,7 @@ func (i *check) relationIdentifierExist(ctx context.Context, tx *bolt.Tx, path b
 	if err != nil {
 		return false
 	}
+
 	return exists
 }
 

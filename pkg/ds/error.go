@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
+//nolint:lll // single line readability more important.
 var (
 	ErrObjectNotFound                    = cerr.NewAsertoError("E20031", codes.NotFound, http.StatusNotFound, "object not found")
 	ErrRelationNotFound                  = cerr.NewAsertoError("E20032", codes.NotFound, http.StatusNotFound, "relation not found")
