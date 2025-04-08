@@ -1,4 +1,3 @@
-// nolint
 package tests_test
 
 import (
@@ -41,7 +40,6 @@ func TestMain(m *testing.M) {
 	logger := zerolog.New(io.Discard)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	dirPath := os.TempDir()
 	if err := os.MkdirAll(dirPath, fs.FileMode0700); err != nil {
@@ -64,6 +62,8 @@ func TestMain(m *testing.M) {
 	exitVal := m.Run()
 
 	closer()
+	cancel()
+
 	os.Exit(exitVal)
 }
 
@@ -115,6 +115,7 @@ func loadObjects(stream dsi3.Importer_ImportClient, objects *Reader) error {
 			if strings.Contains(err.Error(), "unknown field") {
 				continue
 			}
+
 			return err
 		}
 
@@ -141,10 +142,12 @@ func loadRelations(stream dsi3.Importer_ImportClient, relations *Reader) error {
 		if errors.Is(err, io.EOF) {
 			break
 		}
+
 		if err != nil {
 			if strings.Contains(err.Error(), "unknown field") {
 				continue
 			}
+
 			return err
 		}
 
@@ -184,6 +187,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 			if apply != nil {
 				apply(tc.Req)
 			}
+
 			runTestCase(ctx, t, tc)
 		})
 	}

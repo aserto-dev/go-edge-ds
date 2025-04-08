@@ -66,23 +66,24 @@ func (s *Stats) CountRelations(ctx context.Context, tx *bolt.Tx) error {
 }
 
 func (s *Stats) incObject(obj *dsc3.Object) {
-	ot, ok := s.ObjectTypes[model.ObjectName(obj.Type)]
+	ot, ok := s.ObjectTypes[model.ObjectName(obj.GetType())]
 	if !ok {
 		ot = &stats.ObjectType{
 			Relations: stats.Relations{},
 		}
-		s.ObjectTypes[model.ObjectName(obj.Type)] = ot
+		s.ObjectTypes[model.ObjectName(obj.GetType())] = ot
 	}
 
 	atomic.AddInt32(&ot.ObjCount, 1)
 }
 
 func (s *Stats) incRelation(rel *dsc3.Relation) {
-	objType := model.ObjectName(rel.ObjectType)
-	relation := model.RelationName(rel.Relation)
-	subType := model.ObjectName(rel.SubjectType)
-	subRel := model.RelationName(rel.SubjectRelation)
-	if rel.SubjectId == "*" {
+	objType := model.ObjectName(rel.GetObjectType())
+	relation := model.RelationName(rel.GetRelation())
+	subType := model.ObjectName(rel.GetSubjectType())
+	subRel := model.RelationName(rel.GetSubjectRelation())
+
+	if rel.GetSubjectId() == "*" {
 		subType += ":*"
 	}
 
@@ -94,6 +95,7 @@ func (s *Stats) incRelation(rel *dsc3.Relation) {
 		}
 		s.ObjectTypes[objType] = ot
 	}
+
 	atomic.AddInt32(&ot.Count, 1)
 
 	// relations
@@ -104,6 +106,7 @@ func (s *Stats) incRelation(rel *dsc3.Relation) {
 		}
 		ot.Relations[relation] = re
 	}
+
 	atomic.AddInt32(&re.Count, 1)
 
 	// subject_types
@@ -114,6 +117,7 @@ func (s *Stats) incRelation(rel *dsc3.Relation) {
 		}
 		re.SubjectTypes[subType] = st
 	}
+
 	atomic.AddInt32(&st.Count, 1)
 
 	// subject_relations
@@ -123,6 +127,7 @@ func (s *Stats) incRelation(rel *dsc3.Relation) {
 			sr = &stats.SubjectRelation{}
 			st.SubjectRelations[subRel] = sr
 		}
+
 		atomic.AddInt32(&sr.Count, 1)
 	}
 }

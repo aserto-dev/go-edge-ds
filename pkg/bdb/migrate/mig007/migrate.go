@@ -43,18 +43,22 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 
 func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	log.Info().Str("version", Version).Msg("StartMigration")
+
 	for _, fn := range fnMap {
 		if err := fn(log, roDB, rwDB); err != nil {
 			return err
 		}
 	}
+
 	log.Info().Str("version", Version).Msg("FinishedMigration")
+
 	return nil
 }
 
 func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateManifest")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateManifest")
 			return nil
@@ -73,41 +77,13 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 			}
 
 			// re-encode body value.
-			{
-				bodyValue := b.Get(bdb.BodyKey)
-
-				body, err := unmarshal[dsm3.Body](bodyValue)
-				if err != nil {
-					return err
-				}
-
-				bodyBuf, err := marshal(body)
-				if err != nil {
-					return err
-				}
-
-				if err := mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf); err != nil {
-					return err
-				}
+			if err := encodeBody(b, wtx, path); err != nil {
+				return err
 			}
 
 			// re-encode metadata value.
-			{
-				metadataValue := b.Get(bdb.MetadataKey)
-
-				metadata, err := unmarshal[dsm3.Metadata](metadataValue)
-				if err != nil {
-					return err
-				}
-
-				metadataBuf, err := marshal(metadata)
-				if err != nil {
-					return err
-				}
-
-				if err := mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf); err != nil {
-					return err
-				}
+			if err := encodeMetaData(b, wtx, path); err != nil {
+				return err
 			}
 
 			// copy model value as-is.
@@ -122,14 +98,48 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
+}
+
+func encodeBody(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
+	bodyValue := b.Get(bdb.BodyKey)
+
+	body, err := unmarshal[dsm3.Body](bodyValue)
+	if err != nil {
+		return err
+	}
+
+	bodyBuf, err := marshal(body)
+	if err != nil {
+		return err
+	}
+
+	return mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf)
+}
+
+func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
+	metadataValue := b.Get(bdb.MetadataKey)
+
+	metadata, err := unmarshal[dsm3.Metadata](metadataValue)
+	if err != nil {
+		return err
+	}
+
+	metadataBuf, err := marshal(metadata)
+	if err != nil {
+		return err
+	}
+
+	return mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf)
 }
 
 // updateEncodingObjects, read values from read-only backup, write to new bucket.
 func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateObjects")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateObjects")
 			return nil
@@ -168,6 +178,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
 }
@@ -176,6 +187,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateRelations")
+
 		if roDB == nil {
 			log.Info().Bool("roDB", roDB == nil).Msg("updateRelations")
 			return nil
@@ -212,13 +224,13 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 				if err := mig.SetKey(wtx, bdb.RelationsSubPath, ds.Relation(rel).SubKey(), val); err != nil {
 					return err
 				}
-
 			}
 
 			return wtx.Commit()
 		}); err != nil {
 			return err
 		}
+
 		return nil
 	}
 }
@@ -235,9 +247,11 @@ var unmarshalOpts = protojson.UnmarshalOptions{
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
-	if err := unmarshalOpts.Unmarshal(b, any(&t).(proto.Message)); err != nil {
+	msg := M(&t)
+	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}
+
 	return &t, nil
 }
 

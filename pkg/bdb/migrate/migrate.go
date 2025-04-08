@@ -31,6 +31,7 @@ var migMap = map[string]Migration{
 	mig008.Version: mig008.Migrate,
 }
 
+//nolint:lll // single line readability more important.
 var (
 	ErrDirectorySchemaVersionHigher  = cerr.NewAsertoError("E20054", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema version is higher than supported by engine")
 	ErrDirectorySchemaUpdateRequired = cerr.NewAsertoError("E20055", codes.FailedPrecondition, http.StatusExpectationFailed, "directory schema update required")
@@ -47,6 +48,7 @@ func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *
 		if err := create(config, logger, reqVersion); err != nil {
 			return false, err
 		}
+
 		return true, nil
 	}
 
@@ -133,9 +135,11 @@ func getCurrent(config *bdb.Config, logger *zerolog.Logger) (*semver.Version, er
 	if err != nil {
 		return nil, err
 	}
+
 	if err := boltdb.Open(); err != nil {
 		return nil, err
 	}
+
 	defer boltdb.Close()
 
 	return mig.GetVersion(boltdb.DB())
@@ -146,11 +150,14 @@ func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) er
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
+
 		if err := rwDB.Close(); err != nil {
 			log.Error().Err(err).Msg("close rwDB")
 		}
+
 		rwDB = nil
 	}()
 
@@ -175,11 +182,14 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		log.Debug().Str("db_path", rwDB.Path()).Msg("close-rw")
+
 		if err := rwDB.Close(); err != nil {
 			log.Error().Err(err).Msg("close rwDB")
 		}
+
 		rwDB = nil
 	}()
 
@@ -191,11 +201,14 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		log.Debug().Str("db_path", roDB.Path()).Msg("close-ro")
+
 		if err := roDB.Close(); err != nil {
 			log.Error().Err(err).Msg("close roDB")
 		}
+
 		roDB = nil
 	}()
 
@@ -218,5 +231,6 @@ func execute(logger *zerolog.Logger, roDB, rwDB *bolt.DB, newVersion *semver.Ver
 	if fnMigrate, ok := migMap[newVersion.String()]; ok {
 		return fnMigrate(logger, roDB, rwDB)
 	}
+
 	return os.ErrNotExist
 }

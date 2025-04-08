@@ -10,8 +10,6 @@ import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-
-	"github.com/rs/zerolog/log"
 )
 
 // Relation identifier.
@@ -27,19 +25,19 @@ type relations struct {
 
 func Relation(i *dsc3.Relation) *relation {
 	return &relation{safe.Relation(&dsc3.RelationIdentifier{
-		ObjectType:      i.ObjectType,
-		ObjectId:        i.ObjectId,
-		Relation:        i.Relation,
-		SubjectType:     i.SubjectType,
-		SubjectId:       i.SubjectId,
-		SubjectRelation: i.SubjectRelation,
+		ObjectType:      i.GetObjectType(),
+		ObjectId:        i.GetObjectId(),
+		Relation:        i.GetRelation(),
+		SubjectType:     i.GetSubjectType(),
+		SubjectId:       i.GetSubjectId(),
+		SubjectRelation: i.GetSubjectRelation(),
 	})}
 }
 
 func RelationIdentifier(i *dsc3.RelationIdentifier) *relation {
 	return &relation{&safe.SafeRelation{
 		RelationIdentifier: i,
-		HasSubjectRelation: i.SubjectRelation != "",
+		HasSubjectRelation: i.GetSubjectRelation() != "",
 	}}
 }
 
@@ -118,7 +116,6 @@ func (i *relation) PathAndFilter(filter *bytes.Buffer) ([]string, error) {
 
 // ObjFilter
 // format: obj_type : obj_id # relation @ sub_type : sub_id (# sub_relation).
-// TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) ObjFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetObjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -148,7 +145,6 @@ func (i *relation) ObjFilter(buf *bytes.Buffer) {
 
 // SubFilter
 // format: sub_type : sub_id (# sub_relation) | obj_type : obj_id # relation.
-// TODO: if subject relation exists add subject relation to filter clause.
 func (i *relation) SubFilter(buf *bytes.Buffer) {
 	buf.WriteString(i.GetSubjectType())
 	buf.WriteByte(TypeIDSeparator)
@@ -178,20 +174,26 @@ func (i *relation) SubFilter(buf *bytes.Buffer) {
 
 const relationFilterCount int = 6
 
-func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.RelationIdentifier) bool) {
+func (i *relation) Filter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.RelationIdentifier) bool) {
+	var (
+		path        bdb.Path
+		valueFilter func(*dsc3.RelationIdentifier) bool
+	)
+
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
-	if ObjectIdentifier(i.Object()).IsComplete() {
+	switch {
+	case ObjectIdentifier(i.Object()).IsComplete():
 		path = bdb.RelationsObjPath
+
 		i.ObjFilter(keyFilter)
-	} else if ObjectIdentifier(i.Subject()).IsComplete() {
+	case ObjectIdentifier(i.Subject()).IsComplete():
 		path = bdb.RelationsSubPath
+
 		i.SubFilter(keyFilter)
-	}
-	if len(path) == 0 {
-		log.Debug().Msg("no covering index path, default to scan of relation object path")
+	default:
 		path = bdb.RelationsObjPath
 	}
 
@@ -214,7 +216,7 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
-			equal := strings.Compare(item.Relation, fv)
+			equal := strings.Compare(item.GetRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -235,8 +237,9 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 
 	if i.HasSubjectRelation {
 		fv := i.GetSubjectRelation()
+
 		filters = append(filters, func(item *dsc3.RelationIdentifier) bool {
-			equal := strings.Compare(item.SubjectRelation, fv)
+			equal := strings.Compare(item.GetSubjectRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -247,26 +250,33 @@ func (i *relation) Filter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter f
 				return false
 			}
 		}
+
 		return true
 	}
 
 	return path, valueFilter
 }
 
-func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, valueFilter func(*dsc3.Relation) bool) {
+func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (bdb.Path, func(*dsc3.Relation) bool) {
+	var (
+		path        bdb.Path
+		valueFilter func(*dsc3.Relation) bool
+	)
+
 	// #1  determine if object identifier is complete (has type+id)
 	// set index path accordingly
 	// set keyFilter to match covering path
 	// when no complete object identifier, fallback to a full table scan
-	if ObjectIdentifier(i.Object()).IsComplete() {
+	switch {
+	case ObjectIdentifier(i.Object()).IsComplete():
 		path = bdb.RelationsObjPath
+
 		i.ObjFilter(keyFilter)
-	} else if ObjectIdentifier(i.Subject()).IsComplete() {
+	case ObjectIdentifier(i.Subject()).IsComplete():
 		path = bdb.RelationsSubPath
+
 		i.SubFilter(keyFilter)
-	}
-	if len(path) == 0 {
-		log.Debug().Msg("no covering index path, default to scan of relation object path")
+	default:
 		path = bdb.RelationsObjPath
 	}
 
@@ -289,7 +299,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 
 	if fv := i.GetRelation(); fv != "" {
 		filters = append(filters, func(item *dsc3.Relation) bool {
-			equal := strings.Compare(item.Relation, fv)
+			equal := strings.Compare(item.GetRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -310,8 +320,9 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 
 	if i.HasSubjectRelation {
 		fv := i.GetSubjectRelation()
+
 		filters = append(filters, func(item *dsc3.Relation) bool {
-			equal := strings.Compare(item.SubjectRelation, fv)
+			equal := strings.Compare(item.GetSubjectRelation(), fv)
 			return equal == 0
 		})
 	}
@@ -322,6 +333,7 @@ func (i *relation) RelationValueFilter(keyFilter *bytes.Buffer) (path bdb.Path, 
 				return false
 			}
 		}
+
 		return true
 	}
 

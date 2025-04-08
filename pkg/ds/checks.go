@@ -7,12 +7,11 @@ import (
 	"github.com/aserto-dev/azm/cache"
 	"github.com/aserto-dev/azm/jobpool"
 	"github.com/aserto-dev/azm/safe"
-	"google.golang.org/protobuf/types/known/structpb"
-
 	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
 	"github.com/aserto-dev/go-directory/pkg/prop"
 
 	bolt "go.etcd.io/bbolt"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type checks struct {
@@ -20,7 +19,7 @@ type checks struct {
 }
 
 func Checks(i *dsr3.ChecksRequest) *checks {
-	if i.Default == nil {
+	if i.GetDefault() == nil {
 		i.Default = &dsr3.CheckRequest{}
 	}
 
@@ -50,6 +49,7 @@ func (i *checks) Exec(ctx context.Context, tx *bolt.Tx, mc *cache.Cache) (*dsr3.
 	pool.Start()
 
 	resp := &dsr3.ChecksResponse{}
+
 	for check := range i.CheckRequests() {
 		if err := pool.Produce(check.CheckRequest); err != nil {
 			return resp, err

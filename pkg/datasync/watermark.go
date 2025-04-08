@@ -68,6 +68,7 @@ func maxTS(lhs, rhs *timestamppb.Timestamp) *timestamppb.Timestamp {
 	} else if lhs.GetSeconds() == rhs.GetSeconds() && lhs.GetNanos() > rhs.GetNanos() {
 		return lhs
 	}
+
 	return rhs
 }
 
@@ -79,6 +80,7 @@ func (s *Sync) getWatermark() *watermark {
 	defer r.Close()
 
 	var wm watermark
+
 	dec := json.NewDecoder(r)
 	if err := dec.Decode(&wm); err != nil {
 		return newWatermark()
@@ -108,8 +110,8 @@ func (s *Sync) setWatermark(ts *timestamppb.Timestamp) error {
 		return err
 	}
 
-	wm.ObjectCount = uint(objStats.KeyN)
-	wm.RelationCount = uint(relStats.KeyN)
+	wm.ObjectCount = uint(objStats.KeyN)   //nolint:gosec // G115: integer overflow conversion int -> uint
+	wm.RelationCount = uint(relStats.KeyN) //nolint:gosec // G115: integer overflow conversion int -> uint
 
 	wm.TotalCount = wm.ObjectCount + wm.RelationCount
 
@@ -122,6 +124,7 @@ func (s *Sync) setWatermark(ts *timestamppb.Timestamp) error {
 	if err := json.NewEncoder(w).Encode(wm); err != nil {
 		return err
 	}
+
 	_ = w.Sync() // flush sync watermark.
 
 	return nil
@@ -134,10 +137,12 @@ func (s *Sync) syncFilename() string {
 
 func (s *Sync) dbStats(path bdb.Path) (bolt.BucketStats, error) {
 	var stats bolt.BucketStats
+
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		stats = bucketStats(tx, path)
 		return nil
 	})
+
 	return stats, err
 }
 
@@ -146,5 +151,6 @@ func bucketStats(tx *bolt.Tx, path bdb.Path) bolt.BucketStats {
 	if err != nil {
 		return bolt.BucketStats{}
 	}
+
 	return b.Stats()
 }

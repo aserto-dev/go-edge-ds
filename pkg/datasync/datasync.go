@@ -124,22 +124,26 @@ var modes = map[int32]string{
 
 func (m Mode) String() string {
 	str := []string{}
+
 	for k, v := range modes {
 		if Has(m, Mode(k)) {
 			str = append(str, v)
 		}
 	}
+
 	return strings.Join(str, "|")
 }
 
 func (m Mode) RunMode() string {
 	mode := Clear(m, Manifest)
 	str := []string{}
+
 	for k, v := range modes {
 		if Has(mode, Mode(k)) {
 			str = append(str, v)
 		}
 	}
+
 	return strings.Join(str, "|")
 }
 
@@ -149,6 +153,7 @@ func StrToMode(s string) Mode {
 			return Mode(k)
 		}
 	}
+
 	return Unknown
 }
 

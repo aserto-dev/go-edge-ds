@@ -10,7 +10,7 @@ import (
 
 type Message[T any] interface {
 	proto.Message
-	UnmarshalVT([]byte) error
+	UnmarshalVT(b []byte) error
 	*T
 }
 
@@ -34,7 +34,8 @@ func marshal[T any, M Message[T]](t M) ([]byte, error) {
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
-	if err := unmarshalOpts.Unmarshal(b, any(&t).(proto.Message)); err != nil {
+	msg := M(&t)
+	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}
 
@@ -63,6 +64,7 @@ func List[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path) ([]M
 	}
 
 	c := b.Cursor()
+
 	for key, value := c.First(); key != nil; key, value = c.Next() {
 		i, err := unmarshal[T, M](value)
 		if err != nil {
@@ -101,6 +103,7 @@ func unmarshalAny[T any](buf []byte) (*T, error) {
 	if err := json.Unmarshal(buf, &t); err != nil {
 		return nil, err
 	}
+
 	return &t, nil
 }
 

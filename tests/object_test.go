@@ -41,16 +41,16 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsw.SetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Equal(t, "3016620182482667549", resp.Result.Etag)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 1", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Equal(t, "3016620182482667549", resp.GetResult().GetEtag())
 			}
 			return func(proto.Message) {}
 		},
@@ -67,16 +67,16 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsr.GetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 1", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Equal(t, "3016620182482667549", resp.Result.Etag)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 1", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Equal(t, "3016620182482667549", resp.GetResult().GetEtag())
 			}
 			return func(req proto.Message) {}
 		},
@@ -97,16 +97,16 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsw.SetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Equal(t, "2708540687187161441", resp.Result.Etag)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-11@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 11", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Equal(t, "2708540687187161441", resp.GetResult().GetEtag())
 			}
 			return func(req proto.Message) {}
 		},
@@ -123,16 +123,16 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsr.GetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-11@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 11", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Equal(t, "2708540687187161441", resp.Result.Etag)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-11@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 11", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Equal(t, "2708540687187161441", resp.GetResult().GetEtag())
 			}
 			return func(req proto.Message) {}
 		},
@@ -149,7 +149,7 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsw.DeleteObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
+				assert.NotNil(t, resp.GetResult())
 			}
 			return func(req proto.Message) {}
 		},
@@ -179,7 +179,7 @@ var objectTestCasesWithID = []*TestCase{
 			case *dsw.DeleteObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
+				assert.NotNil(t, resp.GetResult())
 			}
 			return func(req proto.Message) {}
 		},
@@ -205,19 +205,19 @@ var objectTestCasesWithoutID = []*TestCase{
 			case *dsw.SetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Greater(t, len(resp.Result.Etag), 4)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 2", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Greater(t, len(resp.GetResult().GetEtag()), 4)
 
 				return func(req proto.Message) {
-					lastHash := resp.Result.Etag
+					lastHash := resp.GetResult().GetEtag()
 
 					switch r := req.(type) {
 					case *dsw.SetObjectRequest:
@@ -241,19 +241,19 @@ var objectTestCasesWithoutID = []*TestCase{
 			case *dsr.GetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 2", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Greater(t, len(resp.Result.Etag), 4)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 2", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Greater(t, len(resp.GetResult().GetEtag()), 4)
 
 				return func(req proto.Message) {
-					lastHash := resp.Result.Etag
+					lastHash := resp.GetResult().GetEtag()
 
 					switch r := req.(type) {
 					case *dsw.SetObjectRequest:
@@ -280,16 +280,16 @@ var objectTestCasesWithoutID = []*TestCase{
 			case *dsw.SetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Greater(t, len(resp.Result.Etag), 4)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 22", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Greater(t, len(resp.GetResult().GetEtag()), 4)
 			}
 			return func(req proto.Message) {}
 		},
@@ -306,16 +306,16 @@ var objectTestCasesWithoutID = []*TestCase{
 			case *dsr.GetObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
-				t.Logf("resp etag:%s", resp.Result.Etag)
+				assert.NotNil(t, resp.GetResult())
+				t.Logf("resp etag:%s", resp.GetResult().GetEtag())
 
-				assert.Equal(t, "user", resp.Result.Type)
-				assert.Equal(t, "test-user-2@acmecorp.com", resp.Result.Id)
-				assert.Equal(t, "test obj 22", resp.Result.DisplayName)
-				assert.NotNil(t, resp.Result.Properties)
-				assert.Empty(t, resp.Result.Properties.Fields)
-				assert.NotEmpty(t, resp.Result.Etag)
-				assert.Greater(t, len(resp.Result.Etag), 4)
+				assert.Equal(t, "user", resp.GetResult().GetType())
+				assert.Equal(t, "test-user-2@acmecorp.com", resp.GetResult().GetId())
+				assert.Equal(t, "test obj 22", resp.GetResult().GetDisplayName())
+				assert.NotNil(t, resp.GetResult().GetProperties())
+				assert.Empty(t, resp.GetResult().GetProperties().GetFields())
+				assert.NotEmpty(t, resp.GetResult().GetEtag())
+				assert.Greater(t, len(resp.GetResult().GetEtag()), 4)
 			}
 			return func(req proto.Message) {}
 		},
@@ -332,7 +332,7 @@ var objectTestCasesWithoutID = []*TestCase{
 			case *dsw.DeleteObjectResponse:
 				require.NoError(t, tErr)
 				assert.NotNil(t, resp)
-				assert.NotNil(t, resp.Result)
+				assert.NotNil(t, resp.GetResult())
 			}
 			return func(req proto.Message) {}
 		},

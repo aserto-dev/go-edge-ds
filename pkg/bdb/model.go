@@ -21,6 +21,7 @@ func (s *BoltDB) LoadModel() error {
 		}
 
 		mod, err := GetAny[model.Model](ctx, tx, ManifestPath, ModelKey)
+
 		switch {
 		case status.Code(err) == codes.NotFound:
 			return nil

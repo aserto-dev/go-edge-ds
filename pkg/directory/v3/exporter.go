@@ -31,22 +31,23 @@ func (s *Exporter) Export(req *dse3.ExportRequest, stream dse3.Exporter_ExportSe
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		// stats mode, short circuits when enabled
-		if req.Options&uint32(dse3.Option_OPTION_STATS) != 0 {
-			if err := exportStats(tx, stream, req.Options); err != nil {
+		if req.GetOptions()&uint32(dse3.Option_OPTION_STATS) != 0 {
+			if err := exportStats(tx, stream, req.GetOptions()); err != nil {
 				logger.Error().Err(err).Msg("export_stats")
 				return err
 			}
+
 			return nil
 		}
 
-		if req.Options&uint32(dse3.Option_OPTION_DATA_OBJECTS) != 0 {
+		if req.GetOptions()&uint32(dse3.Option_OPTION_DATA_OBJECTS) != 0 {
 			if err := exportObjects(tx, stream); err != nil {
 				logger.Error().Err(err).Msg("export_objects")
 				return err
 			}
 		}
 
-		if req.Options&uint32(dse3.Option_OPTION_DATA_RELATIONS) != 0 {
+		if req.GetOptions()&uint32(dse3.Option_OPTION_DATA_RELATIONS) != 0 {
 			if err := exportRelations(tx, stream); err != nil {
 				logger.Error().Err(err).Msg("export_relations")
 				return err

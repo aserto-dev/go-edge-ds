@@ -120,6 +120,7 @@ func setManifest(client *server.TestEdgeClient, manifest []byte) error {
 	}
 
 	_, err = stream.CloseAndRecv()
+
 	return err
 }
 
@@ -132,6 +133,7 @@ func getManifest(client *server.TestEdgeClient) ([]byte, error) {
 	data := bytes.Buffer{}
 
 	bytesRecv := 0
+
 	for {
 		resp, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
@@ -147,8 +149,8 @@ func getManifest(client *server.TestEdgeClient) ([]byte, error) {
 		}
 
 		if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
-			data.Write(body.Body.Data)
-			bytesRecv += len(body.Body.Data)
+			data.Write(body.Body.GetData())
+			bytesRecv += len(body.Body.GetData())
 		}
 	}
 
@@ -239,6 +241,7 @@ func deleteManifest(client *server.TestEdgeClient) error {
 		context.Background(),
 		&dsm3.DeleteManifestRequest{Empty: &emptypb.Empty{}},
 	)
+
 	return err
 }
 

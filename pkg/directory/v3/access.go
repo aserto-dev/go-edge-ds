@@ -33,24 +33,27 @@ func (s *Access) Evaluation(ctx context.Context, req *acc1.EvaluationRequest) (*
 	}
 
 	return &acc1.EvaluationResponse{
-		Decision: resp.Check,
-		Context:  resp.Context,
+		Decision: resp.GetCheck(),
+		Context:  resp.GetContext(),
 	}, nil
 }
 
 func extractCheck(req *acc1.EvaluationRequest) *dsr3.CheckRequest {
 	checkReq := &dsr3.CheckRequest{}
-	if req.Resource != nil {
-		checkReq.ObjectType = req.Resource.GetType()
-		checkReq.ObjectId = req.Resource.GetId()
+	if res := req.GetResource(); res != nil {
+		checkReq.ObjectType = res.GetType()
+		checkReq.ObjectId = res.GetId()
 	}
-	if req.Action != nil {
-		checkReq.Relation = req.Action.GetName()
+
+	if act := req.GetAction(); act != nil {
+		checkReq.Relation = act.GetName()
 	}
-	if req.Subject != nil {
-		checkReq.SubjectType = req.Subject.GetType()
-		checkReq.SubjectId = req.Subject.GetId()
+
+	if sub := req.GetSubject(); sub != nil {
+		checkReq.SubjectType = sub.GetType()
+		checkReq.SubjectId = sub.GetId()
 	}
+
 	return checkReq
 }
 
@@ -61,6 +64,7 @@ func extractCheck(req *acc1.EvaluationRequest) *dsr3.CheckRequest {
 // the scope of a single message exchange (also known as "boxcarring" requests).
 func (s *Access) Evaluations(ctx context.Context, req *acc1.EvaluationsRequest) (*acc1.EvaluationsResponse, error) {
 	defCheck, checks := extractChecks(req)
+
 	checksResp, err := s.reader.Checks(ctx, &dsr3.ChecksRequest{Default: defCheck, Checks: checks})
 	if err != nil {
 		return &acc1.EvaluationsResponse{}, err
@@ -73,36 +77,45 @@ func (s *Access) Evaluations(ctx context.Context, req *acc1.EvaluationsRequest) 
 
 func extractChecks(req *acc1.EvaluationsRequest) (*dsr3.CheckRequest, []*dsr3.CheckRequest) {
 	check := &dsr3.CheckRequest{}
+
 	if sub := req.GetSubject(); sub != nil {
 		check.SubjectType = sub.GetType()
 		check.SubjectId = sub.GetId()
 	}
+
 	if act := req.GetAction(); act != nil {
 		check.Relation = act.GetName()
 	}
+
 	if res := req.GetResource(); res != nil {
 		check.ObjectType = res.GetType()
 		check.ObjectId = res.GetId()
 	}
 
-	checks := make([]*dsr3.CheckRequest, len(req.Evaluations))
-	for k, v := range req.Evaluations {
+	checks := make([]*dsr3.CheckRequest, len(req.GetEvaluations()))
+
+	for k, v := range req.GetEvaluations() {
 		c := extractCheck(v)
 		checks[k] = c
 	}
+
 	return check, checks
 }
 
 func extractDecisions(resp *dsr3.ChecksResponse) []*acc1.EvaluationResponse {
-	evaluations := make([]*acc1.EvaluationResponse, len(resp.Checks))
-	for k, v := range resp.Checks {
+	evaluations := make([]*acc1.EvaluationResponse, len(resp.GetChecks()))
+
+	for k, v := range resp.GetChecks() {
 		e := &acc1.EvaluationResponse{}
 		e.Decision = v.GetCheck()
-		if v.Context != nil {
+
+		if v.GetContext() != nil {
 			e.Context = v.GetContext()
 		}
+
 		evaluations[k] = e
 	}
+
 	return evaluations
 }
 
@@ -123,12 +136,12 @@ func (s *Access) SubjectSearch(ctx context.Context, req *acc1.SubjectSearchReque
 		return resp, err
 	}
 
-	for _, oid := range graphResp.Results {
+	for _, oid := range graphResp.GetResults() {
 		sub := &acc1.Subject{
 			Type: oid.GetObjectType(),
 			Id:   oid.GetObjectId(),
 		}
-		resp.Results = append(resp.Results, sub)
+		resp.Results = append(resp.GetResults(), sub)
 	}
 
 	return resp, nil
@@ -140,14 +153,18 @@ func extractSubjectSearch(req *acc1.SubjectSearchRequest) *dsr3.GetGraphRequest 
 		resp.ObjectType = res.GetType()
 		resp.ObjectId = res.GetId()
 	}
+
 	if act := req.GetAction(); act != nil {
 		resp.Relation = act.GetName()
 	}
+
 	if sub := req.GetSubject(); sub != nil {
 		resp.SubjectType = sub.GetType()
 	}
+
 	resp.SubjectId = ""       // OMITTED
 	resp.SubjectRelation = "" // OMITTED
+
 	return resp
 }
 
@@ -168,12 +185,13 @@ func (s *Access) ResourceSearch(ctx context.Context, req *acc1.ResourceSearchReq
 		return resp, err
 	}
 
-	for _, oid := range graphResp.Results {
+	for _, oid := range graphResp.GetResults() {
 		res := &acc1.Resource{
 			Type: oid.GetObjectType(),
 			Id:   oid.GetObjectId(),
 		}
-		resp.Results = append(resp.Results, res)
+
+		resp.Results = append(resp.GetResults(), res)
 	}
 
 	return resp, nil
@@ -184,15 +202,19 @@ func extractResourceSearch(req *acc1.ResourceSearchRequest) *dsr3.GetGraphReques
 	if res := req.GetResource(); res != nil {
 		resp.ObjectType = res.GetType()
 	}
+
 	if act := req.GetAction(); act != nil {
 		resp.Relation = act.GetName()
 	}
+
 	if sub := req.GetSubject(); sub != nil {
 		resp.SubjectType = sub.GetType()
 		resp.SubjectId = sub.GetId()
 	}
+
 	resp.ObjectId = ""        // OMITTED
 	resp.SubjectRelation = "" // OMITTED
+
 	return resp
 }
 
@@ -211,16 +233,16 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 	graphReq := extractActionSearch(req)
 
 	assignable, err := s.reader.store.MC().AssignableRelations(
-		cache.ObjectName(graphReq.ObjectType),
-		cache.ObjectName(graphReq.SubjectType),
+		cache.ObjectName(graphReq.GetObjectType()),
+		cache.ObjectName(graphReq.GetSubjectType()),
 	)
 	if err != nil {
 		return resp, err
 	}
 
 	availablePermissions, err := s.reader.store.MC().AvailablePermissions(
-		cache.ObjectName(graphReq.ObjectType),
-		cache.ObjectName(graphReq.SubjectType),
+		cache.ObjectName(graphReq.GetObjectType()),
+		cache.ObjectName(graphReq.GetSubjectType()),
 	)
 	if err != nil {
 		return resp, err
@@ -235,10 +257,10 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 
 	checksResp, err := s.reader.Checks(ctx, &dsr3.ChecksRequest{
 		Default: &dsr3.CheckRequest{
-			ObjectType:  graphReq.ObjectType,
-			ObjectId:    graphReq.ObjectId,
-			SubjectType: graphReq.SubjectType,
-			SubjectId:   graphReq.SubjectId,
+			ObjectType:  graphReq.GetObjectType(),
+			ObjectId:    graphReq.GetObjectId(),
+			SubjectType: graphReq.GetSubjectType(),
+			SubjectId:   graphReq.GetSubjectId(),
 		},
 		Checks: checks,
 	})
@@ -246,9 +268,9 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 		return resp, err
 	}
 
-	for i, chk := range checksResp.Checks {
+	for i, chk := range checksResp.GetChecks() {
 		if chk.GetCheck() {
-			resp.Results = append(resp.Results, &acc1.Action{Name: assignable[i].String()})
+			resp.Results = append(resp.GetResults(), &acc1.Action{Name: assignable[i].String()})
 		}
 	}
 
@@ -261,11 +283,14 @@ func extractActionSearch(req *acc1.ActionSearchRequest) *dsr3.GetGraphRequest {
 		resp.ObjectType = res.GetType()
 		resp.ObjectId = res.GetId()
 	}
+
 	if sub := req.GetSubject(); sub != nil {
 		resp.SubjectType = sub.GetType()
 		resp.SubjectId = sub.GetId()
 	}
+
 	resp.Relation = ""        // OMITTED
 	resp.SubjectRelation = "" // OMITTED
+
 	return resp
 }

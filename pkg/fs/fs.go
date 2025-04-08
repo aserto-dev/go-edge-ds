@@ -14,6 +14,7 @@ func FileExists(path string) bool {
 	if err == nil && !fsInfo.IsDir() {
 		return true
 	}
+
 	return false
 }
 
@@ -22,6 +23,7 @@ func DirExists(path string) bool {
 	if err == nil && fsInfo.IsDir() {
 		return true
 	}
+
 	return false
 }
 
@@ -29,5 +31,6 @@ func EnsureDirPath(path string) error {
 	if !DirExists(path) {
 		return os.MkdirAll(path, FileMode0700)
 	}
+
 	return nil
 }

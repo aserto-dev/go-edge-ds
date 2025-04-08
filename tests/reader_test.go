@@ -55,6 +55,7 @@ func NewReader(r io.Reader) (*Reader, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if delim, ok := tok.(json.Delim); !ok && delim.String() != "[" {
 			return nil, errors.Errorf("file does not contain a JSON array")
 		}
@@ -84,6 +85,7 @@ func (r *Reader) Read(m proto.Message) error {
 		if err != nil {
 			return err
 		}
+
 		if delim, ok := tok.(json.Delim); !ok && delim.String() != "]" {
 			return errors.Errorf("file does not contain a JSON array")
 		}
@@ -93,14 +95,17 @@ func (r *Reader) Read(m proto.Message) error {
 		if err != nil {
 			return err
 		}
+
 		if delim, ok := tok.(json.Delim); !ok && delim.String() != "}" {
 			fmt.Fprintf(os.Stderr, "detected addition data [%s] in file, ignoring.", tok)
 		}
+
 		return io.EOF
 	}
 
 	if err := pb.UnmarshalNext(r.dec, m); err != nil {
 		return err
 	}
+
 	return nil
 }

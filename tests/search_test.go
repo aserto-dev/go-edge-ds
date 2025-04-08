@@ -21,6 +21,7 @@ func BenchmarkSearchSerial(b *testing.B) {
 	b.Cleanup(cleanup)
 
 	setupBenchmark(b, client)
+
 	ctx := context.Background()
 
 	b.ResetTimer()
@@ -42,9 +43,11 @@ func BenchmarkSearchParallelChunks(b *testing.B) {
 	b.Cleanup(cleanup)
 
 	setupBenchmark(b, client)
+
 	ctx := context.Background()
 
 	var chunks [][]*dsr3.GetGraphRequest
+
 	numChunks := runtime.NumCPU()
 	chunkSize := (len(checks) + numChunks - 1) / numChunks
 
