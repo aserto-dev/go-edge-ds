@@ -116,11 +116,7 @@ func encodeBody(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
 		return err
 	}
 
-	if err := mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf); err != nil {
-		return err
-	}
-
-	return nil
+	return mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf)
 }
 
 func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {

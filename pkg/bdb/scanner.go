@@ -57,7 +57,7 @@ func WithKeyFilter(filter []byte) ScanOption {
 	}
 }
 
-func NewScanIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, opts ...ScanOption) (Iterator[T, M], error) {
+func NewScanIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path Path, opts ...ScanOption) (*ScanIterator[T, M], error) {
 	args := &ScanArgs{startToken: nil, keyFilter: nil, pageSize: x.MaxPageSize}
 	for _, opt := range opts {
 		opt(args)
@@ -142,9 +142,7 @@ func NewPageIterator[T any, M Message[T]](ctx context.Context, tx *bolt.Tx, path
 		return nil, err
 	}
 
-	scanIter, _ := iter.(*ScanIterator[T, M])
-
-	return &PageIterator[T, M]{iter: scanIter}, nil
+	return &PageIterator[T, M]{iter: iter}, nil
 }
 
 func (p *PageIterator[T, M]) Next() bool {
