@@ -34,7 +34,7 @@ func marshal[T any, M Message[T]](t M) ([]byte, error) {
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
-	msg, _ := any(&t).(proto.Message)
+	msg := M(&t)
 	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}

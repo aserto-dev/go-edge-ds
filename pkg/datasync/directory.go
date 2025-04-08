@@ -230,7 +230,7 @@ func (s *Sync) diff(ctx context.Context) error {
 	s.logger.Info().Str(syncStatus, syncStarted).Msg(syncDifference)
 
 	if s.filter == nil {
-		return errors.New("filter not initialized") //nolint:goerr113
+		return errors.New("filter not initialized") //nolint:err113
 	}
 
 	var objCtr, relCtr, errCtr atomic.Int32

@@ -136,11 +136,7 @@ func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
 		return err
 	}
 
-	if err := mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf); err != nil {
-		return err
-	}
-
-	return nil
+	return mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf)
 }
 
 // updateEncodingObjects, read values from read-only backup, write to new bucket.
@@ -255,7 +251,7 @@ var unmarshalOpts = protojson.UnmarshalOptions{
 func unmarshal[T any, M Message[T]](b []byte) (M, error) {
 	var t T
 
-	msg, _ := any(&t).(proto.Message)
+	msg := M(&t)
 	if err := unmarshalOpts.Unmarshal(b, msg); err != nil {
 		return nil, err
 	}
