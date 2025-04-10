@@ -34,10 +34,10 @@ linters:
     rules:
       - path: pkg/app/tests/
         linters:
-        - dupl
-        - forbidigo
-        - wsl
-      
+          - dupl
+          - forbidigo
+          - wsl
+
       - path: internal/pkg/xdg/
         linters:
           - gochecknoinits
@@ -111,8 +111,8 @@ linters:
 
     gosec:
       excludes:
-        - G104 # Errors unhandled 
-        - G304 # Potential file inclusion via variable (see https://github.com/golang/go/issues/67002)
+        - G104  # Errors unhandled
+        - G304  # Potential file inclusion via variable (see https://github.com/golang/go/issues/67002)
 
     ireturn:
       allow:
