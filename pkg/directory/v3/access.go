@@ -231,13 +231,20 @@ func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest
 	}
 
 	graphReq := extractActionSearch(req)
+	inclRelations := false
 
-	assignable, err := s.reader.store.MC().AssignableRelations(
-		cache.ObjectName(graphReq.GetObjectType()),
-		cache.ObjectName(graphReq.GetSubjectType()),
-	)
-	if err != nil {
-		return resp, err
+	assignable := []cache.RelationName{}
+
+	if inclRelations {
+		assignableRelations, err := s.reader.store.MC().AssignableRelations(
+			cache.ObjectName(graphReq.GetObjectType()),
+			cache.ObjectName(graphReq.GetSubjectType()),
+		)
+		if err != nil {
+			return resp, err
+		}
+
+		assignable = append(assignable, assignableRelations...)
 	}
 
 	availablePermissions, err := s.reader.store.MC().AvailablePermissions(
