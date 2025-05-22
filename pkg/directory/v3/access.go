@@ -71,7 +71,7 @@ func (s *Access) Evaluations(ctx context.Context, req *acc1.EvaluationsRequest) 
 	}
 
 	return &acc1.EvaluationsResponse{
-		Decisions: extractDecisions(checksResp),
+		Evaluations: extractDecisions(checksResp),
 	}, nil
 }
 
