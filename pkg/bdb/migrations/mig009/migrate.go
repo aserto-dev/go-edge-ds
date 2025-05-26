@@ -10,17 +10,22 @@ import (
 	bolt "go.etcd.io/bbolt"
 )
 
-// mig009
-//
-// update:
-// remove ManifestVersion from ManifestPath
-//   ManifestPath      Path = []string{"_manifest", ManifestName, ManifestVersion}
-//   ManifestPathV2    Path = []string{"_manifest", ManifestName}
-//
-// * ManifestPath => ManifestPathV2 (removes hardwired "0.0.1" version from path)
-// * path _manifest/default/0.0.1/body => _manifest/default/body
-// * path _manifest/default/0.0.1/model => _manifest/default/model
-// * path _manifest/default/0.0.1/metadata => _manifest/default/metadata
+/*
+mig009
+
+update:
+
+remove hardcoded "0.0.1" ManifestVersion from ManifestPath
+
+* ManifestPath      Path = []string{"_manifest", ManifestName, ManifestVersion}
+* ManifestPathV2    Path = []string{"_manifest", ManifestName}
+
+migrate to use ManifestPathV2
+* ManifestPath => ManifestPathV2
+* path _manifest/default/0.0.1/body => _manifest/default/body
+* path _manifest/default/0.0.1/model => _manifest/default/model
+* path _manifest/default/0.0.1/metadata => _manifest/default/metadata
+*/
 
 const (
 	Version string = "0.0.9"
@@ -52,6 +57,7 @@ func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	return nil
 }
 
+//nolint:gocognit
 func updateManifest(oldPath, newPath bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 	return func(log *zerolog.Logger, roDB *bolt.DB, rwDB *bolt.DB) error {
 		log.Info().Str("version", Version).Msg("updateManifest")
