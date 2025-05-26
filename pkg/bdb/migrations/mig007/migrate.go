@@ -5,7 +5,7 @@ import (
 	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/common"
 	"github.com/aserto-dev/go-edge-ds/pkg/ds"
 
 	"github.com/rs/zerolog"
@@ -23,21 +23,21 @@ const (
 )
 
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
-	mig.DeleteBucket(bdb.SystemPath),
-	mig.CreateBucket(bdb.SystemPath),
+	common.DeleteBucket(bdb.SystemPath),
+	common.CreateBucket(bdb.SystemPath),
 
-	mig.DeleteBucket(bdb.ManifestPath),
-	mig.CreateBucket(bdb.ManifestPath),
+	common.DeleteBucket(bdb.ManifestPath),
+	common.CreateBucket(bdb.ManifestPath),
 	updateManifest(bdb.ManifestPath),
 
-	mig.DeleteBucket(bdb.ObjectsPath),
-	mig.CreateBucket(bdb.ObjectsPath),
+	common.DeleteBucket(bdb.ObjectsPath),
+	common.CreateBucket(bdb.ObjectsPath),
 	updateEncodingObjects(),
 
-	mig.DeleteBucket(bdb.RelationsObjPath),
-	mig.CreateBucket(bdb.RelationsObjPath),
-	mig.DeleteBucket(bdb.RelationsSubPath),
-	mig.CreateBucket(bdb.RelationsSubPath),
+	common.DeleteBucket(bdb.RelationsObjPath),
+	common.CreateBucket(bdb.RelationsObjPath),
+	common.DeleteBucket(bdb.RelationsSubPath),
+	common.CreateBucket(bdb.RelationsSubPath),
 	updateEncodingRelations(),
 }
 
@@ -71,7 +71,7 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 			}
 			defer func() { _ = wtx.Rollback() }()
 
-			b, err := mig.SetBucket(rtx, path)
+			b, err := common.SetBucket(rtx, path)
 			if err != nil {
 				return err
 			}
@@ -90,7 +90,7 @@ func updateManifest(path bdb.Path) func(*zerolog.Logger, *bolt.DB, *bolt.DB) err
 			{
 				modelValue := b.Get(bdb.ModelKey)
 
-				if err := mig.SetKey(wtx, path, bdb.ModelKey, modelValue); err != nil {
+				if err := common.SetKey(wtx, path, bdb.ModelKey, modelValue); err != nil {
 					return err
 				}
 			}
@@ -116,7 +116,7 @@ func encodeBody(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
 		return err
 	}
 
-	return mig.SetKey(wtx, path, bdb.BodyKey, bodyBuf)
+	return common.SetKey(wtx, path, bdb.BodyKey, bodyBuf)
 }
 
 func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
@@ -132,7 +132,7 @@ func encodeMetaData(b *bolt.Bucket, wtx *bolt.Tx, path bdb.Path) error {
 		return err
 	}
 
-	return mig.SetKey(wtx, path, bdb.MetadataKey, metadataBuf)
+	return common.SetKey(wtx, path, bdb.MetadataKey, metadataBuf)
 }
 
 // updateEncodingObjects, read values from read-only backup, write to new bucket.
@@ -152,7 +152,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 			}
 			defer func() { _ = wtx.Rollback() }()
 
-			b, err := mig.SetBucket(rtx, bdb.ObjectsPath)
+			b, err := common.SetBucket(rtx, bdb.ObjectsPath)
 			if err != nil {
 				return err
 			}
@@ -169,7 +169,7 @@ func updateEncodingObjects() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 					return err
 				}
 
-				if err := mig.SetKey(wtx, bdb.ObjectsPath, key, val); err != nil {
+				if err := common.SetKey(wtx, bdb.ObjectsPath, key, val); err != nil {
 					return err
 				}
 			}
@@ -200,7 +200,7 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 			}
 			defer func() { _ = wtx.Rollback() }()
 
-			b, err := mig.SetBucket(rtx, bdb.RelationsObjPath)
+			b, err := common.SetBucket(rtx, bdb.RelationsObjPath)
 			if err != nil {
 				return err
 			}
@@ -217,11 +217,11 @@ func updateEncodingRelations() func(*zerolog.Logger, *bolt.DB, *bolt.DB) error {
 					return err
 				}
 
-				if err := mig.SetKey(wtx, bdb.RelationsObjPath, ds.Relation(rel).ObjKey(), val); err != nil {
+				if err := common.SetKey(wtx, bdb.RelationsObjPath, ds.Relation(rel).ObjKey(), val); err != nil {
 					return err
 				}
 
-				if err := mig.SetKey(wtx, bdb.RelationsSubPath, ds.Relation(rel).SubKey(), val); err != nil {
+				if err := common.SetKey(wtx, bdb.RelationsSubPath, ds.Relation(rel).SubKey(), val); err != nil {
 					return err
 				}
 			}

@@ -6,12 +6,13 @@ import (
 
 	cerr "github.com/aserto-dev/errors"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig004"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig005"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig006"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig007"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig008"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/common"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig004"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig005"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig006"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig007"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig008"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig009"
 	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 
 	"github.com/Masterminds/semver/v3"
@@ -29,6 +30,7 @@ var migMap = map[string]Migration{
 	mig006.Version: mig006.Migrate,
 	mig007.Version: mig007.Migrate,
 	mig008.Version: mig008.Migrate,
+	mig009.Version: mig009.Migrate,
 }
 
 //nolint:lll // single line readability more important.
@@ -62,7 +64,7 @@ func CheckSchemaVersion(config *bdb.Config, logger *zerolog.Logger, reqVersion *
 	}
 	defer boltdb.Close()
 
-	curVersion, err := mig.GetVersion(boltdb.DB())
+	curVersion, err := common.GetVersion(boltdb.DB())
 	if err != nil {
 		return false, err
 	}
@@ -142,11 +144,11 @@ func getCurrent(config *bdb.Config, logger *zerolog.Logger) (*semver.Version, er
 
 	defer boltdb.Close()
 
-	return mig.GetVersion(boltdb.DB())
+	return common.GetVersion(boltdb.DB())
 }
 
 func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) error {
-	rwDB, err := mig.OpenDB(config)
+	rwDB, err := common.OpenDB(config)
 	if err != nil {
 		return err
 	}
@@ -166,7 +168,7 @@ func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) er
 		return err
 	}
 
-	if err := mig.SetVersion(rwDB, version); err != nil {
+	if err := common.SetVersion(rwDB, version); err != nil {
 		return err
 	}
 
@@ -178,7 +180,7 @@ func create(config *bdb.Config, log *zerolog.Logger, version *semver.Version) er
 }
 
 func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *semver.Version) error {
-	rwDB, err := mig.OpenDB(config)
+	rwDB, err := common.OpenDB(config)
 	if err != nil {
 		return err
 	}
@@ -193,11 +195,11 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 		rwDB = nil
 	}()
 
-	if err := mig.Backup(rwDB, curVersion); err != nil {
+	if err := common.Backup(rwDB, curVersion); err != nil {
 		return err
 	}
 
-	roDB, err := mig.OpenReadOnlyDB(config, curVersion)
+	roDB, err := common.OpenReadOnlyDB(config, curVersion)
 	if err != nil {
 		return err
 	}
@@ -216,7 +218,7 @@ func migrate(config *bdb.Config, log *zerolog.Logger, curVersion, nextVersion *s
 		return err
 	}
 
-	if err := mig.SetVersion(rwDB, nextVersion); err != nil {
+	if err := common.SetVersion(rwDB, nextVersion); err != nil {
 		return err
 	}
 

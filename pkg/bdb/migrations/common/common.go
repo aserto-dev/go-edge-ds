@@ -1,4 +1,4 @@
-package mig
+package common
 
 import (
 	"bytes"
@@ -215,7 +215,7 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 		}
 	}
 
-	db, err := bolt.Open(cfg.DBPath, fs.FileMode0644, &bolt.Options{
+	db, err := bolt.Open(cfg.DBPath, fs.FileModeOwnerRW, &bolt.Options{
 		Timeout: cfg.RequestTimeout,
 	})
 	if err != nil {
@@ -226,7 +226,7 @@ func OpenDB(cfg *bdb.Config) (*bolt.DB, error) {
 }
 
 func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) {
-	db, err := bolt.Open(BackupFilename(cfg.DBPath, version), fs.FileMode0644, &bolt.Options{
+	db, err := bolt.Open(BackupFilename(cfg.DBPath, version), fs.FileModeOwnerRW, &bolt.Options{
 		ReadOnly: true,
 		Timeout:  cfg.RequestTimeout,
 	})

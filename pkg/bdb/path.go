@@ -5,6 +5,7 @@ type Path []string
 var (
 	SystemPath        Path = []string{"_system"}
 	ManifestPath      Path = []string{"_manifest", ManifestName, ManifestVersion}
+	ManifestPathV2    Path = []string{"_manifest", ManifestName}
 	ObjectTypesPath   Path = []string{"object_types"}
 	PermissionsPath   Path = []string{"permissions"}
 	RelationTypesPath Path = []string{"relation_types"}

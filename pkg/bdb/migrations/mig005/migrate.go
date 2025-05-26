@@ -2,7 +2,7 @@ package mig005
 
 import (
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate/mig"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/common"
 
 	"github.com/rs/zerolog"
 	bolt "go.etcd.io/bbolt"
@@ -16,14 +16,14 @@ const (
 )
 
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
-	mig.CreateBucket(bdb.SystemPath),
+	common.CreateBucket(bdb.SystemPath),
 
-	mig.CreateBucket(bdb.ManifestPath),
-	mig.MigrateModel,
+	common.CreateBucket(bdb.ManifestPath),
+	common.MigrateModel,
 
-	mig.CreateBucket(bdb.ObjectsPath),
-	mig.CreateBucket(bdb.RelationsObjPath),
-	mig.CreateBucket(bdb.RelationsSubPath),
+	common.CreateBucket(bdb.ObjectsPath),
+	common.CreateBucket(bdb.RelationsObjPath),
+	common.CreateBucket(bdb.RelationsSubPath),
 }
 
 func Migrate(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
