@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	FileMode0644 = 0o644
-	FileMode0700 = 0o700
+	FileModeOwnerRW  os.FileMode = 0o600
+	FileModeOwnerRWX os.FileMode = 0o700
 )
 
 func FileExists(path string) bool {
@@ -29,7 +29,7 @@ func DirExists(path string) bool {
 
 func EnsureDirPath(path string) error {
 	if !DirExists(path) {
-		return os.MkdirAll(path, FileMode0700)
+		return os.MkdirAll(path, FileModeOwnerRWX)
 	}
 
 	return nil

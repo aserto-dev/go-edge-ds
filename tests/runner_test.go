@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	dirPath := os.TempDir()
-	if err := os.MkdirAll(dirPath, fs.FileMode0700); err != nil {
+	if err := os.MkdirAll(dirPath, fs.FileModeOwnerRWX); err != nil {
 		panic(err)
 	}
 

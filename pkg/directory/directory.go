@@ -14,7 +14,7 @@ import (
 	dsa1 "github.com/authzen/access.go/api/access/v1"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
-	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrate"
+	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/migrate"
 	"github.com/aserto-dev/go-edge-ds/pkg/datasync"
 	v3 "github.com/aserto-dev/go-edge-ds/pkg/directory/v3"
 
@@ -27,7 +27,7 @@ import (
 // required minimum schema version, when the current version is lower,
 // migration will be invoked to update to the minimum schema version required.
 const (
-	schemaVersion   string = "0.0.8"
+	schemaVersion   string = "0.0.9"
 	manifestVersion int    = 2
 	manifestName    string = "edge"
 )
