@@ -1,22 +1,19 @@
 package tests_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"testing"
 
-	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
-	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
-	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
-	"github.com/aserto-dev/go-directory/pkg/pb"
+	"github.com/aserto-dev/go-directory/aserto/directory/common/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	"github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	"github.com/aserto-dev/go-edge-ds/pkg/fs"
 	"github.com/aserto-dev/go-edge-ds/pkg/server"
-	"github.com/samber/lo"
+	"github.com/pkg/errors"
 
 	"github.com/gonvenience/ytbx"
 	"github.com/homeport/dyff/pkg/dyff"
@@ -24,20 +21,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
-
-const blockSize = 1024 // test with 1KiB block size to exercise chunking.
-
-func TestManifestV2(t *testing.T) {
-	client, closer := testInit()
-	t.Cleanup(closer)
-
-	manifest, err := os.ReadFile("./manifest_v2_test.yaml")
-	require.NoError(t, err)
-
-	t.Run("set-manifest", testSetManifest(client, manifest))
-	t.Run("get-manifest", testGetManifest(client, "./manifest_v2_test.yaml"))
-	t.Run("delete-manifest", testDeleteManifest(client))
-}
 
 func TestManifestV3(t *testing.T) {
 	client, closer := testInit()
@@ -56,10 +39,10 @@ func TestManifestDiff(t *testing.T) {
 	client, closer := testInit()
 	t.Cleanup(closer)
 
-	m1, err := os.ReadFile("./manifest_v3_test.yaml")
+	manifest, err := os.ReadFile("./manifest_v3_test.yaml")
 	require.NoError(t, err)
 
-	require.NoError(t, setManifest(client, m1))
+	require.NoError(t, setManifest(client, manifest))
 	require.NoError(t, loadData(client, "./diff_test.json"))
 
 	tests := []struct {
@@ -80,7 +63,7 @@ func TestManifestDiff(t *testing.T) {
 			},
 		},
 		{
-			"delete direct assignment in use", removeDirectAssignemntInUse, func(assert *require.Assertions, err error) {
+			"delete direct assignment in use", removeDirectAssignmentInUse, func(assert *require.Assertions, err error) {
 				assert.Error(err)
 				assert.ErrorContains(err, "relation type in use: user#manager@user")
 			},
@@ -103,58 +86,33 @@ func testSetManifest(client *server.TestEdgeClient, manifest []byte) func(*testi
 }
 
 func setManifest(client *server.TestEdgeClient, manifest []byte) error {
-	stream, err := client.V3.Model.SetManifest(context.Background())
+	ctx := context.Background()
+	man := &common.Manifest{Body: manifest}
+
+	_, err := client.V3.Writer.SetManifest(ctx, &writer.SetManifestRequest{Manifest: man})
 	if err != nil {
 		return err
 	}
 
-	for i := 0; i < len(manifest); i += blockSize {
-		end := lo.Min([]int{i + blockSize, len(manifest)})
-		if err := stream.Send(&dsm3.SetManifestRequest{
-			Msg: &dsm3.SetManifestRequest_Body{
-				Body: &dsm3.Body{Data: manifest[i:end]},
-			},
-		}); err != nil {
-			return err
-		}
+	resp, err := client.V3.Reader.GetManifest(ctx, &reader.GetManifestRequest{Empty: &emptypb.Empty{}})
+	if err != nil {
+		return err
 	}
 
-	_, err = stream.CloseAndRecv()
+	if len(manifest) != len(resp.GetManifest().GetBody()) {
+		return errors.Errorf("not equal")
+	}
 
 	return err
 }
 
 func getManifest(client *server.TestEdgeClient) ([]byte, error) {
-	stream, err := client.V3.Model.GetManifest(context.Background(), &dsm3.GetManifestRequest{Empty: &emptypb.Empty{}})
+	resp, err := client.V3.Reader.GetManifest(context.Background(), &reader.GetManifestRequest{Empty: &emptypb.Empty{}})
 	if err != nil {
 		return nil, err
 	}
 
-	data := bytes.Buffer{}
-
-	bytesRecv := 0
-
-	for {
-		resp, err := stream.Recv()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		if md, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Metadata); ok {
-			_ = md.Metadata
-		}
-
-		if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
-			data.Write(body.Body.GetData())
-			bytesRecv += len(body.Body.GetData())
-		}
-	}
-
-	return data.Bytes(), nil
+	return resp.GetManifest().GetBody(), nil
 }
 
 func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testing.T) {
@@ -190,43 +148,22 @@ func testGetModel(client *server.TestEdgeClient) func(*testing.T) {
 		hdr := metadata.New(map[string]string{"aserto-model-request": "model-only"})
 		ctx = metadata.NewOutgoingContext(ctx, hdr)
 
-		stream, err := client.V3.Model.GetManifest(ctx, &dsm3.GetManifestRequest{Empty: &emptypb.Empty{}})
+		mod, err := client.V3.Reader.GetModel(ctx, &reader.GetModelRequest{Empty: &emptypb.Empty{}})
 		if err != nil {
 			require.NoError(t, err)
 		}
 
-		for {
-			resp, err := stream.Recv()
-			if errors.Is(err, io.EOF) {
-				break
-			}
-
-			if err != nil {
-				require.NoError(t, err)
-			}
-
-			if md, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Metadata); ok {
-				_ = md.Metadata
-			}
-
-			if body, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Body); ok {
-				_ = body
-			}
-
-			if model, ok := resp.GetMsg().(*dsm3.GetManifestResponse_Model); ok {
-				buf := new(bytes.Buffer)
-				if err := pb.ProtoToBuf(buf, model.Model); err != nil {
-					require.NoError(t, err)
-				}
-
-				tempModel := path.Join(os.TempDir(), "model.json")
-				if err := os.WriteFile(tempModel, buf.Bytes(), 0o600); err != nil {
-					require.NoError(t, err)
-				}
-
-				fmt.Println(tempModel)
-			}
+		buf, err := mod.GetModel().GetModel().MarshalJSON()
+		if err != nil {
+			require.NoError(t, err)
 		}
+
+		tempModel := path.Join(os.TempDir(), "model.json")
+		if err := os.WriteFile(tempModel, buf, fs.FileModeOwnerRW); err != nil {
+			require.NoError(t, err)
+		}
+
+		fmt.Println(tempModel)
 	}
 }
 
@@ -237,17 +174,17 @@ func testDeleteManifest(client *server.TestEdgeClient) func(*testing.T) {
 }
 
 func deleteManifest(client *server.TestEdgeClient) error {
-	_, err := client.V3.Model.DeleteManifest(
+	_, err := client.V3.Writer.DeleteManifest(
 		context.Background(),
-		&dsm3.DeleteManifestRequest{Empty: &emptypb.Empty{}},
+		&writer.DeleteManifestRequest{Empty: &emptypb.Empty{}},
 	)
 
 	return err
 }
 
 type testData struct {
-	Objects   []*dsc3.Object   `json:"objects"`
-	Relations []*dsc3.Relation `json:"relations"`
+	Objects   []*common.Object   `json:"objects"`
+	Relations []*common.Relation `json:"relations"`
 }
 
 func loadData(client *server.TestEdgeClient, dataFile string) error {
@@ -264,13 +201,13 @@ func loadData(client *server.TestEdgeClient, dataFile string) error {
 	ctx := context.Background()
 
 	for _, obj := range td.Objects {
-		if _, err := client.V3.Writer.SetObject(ctx, &dsw3.SetObjectRequest{Object: obj}); err != nil {
+		if _, err := client.V3.Writer.SetObject(ctx, &writer.SetObjectRequest{Object: obj}); err != nil {
 			return err
 		}
 	}
 
 	for _, rel := range td.Relations {
-		if _, err := client.V3.Writer.SetRelation(ctx, &dsw3.SetRelationRequest{Relation: rel}); err != nil {
+		if _, err := client.V3.Writer.SetRelation(ctx, &writer.SetRelationRequest{Relation: rel}); err != nil {
 			return err
 		}
 	}
@@ -294,7 +231,7 @@ types:
   user: {}
 `
 
-	removeDirectAssignemntInUse = `
+	removeDirectAssignmentInUse = `
 model:
   version: 3
 

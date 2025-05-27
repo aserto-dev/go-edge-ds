@@ -1,21 +1,23 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.23.7
+go 1.23.8
 
-// replace github.com/aserto-dev/azm => ../azm
-// replace github.com/aserto-dev/go-directory => ../go-directory
+replace github.com/aserto-dev/azm => ../azm
+
+replace github.com/aserto-dev/go-directory => ../go-directory
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/aserto-dev/aserto-grpc v0.2.10
-	github.com/aserto-dev/azm v0.2.12
+	github.com/aserto-dev/azm v0.2.13-0.20250519170237-14875ad29cd3
 	github.com/aserto-dev/errors v0.0.17
-	github.com/aserto-dev/go-directory v0.33.10
+	github.com/aserto-dev/go-directory v0.33.11-0.20250519164731-cb08a67e9ca8
 	github.com/authzen/access.go v0.0.6
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/gonvenience/ytbx v1.4.7
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/homeport/dyff v1.10.1
 	github.com/panmari/cuckoofilter v1.0.6
 	github.com/pkg/errors v0.9.1
@@ -24,7 +26,8 @@ require (
 	github.com/stretchr/testify v1.10.0
 	go.etcd.io/bbolt v1.4.0
 	golang.org/x/sync v0.14.0
-	google.golang.org/grpc v1.72.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237
+	google.golang.org/grpc v1.72.2
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -39,7 +42,6 @@ require (
 	github.com/gonvenience/neat v1.3.15 // indirect
 	github.com/gonvenience/term v1.0.3 // indirect
 	github.com/gonvenience/text v1.0.8 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -59,7 +61,6 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250519155744-55703ea1f237 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250519155744-55703ea1f237 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

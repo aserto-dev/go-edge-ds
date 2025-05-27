@@ -40,7 +40,7 @@ func (s *Reader) GetObject(ctx context.Context, req *dsr3.GetObjectRequest) (*ds
 		return resp, err
 	}
 
-	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{Type: req.GetObjectType(), Id: req.GetObjectId()})
 	if err := objIdent.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
@@ -140,7 +140,7 @@ func (s *Reader) GetObjects(ctx context.Context, req *dsr3.GetObjectsRequest) (*
 	}
 
 	if req.GetObjectType() != "" {
-		oid := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType()})
+		oid := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{Type: req.GetObjectType()})
 		if err := ds.ObjectSelector(oid.ObjectIdentifier).Validate(s.store.MC()); err != nil {
 			return resp, err
 		}
@@ -369,82 +369,6 @@ func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.Che
 	}
 
 	return resp, nil
-}
-
-// CheckPermission, check if subject is permitted to access resource (object).
-//
-//nolint:dupl
-func (s *Reader) CheckPermission(ctx context.Context, req *dsr3.CheckPermissionRequest) (*dsr3.CheckPermissionResponse, error) {
-	resp := &dsr3.CheckPermissionResponse{}
-
-	if err := validator.CheckPermissionRequest(req); err != nil {
-		return resp, err
-	}
-
-	if err := ds.CheckPermission(req).Validate(s.store.MC()); err != nil {
-		return resp, err
-	}
-
-	check := ds.Check(&dsr3.CheckRequest{
-		ObjectType:  req.GetObjectType(),
-		ObjectId:    req.GetObjectId(),
-		Relation:    req.GetPermission(),
-		SubjectType: req.GetSubjectType(),
-		SubjectId:   req.GetSubjectId(),
-		Trace:       req.GetTrace(),
-	})
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		var err error
-
-		r, err := check.Exec(ctx, tx, s.store.MC())
-		if err == nil {
-			resp.Check = r.GetCheck()
-			resp.Trace = r.GetTrace()
-		}
-
-		return err
-	})
-
-	return resp, err
-}
-
-// CheckRelation, check if subject has the specified relation to a resource (object).
-//
-//nolint:dupl
-func (s *Reader) CheckRelation(ctx context.Context, req *dsr3.CheckRelationRequest) (*dsr3.CheckRelationResponse, error) {
-	resp := &dsr3.CheckRelationResponse{}
-
-	if err := validator.CheckRelationRequest(req); err != nil {
-		return resp, err
-	}
-
-	if err := ds.CheckRelation(req).Validate(s.store.MC()); err != nil {
-		return resp, err
-	}
-
-	check := ds.Check(&dsr3.CheckRequest{
-		ObjectType:  req.GetObjectType(),
-		ObjectId:    req.GetObjectId(),
-		Relation:    req.GetRelation(),
-		SubjectType: req.GetSubjectType(),
-		SubjectId:   req.GetSubjectId(),
-		Trace:       req.GetTrace(),
-	})
-
-	err := s.store.DB().View(func(tx *bolt.Tx) error {
-		var err error
-
-		r, err := check.Exec(ctx, tx, s.store.MC())
-		if err == nil {
-			resp.Check = r.GetCheck()
-			resp.Trace = r.GetTrace()
-		}
-
-		return err
-	})
-
-	return resp, err
 }
 
 // GetGraph, return graph of connected objects and relations for requested anchor subject/object.

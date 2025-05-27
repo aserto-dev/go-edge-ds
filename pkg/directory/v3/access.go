@@ -138,8 +138,8 @@ func (s *Access) SubjectSearch(ctx context.Context, req *acc1.SubjectSearchReque
 
 	for _, oid := range graphResp.GetResults() {
 		sub := &acc1.Subject{
-			Type: oid.GetObjectType(),
-			Id:   oid.GetObjectId(),
+			Type: oid.GetType(),
+			Id:   oid.GetId(),
 		}
 		resp.Results = append(resp.GetResults(), sub)
 	}
@@ -187,8 +187,8 @@ func (s *Access) ResourceSearch(ctx context.Context, req *acc1.ResourceSearchReq
 
 	for _, oid := range graphResp.GetResults() {
 		res := &acc1.Resource{
-			Type: oid.GetObjectType(),
-			Id:   oid.GetObjectId(),
+			Type: oid.GetType(),
+			Id:   oid.GetId(),
 		}
 
 		resp.Results = append(resp.GetResults(), res)

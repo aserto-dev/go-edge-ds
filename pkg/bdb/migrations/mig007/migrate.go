@@ -2,7 +2,7 @@ package mig007
 
 import (
 	dsc3 "github.com/aserto-dev/go-directory/aserto/directory/common/v3"
-	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
+	dsm3 "github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/mig007/model"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/common"

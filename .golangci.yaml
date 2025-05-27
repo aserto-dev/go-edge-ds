@@ -128,11 +128,8 @@ linters:
         # 3rd-party
         - proto.Message
         - v1.AccessServer
-        - v3.ModelServer
         - v3.ReaderServer
         - v3.WriterServer
-        - v3.ExporterServer
-        - v3.ImporterServer
         - datasync.SyncClient
 
     lll:

@@ -12,9 +12,10 @@ var (
 	ObjectsPath       Path = []string{"objects"}
 	RelationsSubPath  Path = []string{"relations_sub"}
 	RelationsObjPath  Path = []string{"relations_obj"}
-	MetadataKey            = []byte("metadata")
-	BodyKey                = []byte("body")
-	ModelKey               = []byte("model")
+	ManifestKey            = []byte("manifest") // _manifest/default:manifest
+	ModelKey               = []byte("model")    // _manifest/default:model
+	BodyKey                = []byte("body")     // obsolete
+	MetadataKey            = []byte("metadata") // obsolete
 )
 
 const (

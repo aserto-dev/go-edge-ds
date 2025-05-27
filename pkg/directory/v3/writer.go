@@ -89,14 +89,14 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 		return resp, err
 	}
 
-	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
+	objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{Type: req.GetObjectType(), Id: req.GetObjectId()})
 
 	if err := objIdent.Validate(s.store.MC()); err != nil {
 		return resp, err
 	}
 
 	err := s.store.DB().Update(func(tx *bolt.Tx) error {
-		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{ObjectType: req.GetObjectType(), ObjectId: req.GetObjectId()})
+		objIdent := ds.ObjectIdentifier(&dsc3.ObjectIdentifier{Type: req.GetObjectType(), Id: req.GetObjectId()})
 
 		// optimistic concurrency check
 		ifMatchHeader := metautils.ExtractIncoming(ctx).Get(headers.IfMatch)

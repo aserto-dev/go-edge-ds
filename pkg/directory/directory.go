@@ -6,12 +6,9 @@ import (
 	"sync"
 	"time"
 
-	dse3 "github.com/aserto-dev/go-directory/aserto/directory/exporter/v3"
-	dsi3 "github.com/aserto-dev/go-directory/aserto/directory/importer/v3"
-	dsm3 "github.com/aserto-dev/go-directory/aserto/directory/model/v3"
-	dsr3 "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
-	dsw3 "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
-	dsa1 "github.com/authzen/access.go/api/access/v1"
+	dsr "github.com/aserto-dev/go-directory/aserto/directory/reader/v3"
+	dsw "github.com/aserto-dev/go-directory/aserto/directory/writer/v3"
+	dsa "github.com/authzen/access.go/api/access/v1"
 
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb"
 	"github.com/aserto-dev/go-edge-ds/pkg/bdb/migrations/migrate"
@@ -40,15 +37,12 @@ type Config struct {
 }
 
 type Directory struct {
-	config    *Config
-	logger    *zerolog.Logger
-	store     *bdb.BoltDB
-	exporter3 dse3.ExporterServer
-	importer3 dsi3.ImporterServer
-	model3    dsm3.ModelServer
-	reader3   dsr3.ReaderServer
-	writer3   dsw3.WriterServer
-	access1   dsa1.AccessServer
+	config *Config
+	logger *zerolog.Logger
+	store  *bdb.BoltDB
+	reader dsr.ReaderServer
+	writer dsw.WriterServer
+	access dsa.AccessServer
 }
 
 var (
@@ -113,23 +107,17 @@ func newDirectory(_ context.Context, config *Config, logger *zerolog.Logger) (*D
 		return nil, err
 	}
 
-	reader3 := v3.NewReader(logger, store)
-	writer3 := v3.NewWriter(logger, store)
-	exporter3 := v3.NewExporter(logger, store)
-	importer3 := v3.NewImporter(logger, store)
-
-	access1 := v3.NewAccess(logger, reader3)
+	reader := v3.NewReader(logger, store)
+	writer := v3.NewWriter(logger, store)
+	access := v3.NewAccess(logger, reader)
 
 	dir := &Directory{
-		config:    config,
-		logger:    &newLogger,
-		store:     store,
-		model3:    v3.NewModel(logger, store),
-		reader3:   reader3,
-		writer3:   writer3,
-		exporter3: exporter3,
-		importer3: importer3,
-		access1:   access1,
+		config: config,
+		logger: &newLogger,
+		store:  store,
+		reader: reader,
+		writer: writer,
+		access: access,
 	}
 
 	if err := store.LoadModel(); err != nil {
@@ -146,28 +134,16 @@ func (s *Directory) Close() {
 	}
 }
 
-func (s *Directory) Exporter3() dse3.ExporterServer {
-	return s.exporter3
+func (s *Directory) Reader3() dsr.ReaderServer {
+	return s.reader
 }
 
-func (s *Directory) Importer3() dsi3.ImporterServer {
-	return s.importer3
+func (s *Directory) Writer3() dsw.WriterServer {
+	return s.writer
 }
 
-func (s *Directory) Model3() dsm3.ModelServer {
-	return s.model3
-}
-
-func (s *Directory) Reader3() dsr3.ReaderServer {
-	return s.reader3
-}
-
-func (s *Directory) Writer3() dsw3.WriterServer {
-	return s.writer3
-}
-
-func (s *Directory) Access1() dsa1.AccessServer {
-	return s.access1
+func (s *Directory) Access1() dsa.AccessServer {
+	return s.access
 }
 
 func (s *Directory) Logger() *zerolog.Logger {

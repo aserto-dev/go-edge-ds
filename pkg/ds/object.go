@@ -39,7 +39,7 @@ func ObjectIdentifier(i *dsc3.ObjectIdentifier) *objectIdentifier {
 }
 
 func (i *objectIdentifier) StrKey() string {
-	return i.GetObjectType() + string(TypeIDSeparator) + i.GetObjectId()
+	return i.GetType() + string(TypeIDSeparator) + i.GetId()
 }
 
 func (i *objectIdentifier) Key() []byte {
@@ -47,11 +47,11 @@ func (i *objectIdentifier) Key() []byte {
 
 	buf.Grow(x.MaxObjectIdentifierSize)
 
-	buf.WriteString(i.GetObjectType())
+	buf.WriteString(i.GetType())
 	buf.WriteByte(TypeIDSeparator)
 
-	if i.GetObjectId() != "" {
-		buf.WriteString(i.GetObjectId())
+	if i.GetId() != "" {
+		buf.WriteString(i.GetId())
 	}
 
 	return buf.Bytes()
