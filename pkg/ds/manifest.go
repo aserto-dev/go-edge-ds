@@ -49,11 +49,11 @@ func (m *manifest) Get(ctx context.Context, tx *bolt.Tx) (*manifest, error) {
 // Get, hydrates the model cache from the _manifest
 // _metadata/{name}/{version}/model.
 func (m *manifest) GetModel(ctx context.Context, tx *bolt.Tx) (*model.Model, error) {
-	if ok, _ := bdb.BucketExists(tx, bdb.ManifestPath); !ok {
+	if ok, _ := bdb.BucketExists(tx, bdb.ManifestPathV2); !ok {
 		return nil, bdb.ErrPathNotFound
 	}
 
-	mod, err := bdb.GetAny[model.Model](ctx, tx, bdb.ManifestPath, bdb.ModelKey)
+	mod, err := bdb.GetAny[model.Model](ctx, tx, bdb.ManifestPathV2, bdb.ModelKey)
 	if err != nil {
 		return nil, err
 	}

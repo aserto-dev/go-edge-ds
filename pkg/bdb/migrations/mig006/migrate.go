@@ -18,8 +18,8 @@ const (
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	common.CreateBucket(bdb.SystemPath),
 
-	common.CreateBucket(bdb.ManifestPath),
-	common.MigrateModel,
+	common.CreateBucket(bdb.ManifestPathV1),
+	common.MigrateModelV1,
 
 	common.CreateBucket(bdb.ObjectsPath),
 	common.CreateBucket(bdb.RelationsObjPath),

@@ -237,7 +237,7 @@ func OpenReadOnlyDB(cfg *bdb.Config, version *semver.Version) (*bolt.DB, error) 
 	return db, nil
 }
 
-func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
+func MigrateModelV1(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	// skip when roDB is nil.
 	if roDB == nil {
 		log.Debug().Msg("SKIP MigrateModel")
@@ -246,13 +246,13 @@ func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 
 	ctx := context.Background()
 
-	m, err := loadModel(ctx, roDB)
+	m, err := loadModelV1(ctx, roDB)
 	if err != nil {
 		return err
 	}
 
 	if err := rwDB.Update(func(tx *bolt.Tx) error {
-		_, err := bdb.SetAny(ctx, tx, bdb.ManifestPath, bdb.ModelKey, m)
+		_, err := bdb.SetAny(ctx, tx, bdb.ManifestPathV1, bdb.ModelKey, m)
 		return err
 	}); err != nil {
 		return err
@@ -261,10 +261,51 @@ func MigrateModel(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
 	return nil
 }
 
-func loadModel(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
+func loadModelV1(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
 	var m *model.Model
 	if err := roDB.View(func(rtx *bolt.Tx) error {
-		manifestBody, err := bdb.Get[dsm3.Body](ctx, rtx, bdb.ManifestPath, bdb.BodyKey)
+		manifestBody, err := bdb.Get[dsm3.Body](ctx, rtx, bdb.ManifestPathV1, bdb.BodyKey)
+		if err != nil {
+			return err
+		}
+
+		m, err = v3.Load(bytes.NewReader(manifestBody.GetData()))
+		return err
+	}); err != nil {
+		return m, err
+	}
+
+	return m, nil
+}
+
+func MigrateModelV2(log *zerolog.Logger, roDB, rwDB *bolt.DB) error {
+	// skip when roDB is nil.
+	if roDB == nil {
+		log.Debug().Msg("SKIP MigrateModel")
+		return nil
+	}
+
+	ctx := context.Background()
+
+	m, err := loadModelV2(ctx, roDB)
+	if err != nil {
+		return err
+	}
+
+	if err := rwDB.Update(func(tx *bolt.Tx) error {
+		_, err := bdb.SetAny(ctx, tx, bdb.ManifestPathV2, bdb.ModelKey, m)
+		return err
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loadModelV2(ctx context.Context, roDB *bolt.DB) (*model.Model, error) {
+	var m *model.Model
+	if err := roDB.View(func(rtx *bolt.Tx) error {
+		manifestBody, err := bdb.Get[dsm3.Body](ctx, rtx, bdb.ManifestPathV2, bdb.BodyKey)
 		if err != nil {
 			return err
 		}
