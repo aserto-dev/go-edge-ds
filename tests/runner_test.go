@@ -172,7 +172,7 @@ func testRunner(t *testing.T, tcs []*TestCase) {
 	client, cleanup := testInit()
 	t.Cleanup(cleanup)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	manifest, err := os.ReadFile("./manifest_v3_test.yaml")
 	require.NoError(t, err)

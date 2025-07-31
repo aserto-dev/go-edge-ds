@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"runtime"
 	"testing"
 
@@ -22,7 +21,7 @@ func BenchmarkSearchSerial(b *testing.B) {
 
 	setupBenchmark(b, client)
 
-	ctx := context.Background()
+	ctx := b.Context()
 
 	b.ResetTimer()
 
@@ -44,7 +43,7 @@ func BenchmarkSearchParallelChunks(b *testing.B) {
 
 	setupBenchmark(b, client)
 
-	ctx := context.Background()
+	ctx := b.Context()
 
 	var chunks [][]*dsr3.GetGraphRequest
 

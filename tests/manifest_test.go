@@ -186,7 +186,7 @@ func testGetManifest(client *server.TestEdgeClient, manifest string) func(*testi
 
 func testGetModel(client *server.TestEdgeClient) func(*testing.T) {
 	return func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		hdr := metadata.New(map[string]string{"aserto-model-request": "model-only"})
 		ctx = metadata.NewOutgoingContext(ctx, hdr)
 
