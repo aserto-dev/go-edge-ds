@@ -1,7 +1,6 @@
 package tests_test
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -28,7 +27,7 @@ func BenchmarkCheckSerial(b *testing.B) {
 
 	setupBenchmark(b, client)
 
-	ctx := context.Background()
+	ctx := b.Context()
 
 	b.ResetTimer()
 
@@ -50,7 +49,7 @@ func BenchmarkCheckParallel(b *testing.B) {
 
 	setupBenchmark(b, client)
 
-	ctx := context.Background()
+	ctx := b.Context()
 
 	b.ResetTimer()
 
@@ -76,7 +75,7 @@ func BenchmarkCheckParallelChunks(b *testing.B) {
 
 	setupBenchmark(b, client)
 
-	ctx := context.Background()
+	ctx := b.Context()
 
 	var chunks [][]*dsr3.CheckRequest
 
@@ -111,7 +110,7 @@ func setupBenchmark(b *testing.B, client *server.TestEdgeClient) {
 	assert.NoError(deleteManifest(client))
 	assert.NoError(setManifest(client, manifest))
 
-	g, iCtx := errgroup.WithContext(context.Background())
+	g, iCtx := errgroup.WithContext(b.Context())
 	stream, err := client.V3.Importer.Import(iCtx)
 	assert.NoError(err)
 

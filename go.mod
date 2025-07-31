@@ -1,6 +1,6 @@
 module github.com/aserto-dev/go-edge-ds
 
-go 1.23.11
+go 1.24
 
 toolchain go1.24.5
 

@@ -26,9 +26,9 @@ var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	common.DeleteBucket(bdb.SystemPath),
 	common.CreateBucket(bdb.SystemPath),
 
-	common.DeleteBucket(bdb.ManifestPath),
-	common.CreateBucket(bdb.ManifestPath),
-	updateManifest(bdb.ManifestPath),
+	common.DeleteBucket(bdb.ManifestPathV1),
+	common.CreateBucket(bdb.ManifestPathV1),
+	updateManifest(bdb.ManifestPathV1),
 
 	common.DeleteBucket(bdb.ObjectsPath),
 	common.CreateBucket(bdb.ObjectsPath),

@@ -34,9 +34,9 @@ const (
 var fnMap = []func(*zerolog.Logger, *bolt.DB, *bolt.DB) error{
 	common.CreateBucket(bdb.SystemPath),
 
-	common.DeleteBucket(bdb.ManifestPath),
+	common.DeleteBucket(bdb.ManifestPathV1),
 	common.CreateBucket(bdb.ManifestPathV2),
-	updateManifest(bdb.ManifestPath, bdb.ManifestPathV2),
+	updateManifest(bdb.ManifestPathV1, bdb.ManifestPathV2),
 
 	common.CreateBucket(bdb.ObjectsPath),
 	common.CreateBucket(bdb.RelationsObjPath),
