@@ -15,11 +15,11 @@ EXT_DIR            := ${PWD}/.ext
 EXT_BIN_DIR        := ${EXT_DIR}/bin
 EXT_TMP_DIR        := ${EXT_DIR}/tmp
 
-GO_VER             := 1.24
+GO_VER             := 1.25
 VAULT_VER	         := 1.8.12
 SVU_VER 	         := 3.1.0
-GOTESTSUM_VER      := 1.12.1
-GOLANGCI-LINT_VER  := 2.0.2
+GOTESTSUM_VER      := 1.12.3
+GOLANGCI-LINT_VER  := 2.4.0
 GORELEASER_VER     := 2.8.2
 
 RELEASE_TAG        := $$(${EXT_BIN_DIR}/svu current)

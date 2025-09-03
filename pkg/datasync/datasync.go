@@ -58,12 +58,13 @@ const (
 )
 
 type Sync struct {
+	*Client
+
 	options    *Options
 	exportChan chan *dse3.ExportResponse
 	errChan    chan error
 	tsChan     chan *timestamppb.Timestamp
 	filter     *cuckoo.Filter
-	*Client
 }
 
 func newSync(c *Client, o *Options) *Sync {

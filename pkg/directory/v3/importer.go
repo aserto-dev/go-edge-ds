@@ -21,6 +21,7 @@ import (
 
 type Importer struct {
 	dsi3.UnimplementedImporterServer
+
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 }

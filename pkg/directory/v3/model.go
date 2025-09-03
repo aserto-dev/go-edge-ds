@@ -33,6 +33,7 @@ import (
 
 type Model struct {
 	dsm3.UnimplementedModelServer
+
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 }
@@ -120,38 +121,6 @@ func (s *Model) GetManifest(req *dsm3.GetManifestRequest, stream dsm3.Model_GetM
 	return modelErr
 }
 
-func (*Model) getModel(stream dsm3.Model_GetManifestServer, tx *bolt.Tx, md *dsm3.Metadata) error {
-	model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
-
-	switch {
-	case status.Code(err) == codes.NotFound:
-		return derr.ErrNotFound.Msg("model")
-	case err != nil:
-		return errors.Errorf("failed to get model")
-	}
-
-	m := pb.NewStruct()
-
-	r, err := model.Reader()
-	if err != nil {
-		return err
-	}
-
-	if err := pb.BufToProto(r, m); err != nil {
-		return err
-	}
-
-	if err := stream.Send(&dsm3.GetManifestResponse{
-		Msg: &dsm3.GetManifestResponse_Model{
-			Model: m,
-		},
-	}); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	logger := s.logger.With().Str("method", "SetManifest").Logger()
 	logger.Trace().Send()
@@ -219,27 +188,6 @@ func (s *Model) SetManifest(stream dsm3.Model_SetManifestServer) error {
 	return s.store.MC().UpdateModel(m)
 }
 
-func (s *Model) setManifest(stream dsm3.Model_SetManifestServer, tx *bolt.Tx, m *azmModel.Model, md *dsm3.Metadata, data *bytes.Buffer) error {
-	stats, err := ds.CalculateStats(stream.Context(), tx)
-	if err != nil {
-		return derr.ErrUnknown.Msgf("failed to calculate stats: %s", err.Error())
-	}
-
-	if err := s.store.MC().CanUpdate(m, stats); err != nil {
-		return err
-	}
-
-	if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
-		return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
-	}
-
-	if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
-		return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
-	}
-
-	return nil
-}
-
 func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequest) (*dsm3.DeleteManifestResponse, error) {
 	resp := &dsm3.DeleteManifestResponse{}
 	if err := validator.DeleteManifestRequest(req); err != nil {
@@ -295,4 +243,57 @@ func (s *Model) DeleteManifest(ctx context.Context, req *dsm3.DeleteManifestRequ
 	}
 
 	return &dsm3.DeleteManifestResponse{Result: &emptypb.Empty{}}, nil
+}
+
+func (*Model) getModel(stream dsm3.Model_GetManifestServer, tx *bolt.Tx, md *dsm3.Metadata) error {
+	model, err := ds.Manifest(md).GetModel(stream.Context(), tx)
+
+	switch {
+	case status.Code(err) == codes.NotFound:
+		return derr.ErrNotFound.Msg("model")
+	case err != nil:
+		return errors.Errorf("failed to get model")
+	}
+
+	m := pb.NewStruct()
+
+	r, err := model.Reader()
+	if err != nil {
+		return err
+	}
+
+	if err := pb.BufToProto(r, m); err != nil {
+		return err
+	}
+
+	if err := stream.Send(&dsm3.GetManifestResponse{
+		Msg: &dsm3.GetManifestResponse_Model{
+			Model: m,
+		},
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Model) setManifest(stream dsm3.Model_SetManifestServer, tx *bolt.Tx, m *azmModel.Model, md *dsm3.Metadata, data *bytes.Buffer) error {
+	stats, err := ds.CalculateStats(stream.Context(), tx)
+	if err != nil {
+		return derr.ErrUnknown.Msgf("failed to calculate stats: %s", err.Error())
+	}
+
+	if err := s.store.MC().CanUpdate(m, stats); err != nil {
+		return err
+	}
+
+	if err := ds.Manifest(md).Set(stream.Context(), tx, data); err != nil {
+		return derr.ErrUnknown.Msgf("failed to set manifest: %s", err.Error())
+	}
+
+	if err := ds.Manifest(md).SetModel(stream.Context(), tx, m); err != nil {
+		return derr.ErrUnknown.Msgf("failed to set model: %s", err.Error())
+	}
+
+	return nil
 }

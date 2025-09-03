@@ -11,6 +11,7 @@ import (
 
 type Access struct {
 	acc1.UnimplementedAccessServer
+
 	logger *zerolog.Logger
 	reader *Reader
 }

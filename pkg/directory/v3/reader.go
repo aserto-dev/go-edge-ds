@@ -21,6 +21,7 @@ import (
 
 type Reader struct {
 	dsr3.UnimplementedReaderServer
+
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 }
@@ -287,30 +288,6 @@ func (s *Reader) GetRelations(ctx context.Context, req *dsr3.GetRelationsRequest
 	return resp, err
 }
 
-func (*Reader) getWithObjects(ctx context.Context, tx *bolt.Tx, relations []*dsc3.Relation) map[string]*dsc3.Object {
-	objects := map[string]*dsc3.Object{}
-
-	for _, r := range relations {
-		rel := ds.Relation(r)
-
-		sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
-		if err != nil {
-			sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
-		}
-
-		objects[ds.Object(sub).StrKey()] = sub
-
-		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
-		if err != nil {
-			obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
-		}
-
-		objects[ds.Object(obj).StrKey()] = obj
-	}
-
-	return objects
-}
-
 // Check, if subject is permitted to access resource (object).
 func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.CheckResponse, error) {
 	resp := &dsr3.CheckResponse{}
@@ -338,6 +315,7 @@ func (s *Reader) Check(ctx context.Context, req *dsr3.CheckRequest) (*dsr3.Check
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
+
 		resp, err = check.Exec(ctx, tx, s.store.MC())
 
 		return err
@@ -360,6 +338,7 @@ func (s *Reader) Checks(ctx context.Context, req *dsr3.ChecksRequest) (*dsr3.Che
 
 	err := s.store.DB().View(func(tx *bolt.Tx) error {
 		var err error
+
 		resp, err = checks.Exec(ctx, tx, s.store.MC())
 
 		return err
@@ -474,4 +453,28 @@ func (s *Reader) GetGraph(ctx context.Context, req *dsr3.GetGraphRequest) (*dsr3
 	})
 
 	return resp, err
+}
+
+func (*Reader) getWithObjects(ctx context.Context, tx *bolt.Tx, relations []*dsc3.Relation) map[string]*dsc3.Object {
+	objects := map[string]*dsc3.Object{}
+
+	for _, r := range relations {
+		rel := ds.Relation(r)
+
+		sub, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Subject()).Key())
+		if err != nil {
+			sub = &dsc3.Object{Type: rel.SubjectType, Id: rel.SubjectId}
+		}
+
+		objects[ds.Object(sub).StrKey()] = sub
+
+		obj, err := bdb.Get[dsc3.Object](ctx, tx, bdb.ObjectsPath, ds.ObjectIdentifier(rel.Object()).Key())
+		if err != nil {
+			obj = &dsc3.Object{Type: rel.ObjectType, Id: rel.ObjectId}
+		}
+
+		objects[ds.Object(obj).StrKey()] = obj
+	}
+
+	return objects
 }

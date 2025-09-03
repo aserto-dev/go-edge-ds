@@ -19,6 +19,7 @@ import (
 
 type Writer struct {
 	dsw3.UnimplementedWriterServer
+
 	logger *zerolog.Logger
 	store  *bdb.BoltDB
 }
@@ -136,31 +137,6 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	return resp, err
 }
 
-func (*Writer) deleteRelations(ctx context.Context, path bdb.Path, tx *bolt.Tx, oid *dsc3.ObjectIdentifier) error {
-	objIdent := ds.ObjectIdentifier(oid)
-
-	iter, err := bdb.NewScanIterator[dsc3.Relation](
-		ctx, tx, path,
-		bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
-	)
-	if err != nil {
-		return err
-	}
-
-	for iter.Next() {
-		rel := ds.Relation(iter.Value())
-		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
-			return err
-		}
-
-		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // relation methods.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) (*dsw3.SetRelationResponse, error) {
 	resp := &dsw3.SetRelationResponse{}
@@ -269,4 +245,29 @@ func (s *Writer) DeleteRelation(ctx context.Context, req *dsw3.DeleteRelationReq
 	})
 
 	return resp, err
+}
+
+func (*Writer) deleteRelations(ctx context.Context, path bdb.Path, tx *bolt.Tx, oid *dsc3.ObjectIdentifier) error {
+	objIdent := ds.ObjectIdentifier(oid)
+
+	iter, err := bdb.NewScanIterator[dsc3.Relation](
+		ctx, tx, path,
+		bdb.WithKeyFilter(append(objIdent.Key(), ds.InstanceSeparator)),
+	)
+	if err != nil {
+		return err
+	}
+
+	for iter.Next() {
+		rel := ds.Relation(iter.Value())
+		if err := bdb.Delete(ctx, tx, bdb.RelationsObjPath, rel.ObjKey()); err != nil {
+			return err
+		}
+
+		if err := bdb.Delete(ctx, tx, bdb.RelationsSubPath, rel.SubKey()); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
