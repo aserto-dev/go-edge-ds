@@ -120,7 +120,7 @@ func extractDecisions(resp *dsr3.ChecksResponse) []*acc1.EvaluationResponse {
 	return evaluations
 }
 
-// Subject Search
+// SubjectSearch
 //
 // The Subject Search API defines the message exchange pattern between a client (PEP) and an authorization service (PDP)
 // for returning all of the subjects that match the search criteria.
@@ -129,7 +129,7 @@ func extractDecisions(resp *dsr3.ChecksResponse) []*acc1.EvaluationResponse {
 func (s *Access) SubjectSearch(ctx context.Context, req *acc1.SubjectSearchRequest) (*acc1.SubjectSearchResponse, error) {
 	resp := &acc1.SubjectSearchResponse{
 		Results: []*acc1.Subject{},
-		Page:    &acc1.Page{},
+		Page:    &acc1.PaginationResponse{},
 	}
 
 	graphResp, err := s.reader.GetGraph(ctx, extractSubjectSearch(req))
@@ -169,7 +169,7 @@ func extractSubjectSearch(req *acc1.SubjectSearchRequest) *dsr3.GetGraphRequest 
 	return resp
 }
 
-// Resource Search
+// ResourceSearch
 //
 // The Resource Search API defines the message exchange pattern between a client (PEP) and an authorization service (PDP)
 // for returning all of the resources that match the search criteria.
@@ -178,7 +178,7 @@ func extractSubjectSearch(req *acc1.SubjectSearchRequest) *dsr3.GetGraphRequest 
 func (s *Access) ResourceSearch(ctx context.Context, req *acc1.ResourceSearchRequest) (*acc1.ResourceSearchResponse, error) {
 	resp := &acc1.ResourceSearchResponse{
 		Results: []*acc1.Resource{},
-		Page:    &acc1.Page{},
+		Page:    &acc1.PaginationResponse{},
 	}
 
 	graphResp, err := s.reader.GetGraph(ctx, extractResourceSearch(req))
@@ -219,7 +219,7 @@ func extractResourceSearch(req *acc1.ResourceSearchRequest) *dsr3.GetGraphReques
 	return resp
 }
 
-// Action Search
+// ActionSearch
 //
 // The Action Search API defines the message exchange pattern between a client (PEP) and an authorization service (PDP)
 // for returning all of the actions that match the search criteria.
@@ -228,7 +228,7 @@ func extractResourceSearch(req *acc1.ResourceSearchRequest) *dsr3.GetGraphReques
 func (s *Access) ActionSearch(ctx context.Context, req *acc1.ActionSearchRequest) (*acc1.ActionSearchResponse, error) {
 	resp := &acc1.ActionSearchResponse{
 		Results: []*acc1.Action{},
-		Page:    &acc1.Page{},
+		Page:    &acc1.PaginationResponse{},
 	}
 
 	graphReq := extractActionSearch(req)

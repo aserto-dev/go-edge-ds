@@ -46,7 +46,7 @@ func (m *manifest) Get(ctx context.Context, tx *bolt.Tx) (*manifest, error) {
 	return &manifest{Metadata: metadata, Body: body}, nil
 }
 
-// Get, hydrates the model cache from the _manifest
+// GetModel, hydrates the model cache from the _manifest
 // _metadata/{name}/{version}/model.
 func (m *manifest) GetModel(ctx context.Context, tx *bolt.Tx) (*model.Model, error) {
 	if ok, _ := bdb.BucketExists(tx, bdb.ManifestPath); !ok {
@@ -98,9 +98,10 @@ func (m *manifest) SetModel(ctx context.Context, tx *bolt.Tx, mod *model.Model) 
 	return nil
 }
 
+// Delete
+//
 // !!! NOTE: delete manifest is a destructive operation !!!
 //
-// Delete:
 // sets the manifest to an empty manifest,
 // updates the model accordingly,
 // deletes and recreates the objects and relations buckets.
