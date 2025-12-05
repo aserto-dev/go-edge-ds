@@ -27,7 +27,6 @@ func CalculateStats(ctx context.Context, tx *bolt.Tx) (*stats.Stats, error) {
 	return s.Stats, nil
 }
 
-// Wraps the azm Stats object and adds mutator methods.
 type Stats struct {
 	*stats.Stats
 }
@@ -50,7 +49,6 @@ func (s *Stats) CountObjects(ctx context.Context, tx *bolt.Tx) error {
 	return nil
 }
 
-// relation stats.
 func (s *Stats) CountRelations(ctx context.Context, tx *bolt.Tx) error {
 	iter, err := bdb.NewScanIterator[dsc3.Relation](ctx, tx, bdb.RelationsObjPath)
 	if err != nil {

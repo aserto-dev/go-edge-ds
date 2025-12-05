@@ -31,7 +31,7 @@ func NewWriter(logger *zerolog.Logger, store *bdb.BoltDB) *Writer {
 	}
 }
 
-// object methods.
+// SetObject.
 func (s *Writer) SetObject(ctx context.Context, req *dsw3.SetObjectRequest) (*dsw3.SetObjectResponse, error) {
 	resp := &dsw3.SetObjectResponse{}
 
@@ -137,7 +137,7 @@ func (s *Writer) DeleteObject(ctx context.Context, req *dsw3.DeleteObjectRequest
 	return resp, err
 }
 
-// relation methods.
+// SetRelation.
 func (s *Writer) SetRelation(ctx context.Context, req *dsw3.SetRelationRequest) (*dsw3.SetRelationResponse, error) {
 	resp := &dsw3.SetRelationResponse{}
 

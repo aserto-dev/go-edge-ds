@@ -37,6 +37,7 @@ var (
 
 func TestMain(m *testing.M) {
 	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+
 	logger := zerolog.New(io.Discard)
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -307,11 +307,11 @@ func (s *Sync) diff(ctx context.Context) error {
 }
 
 func getObjectKey(obj *dsc3.Object) []byte {
-	return []byte(fmt.Sprintf("%s:%s", obj.GetType(), obj.GetId()))
+	return fmt.Appendf([]byte{}, "%s:%s", obj.GetType(), obj.GetId())
 }
 
 func getRelationKey(rel *dsc3.Relation) []byte {
-	return []byte(fmt.Sprintf("%s:%s#%s@%s:%s%s",
+	return fmt.Appendf([]byte{}, "%s:%s#%s@%s:%s%s",
 		rel.GetObjectType(), rel.GetObjectId(), rel.GetRelation(), rel.GetSubjectType(), rel.GetSubjectId(),
-		lo.Ternary(rel.GetSubjectRelation() == "", "", "#"+rel.GetSubjectRelation())))
+		lo.Ternary(rel.GetSubjectRelation() == "", "", "#"+rel.GetSubjectRelation()))
 }
