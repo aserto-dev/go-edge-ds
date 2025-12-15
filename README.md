@@ -1,3 +1,3 @@
-# Edge Directory
+# go-edge-ds
 
-To install: ``go get github.com/aserto-dev/go-edge-ds``
+> NOTE: This repo is archived, the code has been integrated into the [topaz repo](https://github.com/aserto-dev/topaz/tree/main/internal/pkg/eds)
